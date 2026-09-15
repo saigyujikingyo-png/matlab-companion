@@ -2,7 +2,7 @@
 
 Date: 2026-09-15.
 
-Status: **PARTIAL — new repository not yet visible in the Codex picker**.
+Status: **READY for cloud-container setup and portable checks at `f3e1e67`; later changes require their own run**.
 
 ## Scope
 
@@ -17,46 +17,80 @@ cases across five operations and local file readback. It is not a cloud
 container result. [Compatibility](../docs/COMPATIBILITY.md) records GUI,
 new-device, host/model and other-host acceptance as unverified.
 
-## Observed preparation
+## Saved environment
 
-- The existing Codex Web account was signed in and the environment creation
-  form was available through the supported browser interface.
-- The existing GitHub organisation `saigyujikingyo-png` was available.
-- The form offered the universal image, Python 3.12, container caching,
-  manual setup and maintenance scripts, agent network controls and an
-  interactive terminal.
-- A new unsaved form was prepared for `Chembridge / MATLAB Companion`, with
-  `bash scripts/setup_codex_cloud.sh` for setup and maintenance,
-  common-dependencies agent network access restricted to GET, HEAD and
-  OPTIONS, and additional official documentation domains `mathworks.com`,
-  `www.mathworks.com`, `uk.mathworks.com`.
+The root contributor created and read back the matching environment through
+the official Codex Web interface in the intended existing account. Its
+repository association is `saigyujikingyo-png/matlab-companion`.
 
-## Outstanding
+Environment: [Chembridge / MATLAB Companion](https://chatgpt.com/codex/cloud/settings/environment/6aa97c8022048191bc6e1faa963492d8).
 
-- The product repository was published separately, but the Codex Web picker
-  did not show `matlab-companion` after an ordinary refresh and reopening the
-  creation form. The existing organisation and earlier repositories were
-  visible. A fresh browser tab also showed another newly created product
-  repository, while `matlab-companion` remained absent.
-- The official GitHub installation-settings page initially required owner
-  sudo authentication. After the owner completed verification, the root
-  contributor read back **All repositories** for the existing ChatGPT Codex
-  Connector, covering current and future repositories. Save was disabled and
-  no permission change was made. Selected-repository omission is therefore
-  not supported by this evidence; the remaining discovery cause is unknown.
-- Select the new repository when the existing Codex connection lists it,
-  save the environment and read back its settings.
-- Run the actual portable checks in the cloud container and record source
-  commit, Python version and output.
+| Setting | Saved value |
+| --- | --- |
+| Container image | `universal` |
+| Python selection | `3.12`; actual container runtime observed as `3.12.13` |
+| Container caching | On |
+| Setup | `bash scripts/setup_codex_cloud.sh` |
+| Maintenance | `bash scripts/setup_codex_cloud.sh` |
+| Agent network preset | Common dependencies |
+| Additional documentation domains | `mathworks.com`, `www.mathworks.com`, `uk.mathworks.com` |
+| Agent HTTP methods | GET, HEAD, OPTIONS |
+| Environment variables and secrets | None added |
 
-The official creation form, organisation menu and connector settings expose
-no separate repository-refresh control. Connector settings report the
-existing GitHub account as connected and offer disconnect or installation
-settings; neither was used to reset the connection. Further discovery should
-use the normal picker after the next source publication, without changing
-permissions, caches or application internals.
+The setup script installs locked portable dependencies. It does not install
+MATLAB, a licence or private datasets, and its successful exit would not by
+itself establish that the product checks passed. The selected network policy
+is configuration evidence, not a test of every permitted route.
 
-No account connection, secret, licence, private dataset or unrelated
-environment was changed. The prepared form was discarded during repository
-discovery refresh; no environment has been saved and no cloud-container check
-has run. This is not an environment-creation or cloud-container pass.
+## Evidence ledger
+
+| Stage | State | Evidence and limit |
+| --- | --- | --- |
+| Repository discovery | READY | The public repository is selectable in the intended account. |
+| Environment creation and saved settings | READY | Saved environment and repository association read back in the official UI. |
+| Actual cloud-container setup | READY for tested commit | Setup and maintenance both succeeded in the Linux universal container; Python `3.12.13`. |
+| Actual cloud portable checks | READY for tested commit | Tests, Ruff, contract schemas, real stdio smoke and public-file audit passed at the commit recorded below. |
+| Model-based cloud task | NOT RUN | No cloud model task has been launched for this verification. |
+| Desktop-to-cloud dispatch | NOT RUN | Saved Web configuration does not exercise desktop dispatch. |
+| Native MATLAB and host delivery | SEPARATE | This Linux development configuration does not establish native MATLAB execution or received artifacts in a target host. |
+
+## Actual cloud-container results
+
+The root contributor ran the checks in the saved environment's interactive
+terminal through the official Codex Web interface and read their results.
+The observed `git HEAD` was
+`f3e1e67b44a2e6758c762b98554b460e2744c7f6`, with Python `3.12.13` in the Linux
+universal container.
+
+| Check | Observed result |
+| --- | --- |
+| Setup: `bash scripts/setup_codex_cloud.sh` | Success |
+| Maintenance: `bash scripts/setup_codex_cloud.sh` | Success |
+| Pytest | **157 passed in 5.20 s** |
+| Ruff | Passed |
+| Contract/schema checker | **22 schemas passed** |
+| Real stdio MCP smoke | Passed |
+| Public-file audit | **33 public files passed** |
+
+These are actual cloud-container results for that exact commit. Subsequent
+core fixes and later commits are not covered by this run and must receive
+their own applicable checks. No model-based cloud task or desktop-to-cloud
+dispatch was performed, and no MATLAB installation or licence was added to
+the container.
+
+## Resolved discovery issue
+
+The repository was initially absent from the picker after its first source
+publication. The owner completed the existing GitHub verification, and the
+root contributor confirmed the existing ChatGPT Codex Connector already used
+**All repositories**, including current and future repositories. No access
+change or connection reset was needed.
+
+After integration commit `f3e1e67` was published, a repository search became
+available. A read-only discovery check in another already signed-in browser
+did not create an environment in that account. The root contributor then
+completed creation in the intended account. No account address, credential,
+cache change or application-internal repair is included in this receipt.
+
+No unrelated environment was modified. Container execution, native execution,
+installation, model benchmarks and file delivery remain independent gates.

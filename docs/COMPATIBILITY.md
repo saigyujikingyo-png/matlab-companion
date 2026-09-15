@@ -22,7 +22,7 @@ acceptance run is recorded.
 | Python core | PARTIAL | The project targets Python 3.12 with locked dependencies. Protocol and contract checks run without MATLAB. Additional Python/OS combinations need their own results. |
 | Other MATLAB releases or update builds | UNVERIFIED | Upstream version support is not Companion acceptance. Each advertised combination needs native cases and artifact reopening. |
 | Linux and macOS native execution | UNVERIFIED | Backend asset mappings exist in source; they do not establish installation, activation or working MATLAB execution on these systems. |
-| Codex cloud development environment | PARTIAL | Setup entrypoint exists, but the repository is not yet listed by the cloud picker. No matching environment is saved and no cloud container check has run; see [cloud verification](../verification/cloud-environment.md). |
+| Codex cloud development environment | READY for tested commit | Saved environment and Linux universal container verified at `f3e1e67b44a2e6758c762b98554b460e2744c7f6`, Python `3.12.13`: setup/maintenance, 157 tests, Ruff, 22 schemas, real stdio smoke and 33-file public audit passed. Later fixes require a separate run. This does not establish a model task, desktop dispatch or native MATLAB acceptance; see [cloud verification](../verification/cloud-environment.md). |
 | University/account entitlement | UNVERIFIED beyond this local run | Successful native execution is not an entitlement audit for another device, toolbox, account, shared service or remote deployment. |
 
 The native receipt records the observed MATLAB version, job IDs, results,

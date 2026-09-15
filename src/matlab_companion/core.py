@@ -111,7 +111,12 @@ class Core:
 
     def _recover_jobs(self):
         """Do not replay a native dispatch whose coordinator disappeared."""
-        with file_lock(self.root / ".recovery.lock", timeout=10):
+        # Registration and recovery use one lock order. A queued state is not
+        # visible to recovery while its scheduler and idempotency intent commit.
+        with (
+            file_lock(self.root / ".recovery.lock", timeout=10),
+            file_lock(self.root / ".index.lock", timeout=10),
+        ):
             for path in (self.root / "jobs").glob("*/state.json"):
                 state = read_json(path)
                 if state.get("state") not in ACTIVE:
@@ -143,8 +148,39 @@ class Core:
                     if (job / "receipt.json").exists():
                         self._reconcile(state["job_id"])
                 else:
+                    key = owner.get("idempotency_key")
+                    signature = owner.get("signature")
+                    if not isinstance(key, str) or not isinstance(signature, str):
+                        self._save_state(
+                            state["job_id"],
+                            state="failed",
+                            summary="Queued job registration was incomplete; no native dispatch occurred",
+                            error={
+                                "code": "JOB_REGISTRATION_INCOMPLETE",
+                                "message": "The missing idempotency intent prevents safe automatic scheduling.",
+                            },
+                        )
+                        continue
+                    index_path = self.root / "idempotency.json"
+                    index = read_json(index_path) if index_path.exists() else {}
+                    intended = {"signature": signature, "job_id": state["job_id"]}
+                    if key in index and index[key] != intended:
+                        self._save_state(
+                            state["job_id"],
+                            state="failed",
+                            summary="Queued job conflicts with an existing idempotency record",
+                            error={
+                                "code": "REVISION_CONFLICT",
+                                "message": "Recovery preserved both jobs and did not dispatch the conflicting request.",
+                            },
+                        )
+                        continue
+                    if key not in index:
+                        index[key] = intended
+                        atomic_json(index_path, index)
                     atomic_json(
-                        scheduler, {"coordinator_pid": os.getpid(), "accepted_at": utc_now()}
+                        scheduler,
+                        owner | {"coordinator_pid": os.getpid(), "recovered_at": utc_now()},
                     )
                     self.futures[state["job_id"]] = self.pool.submit(self._execute, state["job_id"])
 
@@ -339,7 +375,11 @@ class Core:
             ).encode()
         ).hexdigest()
         key = hashlib.sha256(idempotency_key.encode()).hexdigest()
-        with self.mutex, file_lock(self.root / ".index.lock", timeout=10):
+        with (
+            self.mutex,
+            file_lock(self.root / ".recovery.lock", timeout=10),
+            file_lock(self.root / ".index.lock", timeout=10),
+        ):
             index_path = self.root / "idempotency.json"
             index = read_json(index_path) if index_path.exists() else {}
             if key in index:
@@ -417,10 +457,16 @@ class Core:
                 state="queued",
                 summary="Accepted; waiting for the owned executor",
             ).model_dump(mode="json")
-            atomic_json(job / "state.json", state)
             atomic_json(
-                job / "scheduler.json", {"coordinator_pid": os.getpid(), "accepted_at": utc_now()}
+                job / "scheduler.json",
+                {
+                    "coordinator_pid": os.getpid(),
+                    "accepted_at": utc_now(),
+                    "idempotency_key": key,
+                    "signature": signature,
+                },
             )
+            atomic_json(job / "state.json", state)
             index[key] = {"signature": signature, "job_id": job_id}
             atomic_json(index_path, index)
             self.futures[job_id] = self.pool.submit(self._execute, job_id)
@@ -430,6 +476,16 @@ class Core:
         job = self._job_path(job_id)
         try:
             with file_lock(self.root / ".execution.lock", timeout=600):
+                current = self._state(job_id)
+                if current["state"] not in ACTIVE:
+                    return
+                if (job / "dispatch.json").exists():
+                    reconciled = self._reconcile(job_id)
+                    if reconciled["state"] in {"completed", "failed", "cancelled"}:
+                        return
+                    raise RuntimeError("An existing native dispatch cannot be replayed")
+                if current["state"] not in {"queued", "cancel_requested"}:
+                    raise RuntimeError("An unconfirmed running job cannot be dispatched again")
                 if (self.root / "executor-quarantine.json").exists():
                     self._save_state(
                         job_id,
@@ -458,8 +514,25 @@ class Core:
                     },
                 )
                 asyncio.run(self.backend.execute(job))
+                if not (job / "receipt.json").is_file():
+                    raise RuntimeError("Native backend returned without a completion receipt")
                 self._reconcile(job_id)
         except Exception as error:  # noqa: BLE001 -- Native failures must preserve uncertain writes.
+            if not (job / "dispatch.json").exists():
+                busy = isinstance(error, TimeoutError)
+                self._save_state(
+                    job_id,
+                    expected_states=ACTIVE,
+                    state="failed",
+                    summary="Executor was busy; no native dispatch occurred"
+                    if busy
+                    else "Execution could not start; no native dispatch occurred",
+                    error={
+                        "code": "EXECUTOR_BUSY" if busy else "DISPATCH_FAILED",
+                        "message": "The job did not reach native dispatch. No cancellation or executor quarantine was required.",
+                    },
+                )
+                return
             (job / "cancel.flag").write_text(
                 "cancel requested after loss of executor response\n", encoding="utf-8"
             )

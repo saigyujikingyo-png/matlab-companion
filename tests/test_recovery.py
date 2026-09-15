@@ -10,6 +10,7 @@ import json
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -399,3 +400,211 @@ def test_recovery_finishes_commit_after_manifest_was_saved(core_factory, monkeyp
         assert backend.calls == [job_id], "Recovery must not execute the original write again"
     finally:
         recovered_core.close()
+
+
+def test_registration_and_recovery_cannot_dispatch_one_job_twice(core_factory, monkeypatch):
+    backend = ReceiptBackend()
+    core, input_id = core_factory(backend)
+    queued_written = threading.Event()
+    finish_registration = threading.Event()
+    recovery_started = threading.Event()
+    recovery_finished = threading.Event()
+    real_atomic = core_module.atomic_json
+    intercepted = False
+
+    def pause_registration(path, value):
+        nonlocal intercepted
+        real_atomic(path, value)
+        if not intercepted and path.name == "state.json" and value.get("state") == "queued":
+            intercepted = True
+            queued_written.set()
+            assert finish_registration.wait(3), "Registration interleave did not resume"
+
+    monkeypatch.setattr(core_module, "atomic_json", pause_registration)
+
+    def open_second_coordinator():
+        recovery_started.set()
+        other = Core(core.root, core.allowed_roots, core.output_roots, backend)
+        recovery_finished.set()
+        return other
+
+    second = None
+    with ThreadPoolExecutor(max_workers=2) as threads:
+        submitted = threads.submit(
+            core.call,
+            "matlab_run",
+            {
+                "operation": "data_profile",
+                "parameters": {},
+                "input_id": input_id,
+                "idempotency_key": "registration-recovery-interleave",
+            },
+        )
+        try:
+            assert queued_written.wait(3)
+            opening = threads.submit(open_second_coordinator)
+            assert recovery_started.wait(3)
+            # The second coordinator must not recover the partially published
+            # request. Finishing registration releases the common recovery lock.
+            recovery_finished.wait(0.2)
+            finish_registration.set()
+            accepted = submitted.result(timeout=5)
+            second = opening.result(timeout=5)
+            assert accepted["ok"], accepted
+            state = core.wait(accepted["job_id"], timeout=5)
+            assert state["state"] == "completed", state
+            core.close()
+            second.close()
+            assert backend.calls == [accepted["job_id"]]
+        finally:
+            finish_registration.set()
+            if second is not None:
+                second.close()
+
+
+def test_an_already_completed_job_cannot_be_dispatched_again(core_factory):
+    backend = ReceiptBackend()
+    core, input_id = core_factory(backend)
+    job_id, state = run_fake(core, input_id)
+    assert state["state"] == "completed"
+    core._execute(job_id)
+    assert backend.calls == [job_id]
+    assert core._state(job_id)["state"] == "completed"
+
+
+def test_normal_backend_return_without_receipt_becomes_unknown(core_factory):
+    class MissingReceiptBackend(ReceiptBackend):
+        async def execute(self, job):
+            self.calls.append(read_json(job / "request.json")["job_id"])
+
+    backend = MissingReceiptBackend()
+    core, input_id = core_factory(backend)
+    job_id, state = run_fake(core, input_id)
+    assert state["state"] == "unknown", state
+    assert state["error"]["code"] == "OUTCOME_UNKNOWN"
+    job = core._job_path(job_id)
+    assert (job / "dispatch.json").is_file()
+    assert (job / "request.json").is_file()
+    assert (job / "cancel.flag").is_file()
+    assert (core.root / "executor-quarantine.json").is_file()
+    duplicate, repeated_state = run_fake(core, input_id)
+    assert duplicate == job_id
+    assert repeated_state["state"] == "unknown"
+    assert backend.calls == [job_id]
+
+
+def test_queued_registration_recovers_its_missing_idempotency_index(core_factory, monkeypatch):
+    backend = ReceiptBackend()
+    core, input_id = core_factory(backend)
+    real_atomic = core_module.atomic_json
+
+    def stop_before_index_commit(path, value):
+        if path == core.root / "idempotency.json":
+            raise OSError("Simulated coordinator stop before index commit")
+        return real_atomic(path, value)
+
+    arguments = {
+        "operation": "data_profile",
+        "parameters": {},
+        "input_id": input_id,
+        "idempotency_key": "persisted-registration-intent",
+    }
+    monkeypatch.setattr(core_module, "atomic_json", stop_before_index_commit)
+    interrupted = core.call("matlab_run", arguments)
+    assert not interrupted["ok"]
+    core.close()
+    assert backend.calls == []
+    job = next((core.root / "jobs").iterdir())
+    scheduler = read_json(job / "scheduler.json")
+    atomic_json(job / "scheduler.json", scheduler | {"coordinator_pid": 999_999})
+    monkeypatch.setattr(core_module, "atomic_json", real_atomic)
+    monkeypatch.setattr(core_module, "process_alive", lambda pid: pid != 999_999)
+    recovered = Core(core.root, core.allowed_roots, core.output_roots, backend)
+    try:
+        state = recovered.wait(job.name, timeout=5)
+        assert state["state"] == "completed", state
+        retry = recovered.call("matlab_run", arguments)
+        assert retry["ok"] and retry["job_id"] == job.name, retry
+        assert backend.calls == [job.name]
+    finally:
+        recovered.close()
+
+
+def test_execution_lock_timeout_does_not_quarantine_an_undispatched_job(core_factory, monkeypatch):
+    backend = ReceiptBackend()
+    core, input_id = core_factory(backend)
+    real_lock = core_module.file_lock
+
+    @contextmanager
+    def contend_execution_lock(path, timeout=0):
+        if path.name == ".execution.lock":
+            raise TimeoutError("Simulated execution-lock contention deadline")
+        with real_lock(path, timeout=timeout):
+            yield
+
+    monkeypatch.setattr(core_module, "file_lock", contend_execution_lock)
+    job_id, state = run_fake(core, input_id)
+    job = core._job_path(job_id)
+    assert state["state"] == "failed", state
+    assert state["error"]["code"] == "EXECUTOR_BUSY"
+    assert backend.calls == []
+    assert not (job / "dispatch.json").exists()
+    assert not (job / "cancel.flag").exists()
+    assert not (core.root / "executor-quarantine.json").exists()
+    monkeypatch.setattr(core_module, "file_lock", real_lock)
+    next_job = core.call(
+        "matlab_run",
+        {
+            "operation": "data_profile",
+            "parameters": {},
+            "input_id": input_id,
+            "idempotency_key": "after-execution-lock-contention",
+        },
+    )
+    assert next_job["ok"], next_job
+    assert core.wait(next_job["job_id"], timeout=5)["state"] == "completed"
+    assert backend.calls == [next_job["job_id"]]
+
+
+def test_execution_lock_failure_keeps_an_existing_dispatch_unknown(core_factory, monkeypatch):
+    backend = ReceiptBackend()
+    core, _ = core_factory(backend)
+    job_id = str(uuid.uuid4())
+    job = core._job_path(job_id)
+    (job / "outputs").mkdir(parents=True)
+    atomic_json(
+        job / "state.json",
+        JobSummary(
+            job_id=job_id,
+            operation="data_profile",
+            state="running",
+            summary="Earlier native dispatch has no confirmed receipt",
+        ).model_dump(mode="json"),
+    )
+    atomic_json(
+        job / "dispatch.json",
+        {"coordinator_pid": 999_999, "coordinator_identity": None, "dispatched_at": utc_now()},
+    )
+    dispatch = (job / "dispatch.json").read_bytes()
+    real_lock = core_module.file_lock
+
+    @contextmanager
+    def contend_execution_lock(path, timeout=0):
+        if path.name == ".execution.lock":
+            raise TimeoutError("Simulated contention with an existing dispatch")
+        with real_lock(path, timeout=timeout):
+            yield
+
+    monkeypatch.setattr(core_module, "file_lock", contend_execution_lock)
+    core._execute(job_id)
+    state = core._state(job_id)
+    assert state["state"] == "unknown", state
+    assert state["error"]["code"] == "OUTCOME_UNKNOWN"
+    assert (job / "dispatch.json").read_bytes() == dispatch
+    assert (job / "cancel.flag").is_file()
+    assert (core.root / "executor-quarantine.json").is_file()
+    assert backend.calls == []
+    monkeypatch.setattr(core_module, "file_lock", real_lock)
+    core._execute(job_id)
+    assert core._state(job_id)["state"] == "unknown"
+    assert backend.calls == []

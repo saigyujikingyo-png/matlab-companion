@@ -1,0 +1,894 @@
+{
+  "observed_at": "2026-09-15T17:15:08.862461+00:00",
+  "status": "partial",
+  "archive": "dist/bundle-1789492201910424900/MATLAB-Companion-0.1.0a1-windows-x64.zip",
+  "archive_size_bytes": 37499934,
+  "archive_sha256": "ab9d5bd1bce1c7bc22ce3e5aadb26c15bb204e169dcf097320f9b84b5a080ceb",
+  "extraction_relative": "dist/package audit 中文-a1c7a58f5e88",
+  "relocated_path_contains_spaces_and_chinese": true,
+  "manifest": {
+    "entries": 3961,
+    "mismatches": [],
+    "unlisted_file_count": 514,
+    "unlisted_examples": [
+      "runtime/Lib/__pycache__/__future__.cpython-312.pyc",
+      "runtime/Lib/__pycache__/_compat_pickle.cpython-312.pyc",
+      "runtime/Lib/__pycache__/_compression.cpython-312.pyc",
+      "runtime/Lib/__pycache__/_weakrefset.cpython-312.pyc",
+      "runtime/Lib/__pycache__/argparse.cpython-312.pyc",
+      "runtime/Lib/__pycache__/ast.cpython-312.pyc",
+      "runtime/Lib/__pycache__/base64.cpython-312.pyc",
+      "runtime/Lib/__pycache__/bisect.cpython-312.pyc",
+      "runtime/Lib/__pycache__/bz2.cpython-312.pyc",
+      "runtime/Lib/__pycache__/calendar.cpython-312.pyc",
+      "runtime/Lib/__pycache__/configparser.cpython-312.pyc",
+      "runtime/Lib/__pycache__/contextlib.cpython-312.pyc",
+      "runtime/Lib/__pycache__/contextvars.cpython-312.pyc",
+      "runtime/Lib/__pycache__/copy.cpython-312.pyc",
+      "runtime/Lib/__pycache__/copyreg.cpython-312.pyc",
+      "runtime/Lib/__pycache__/csv.cpython-312.pyc",
+      "runtime/Lib/__pycache__/dataclasses.cpython-312.pyc",
+      "runtime/Lib/__pycache__/datetime.cpython-312.pyc",
+      "runtime/Lib/__pycache__/decimal.cpython-312.pyc",
+      "runtime/Lib/__pycache__/dis.cpython-312.pyc"
+    ],
+    "source_commit": "f3e1e67b44a2e6758c762b98554b460e2744c7f6",
+    "source_dirty": true,
+    "python": "3.12.14"
+  },
+  "privacy_scan": {
+    "scope": "Exact local builder username and checkout path bytes, UTF-8/UTF-16; not a comprehensive secret audit.",
+    "matched_file_count": 526,
+    "findings": [
+      {
+        "path": "docs/ARCHITECTURE.md",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "documented_checkout_example"
+      },
+      {
+        "path": "requirements.txt",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/cffi-gen-src.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/httpx2.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/idna.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/jsonschema.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/matlab-companion.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/mcp.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/pywin32_postinstall.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/pywin32_testall.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/uvicorn.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/matlab_companion-0.1.0a1.dist-info/direct_url.json",
+        "categories": [
+          "builder_checkout_forward_slash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/__future__.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/_compat_pickle.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/_compression.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/_weakrefset.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/argparse.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/ast.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/base64.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/bisect.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/bz2.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/calendar.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/configparser.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/contextlib.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/contextvars.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/copy.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/copyreg.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/csv.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/dataclasses.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/datetime.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/decimal.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/dis.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/enum.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/fnmatch.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/fractions.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/functools.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/gettext.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/hashlib.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/heapq.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/hmac.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/inspect.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/ipaddress.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/keyword.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/linecache.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/locale.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/lzma.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/mimetypes.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/nturl2path.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/numbers.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/opcode.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/operator.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/pathlib.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/pickle.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/platform.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/queue.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/quopri.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/random.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/reprlib.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/secrets.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/selectors.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/shlex.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/shutil.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/signal.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/socket.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/socketserver.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/ssl.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/string.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/struct.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/subprocess.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/sysconfig.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/tempfile.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/textwrap.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/threading.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/token.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/tokenize.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/traceback.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/types.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/typing.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/uuid.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/warnings.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/__pycache__/weakref.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/__init__.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/base_events.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/base_futures.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/base_subprocess.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/base_tasks.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/constants.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/coroutines.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/events.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/exceptions.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/format_helpers.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/futures.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/locks.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/log.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/mixins.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/proactor_events.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/protocols.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/queues.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/runners.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/asyncio/__pycache__/selector_events.cpython-312.pyc",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      }
+    ],
+    "truncated": true,
+    "non_bytecode_findings": [
+      {
+        "path": "docs/ARCHITECTURE.md",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "documented_checkout_example"
+      },
+      {
+        "path": "requirements.txt",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/cffi-gen-src.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/httpx2.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/idna.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/jsonschema.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/matlab-companion.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/mcp.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/pywin32_postinstall.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/pywin32_testall.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/bin/uvicorn.exe",
+        "categories": [
+          "builder_checkout_backslash"
+        ],
+        "classification": "embedded_builder_metadata"
+      },
+      {
+        "path": "runtime/Lib/site-packages/matlab_companion-0.1.0a1.dist-info/direct_url.json",
+        "categories": [
+          "builder_checkout_forward_slash"
+        ],
+        "classification": "embedded_builder_metadata"
+      }
+    ],
+    "embedded_builder_metadata_files": 525
+  },
+  "self_test": {
+    "returncode": 0,
+    "elapsed_seconds": 2.125,
+    "portable_pass_text_present": true,
+    "stderr": ""
+  },
+  "protocol_and_hidden_tk": {
+    "returncode": 0,
+    "elapsed_seconds": 4.219,
+    "result": {
+      "tool_calls": [
+        {
+          "tool": "matlab_status",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_help",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_inspect",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_artifacts",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_run",
+          "is_error": true
+        },
+        {
+          "tool": "matlab_job",
+          "is_error": true
+        }
+      ],
+      "validated_output_schemas": 6,
+      "resource_count": 10,
+      "tk": {
+        "state_during_update": "withdrawn",
+        "version": "8.6.12",
+        "constructed": true,
+        "updated": true,
+        "destroyed": true
+      },
+      "native_dispatch_files": 0,
+      "python_relative": "runtime/python.exe",
+      "module_relative": "runtime/Lib/site-packages/matlab_companion/__init__.py"
+    },
+    "stderr": ""
+  },
+  "boundaries": {
+    "visible_gui_opened": false,
+    "host_configuration_changed": false,
+    "matlab_launched": false,
+    "vendor_downloaded": false,
+    "fresh_device_acceptance": false,
+    "host_model_acceptance": false,
+    "native_artifact_delivery_acceptance": false,
+    "note": "Package runtime/protocol/hidden-window checks only; valid only for the recorded archive SHA-256."
+  }
+}

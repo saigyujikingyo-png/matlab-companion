@@ -2,9 +2,13 @@
 
 import argparse
 import math
+import platform
+import subprocess
+import sys
 import time
 from pathlib import Path
 
+from matlab_companion.backend import BACKEND_VERSION, native_code_root
 from matlab_companion.core import Core
 from matlab_companion.storage import atomic_json, default_root, digest, utc_now
 
@@ -27,6 +31,15 @@ def main():
     evidence = {
         "scope": "Synthetic native execution, numerical/native readback and local copy delivery; not host-model or installer acceptance",
         "observed_at": utc_now(),
+        "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        "environment": {
+            "python": sys.version.split()[0],
+            "platform": platform.platform(),
+            "backend": BACKEND_VERSION,
+        },
+        "native_sources": {
+            p.name: digest(p) for p in (native_code_root() / "+companion").glob("*.m")
+        },
         "cases": [],
     }
     print("Native acceptance workspace:", run_root, flush=True)

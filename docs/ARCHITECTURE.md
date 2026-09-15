@@ -329,7 +329,7 @@ No phase below has been executed by this task. Work is sequenced by evidence, wi
 
 ### Proposed repository and cloud environment
 
-Working repository: `matlab-companion`; candidate checkout: `C:\Projects\matlab-companion`; proposed environment: `Chembridge / MATLAB Companion`. These are names for future creation, not existing resources. Use the actual repository URL/default branch when registering it. Do not aggregate other Chembridge product runtimes into this environment.
+Working repository: `matlab-companion`, in a local checkout outside cloud sync; planned environment: `Chembridge / MATLAB Companion`. These were proposed names at design time. See STATUS and the cloud receipt for current creation and verification evidence. Do not aggregate other Chembridge product runtimes into this environment.
 
 ```text
 matlab-companion/

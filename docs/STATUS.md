@@ -12,7 +12,7 @@ Updated: 2026-09-15. Version: 0.1.0a1 (early preview).
 | Windows installation | PARTIAL | Wizard and bundle builder implemented; packaged clean-path and GUI checks pending |
 | Codex model workflow | PARTIAL | Real protocol passed; model-driven native workflow pending |
 | Other hosts | PARTIAL | ChatGPT Chat, local/cloud Work, Claude and WorkBuddy require independent acceptance |
-| Cloud environment | PARTIAL | New repository absent from authenticated Codex picker despite All repositories access; environment not saved |
+| Cloud environment | READY for first implementation revision | Dedicated environment saved; f3e1e67 setup, maintenance, 157 tests, lint, schemas, protocol and source audit passed |
 | Stable release acceptance | PARTIAL | Alpha preview only; clean-device, upgrade, owner review and broader host gates open |
 
 The architecture document is an approved design record, not a list of shipped features. Warm sessions, shared IPC, remote authentication/service and host attachment adapters are not implemented.
