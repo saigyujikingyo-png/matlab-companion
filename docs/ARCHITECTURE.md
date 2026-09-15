@@ -1,8 +1,8 @@
 # MATLAB Companion: architecture and implementation plan
 
-Date: 2026-09-15  
-Status: **Design complete; formal implementation not started**  
-Shared baseline: **Chembridge 2026-09-14.1**  
+Date: 2026-09-15
+Status: **Approved design snapshot; implementation started on 2026-09-15**
+Shared baseline: **Chembridge 2026-09-14.1**
 Working identity: **MATLAB Companion**, an independent Chembridge plugin; no MathWorks or University of Edinburgh endorsement is implied.
 
 ## 1. Decision
@@ -13,7 +13,7 @@ This is a design decision with an explicit feasibility gate: select and pin the 
 
 The first vertical workflow is **selected numerical data → documented analysis → editable MATLAB files and figures → verified delivery**. General MATLAB programming, toolboxes and Simulink are subsequent increments of the same product. No additional paid reasoning service is needed: the user's chosen agent handles language; MATLAB performs the scientific computation.
 
-This plan follows [shared principles](../DEVELOPMENT_PRINCIPLES.md), [cloud development](../CLOUD_DEVELOPMENT.md), [storage policy](../CLOUD_STORAGE.md), [project catalog](../project-catalog.json), [new-plugin checklist](../templates/NEW_PLUGIN.md) and [contributor template](../templates/AGENTS.md). The existing Mnova plan informed document organisation only; no product implementation or acceptance is inherited.
+This plan follows [shared principles](../DEVELOPMENT_PRINCIPLES.md), [cloud development](https://github.com/saigyujikingyo-png/chembridge/blob/codex/chembridge-cloud/CLOUD_DEVELOPMENT.md), [storage policy](https://github.com/saigyujikingyo-png/chembridge/blob/codex/chembridge-cloud/CLOUD_STORAGE.md), [project catalog](https://github.com/saigyujikingyo-png/chembridge/blob/codex/chembridge-cloud/project-catalog.json), [new-plugin checklist](https://github.com/saigyujikingyo-png/chembridge/blob/codex/chembridge-cloud/templates/NEW_PLUGIN.md) and [contributor template](https://github.com/saigyujikingyo-png/chembridge/blob/codex/chembridge-cloud/templates/AGENTS.md). The existing Mnova plan informed document organisation only; no product implementation or acceptance is inherited.
 
 ### Current evidence ledger
 

@@ -1,0 +1,170 @@
+{
+  "scope": "Synthetic TSV native execution, native reopen, standalone rerun and original local-copy readback; not host/model or installer acceptance",
+  "observed_at": "2026-09-15T17:05:10.553191Z",
+  "outcome": "passed",
+  "input_sha256": "1556133954d8893311f317f908dc83bdc3bc2f3325dcc61bff272ce55e79947e",
+  "input_size_bytes": 94,
+  "operation": "linear_calibration",
+  "job_id": "cdf147e0-ef18-4807-90c5-6dee18c4f3e4",
+  "state": "completed",
+  "verification": {
+    "native_reopen": true,
+    "numerical": true,
+    "script_rerun": true
+  },
+  "result": {
+    "rows": 4,
+    "intercept_mode": "free",
+    "weights_kind": "relative",
+    "weighted": false,
+    "degrees_of_freedom": 2,
+    "slope": 1.9999999999999998,
+    "intercept": 1.0000000000000007,
+    "slope_standard_error": 2.531698018113678e-16,
+    "intercept_standard_error": 4.736373295277992e-16,
+    "residual_sum_squares": 6.409494854920721e-31,
+    "weighted_residual_sum_squares": 6.409494854920721e-31,
+    "r_squared": 1.0,
+    "r_squared_reason": null,
+    "uncertainty_state": "available",
+    "uncertainty_reason": null,
+    "x_unit": "mmol/L",
+    "y_unit": "1"
+  },
+  "matlab_version": "26.1.0.3346908 (R2026a) Update 5",
+  "matlab_release": "2026a",
+  "artifacts": [
+    {
+      "name": "input.tsv",
+      "media_type": "text/tab-separated-values",
+      "size_bytes": 94,
+      "sha256": "1556133954d8893311f317f908dc83bdc3bc2f3325dcc61bff272ce55e79947e",
+      "role": "original_input"
+    },
+    {
+      "name": "analysis.mat",
+      "media_type": "application/x-matlab-data",
+      "size_bytes": 2337,
+      "sha256": "76ba97e8c14c87d8d2358daec56bef637aefc302297a9ab194f58e137f3c0dce",
+      "role": "native_data"
+    },
+    {
+      "name": "results.csv",
+      "media_type": "text/csv",
+      "size_bytes": 122,
+      "sha256": "3c72511b8659d5f931236eff5f6299c7ccd9ae8ab07774b560cafdd0aa67da7d",
+      "role": "data_export"
+    },
+    {
+      "name": "figure.fig",
+      "media_type": "application/vnd.mathworks.matlab.fig",
+      "size_bytes": 10818,
+      "sha256": "a33bdd74b3df36ca2613bbac8b0f6e4f0c272b50106922321dcaaa93eec0cb7b",
+      "role": "native_figure"
+    },
+    {
+      "name": "figure.png",
+      "media_type": "image/png",
+      "size_bytes": 33121,
+      "sha256": "e4d35b4341400e093b00cabc8ebad64d1a9186a8685c37cb5d1afc1c4a90999b",
+      "role": "preview"
+    },
+    {
+      "name": "figure.pdf",
+      "media_type": "application/pdf",
+      "size_bytes": 12979,
+      "sha256": "459179cce65cb71206616f424d444da4d55969f646f5bb28f5a0e222de135eac",
+      "role": "figure_export"
+    },
+    {
+      "name": "reproduce.m",
+      "media_type": "text/x-matlab",
+      "size_bytes": 21790,
+      "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c",
+      "role": "script"
+    },
+    {
+      "name": "method.json",
+      "media_type": "application/json",
+      "size_bytes": 3024,
+      "sha256": "696bbb364d2db1c8d034af962c2e993325cbf320accda08ee5a93081e3244718",
+      "role": "method"
+    }
+  ],
+  "original_input_preserved": true,
+  "local_delivery_readback": true,
+  "method_references_preserved_tsv": true,
+  "kinetics_light_style": {
+    "job_id": "277cdc74-7d74-438a-8ce4-1822a977583e",
+    "verification": {
+      "native_reopen": true,
+      "numerical": true,
+      "script_rerun": true
+    },
+    "result": {
+      "points": 101,
+      "initial_concentration": 2.0,
+      "rate_constant": 0.25,
+      "time_end": 8.0,
+      "final_concentration": 0.2706705665373914,
+      "max_absolute_error": 4.260867214611608e-10,
+      "relative_tolerance": 1e-09,
+      "absolute_tolerance": 2e-12,
+      "concentration_unit": "mmol/L",
+      "time_unit": "s"
+    },
+    "local_delivery_readback": true,
+    "artifacts": [
+      {
+        "name": "analysis.mat",
+        "media_type": "application/x-matlab-data",
+        "size_bytes": 5718,
+        "sha256": "880e46643a512f4dbc7f0e4494d8d5501664836519c55c435cef0ac47c2a589c",
+        "role": "native_data"
+      },
+      {
+        "name": "results.csv",
+        "media_type": "text/csv",
+        "size_bytes": 6233,
+        "sha256": "2bd266809bd376e59be4593c97569525c614ad80387e96a20db4709dc5cff4f2",
+        "role": "data_export"
+      },
+      {
+        "name": "figure.fig",
+        "media_type": "application/vnd.mathworks.matlab.fig",
+        "size_bytes": 13533,
+        "sha256": "7892f74820f05500b43dbaef85cc43eb6d94d037d1110615e727346987f220f4",
+        "role": "native_figure"
+      },
+      {
+        "name": "figure.png",
+        "media_type": "image/png",
+        "size_bytes": 43736,
+        "sha256": "9cd3e8228748de26b04e106a142996896e30c580cfee0f2d80e30a357d65fc76",
+        "role": "preview"
+      },
+      {
+        "name": "figure.pdf",
+        "media_type": "application/pdf",
+        "size_bytes": 14268,
+        "sha256": "f0bfa5fadc47b79c3221acddd8ed4812757f365cf79f521f0abfd258227c6604",
+        "role": "figure_export"
+      },
+      {
+        "name": "reproduce.m",
+        "media_type": "text/x-matlab",
+        "size_bytes": 21790,
+        "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c",
+        "role": "script"
+      },
+      {
+        "name": "method.json",
+        "media_type": "application/json",
+        "size_bytes": 1482,
+        "sha256": "24a0628360a4154944db8da6a6c6eb45432bf36493c69512ff9fb6e1b2979fdd",
+        "role": "method"
+      }
+    ]
+  },
+  "seconds": 46.266
+}

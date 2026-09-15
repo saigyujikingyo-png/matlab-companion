@@ -1,0 +1,23 @@
+{
+  "name": "matlab-companion",
+  "version": "0.1.0-alpha.1",
+  "description": "Bounded MATLAB analysis and editable native artifacts",
+  "author": {
+    "name": "MATLAB Companion contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "MATLAB Companion",
+    "shortDescription": "Analyze data and deliver editable MATLAB artifacts.",
+    "longDescription": "Guidance for the local MATLAB Companion connection created by its setup wizard.",
+    "developerName": "MATLAB Companion contributors",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": [
+      "Plot my selected data with editable MATLAB output.",
+      "Fit a calibration with explicit units and weights."
+    ]
+  },
+  "repository": "https://github.com/saigyujikingyo-png/matlab-companion",
+  "license": "MIT"
+}
