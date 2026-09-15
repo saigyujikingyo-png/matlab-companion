@@ -1,0 +1,87 @@
+{
+  "observed_at": "2026-09-15T17:51:15.527121+00:00",
+  "status": "pass",
+  "archive": "dist/release-source-6ac645d/dist/bundle-1789494603242841700/MATLAB-Companion-0.1.0a1-windows-x64.zip",
+  "archive_size_bytes": 33013051,
+  "archive_sha256": "8b22ed6b715f3f7ec4f474973db63d24612fc1ce27179e9ccdf62e9263a7ae2a",
+  "extraction_relative": "dist/package audit 中文-7efc69a70a93",
+  "relocated_path_contains_spaces_and_chinese": true,
+  "manifest": {
+    "entries": 3963,
+    "mismatches": [],
+    "unlisted_file_count": 0,
+    "unlisted_examples": [],
+    "source_commit": "c5c73174f3507f5291df5fbcea28a67795ea0763",
+    "source_dirty": false,
+    "python": "3.12.14"
+  },
+  "privacy_scan": {
+    "scope": "Exact local builder username and checkout path bytes, UTF-8/UTF-16; not a comprehensive secret audit.",
+    "matched_file_count": 0,
+    "embedded_builder_metadata_files": 0,
+    "non_bytecode_findings": [],
+    "findings": [],
+    "truncated": false
+  },
+  "self_test": {
+    "returncode": 0,
+    "elapsed_seconds": 1.907,
+    "portable_pass_text_present": true,
+    "stderr": ""
+  },
+  "protocol_and_hidden_tk": {
+    "returncode": 0,
+    "elapsed_seconds": 3.938,
+    "result": {
+      "tool_calls": [
+        {
+          "tool": "matlab_status",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_help",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_inspect",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_artifacts",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_run",
+          "is_error": true
+        },
+        {
+          "tool": "matlab_job",
+          "is_error": true
+        }
+      ],
+      "validated_output_schemas": 6,
+      "resource_count": 10,
+      "tk": {
+        "state_during_update": "withdrawn",
+        "version": "8.6.12",
+        "constructed": true,
+        "updated": true,
+        "destroyed": true
+      },
+      "native_dispatch_files": 0,
+      "python_relative": "runtime/python.exe",
+      "module_relative": "runtime/Lib/site-packages/matlab_companion/__init__.py"
+    },
+    "stderr": ""
+  },
+  "boundaries": {
+    "visible_gui_opened": false,
+    "host_configuration_changed": false,
+    "matlab_launched": false,
+    "vendor_downloaded": false,
+    "fresh_device_acceptance": false,
+    "host_model_acceptance": false,
+    "native_artifact_delivery_acceptance": false,
+    "note": "Package runtime/protocol/hidden-window checks only; valid only for the recorded archive SHA-256."
+  }
+}

@@ -2,7 +2,7 @@
 
 Date: 2026-09-15.
 
-Status: **READY for cloud-container setup and portable checks at `cf4a705`; later changes require their own run**.
+Status: **READY for cloud-container setup and portable checks at `c5c7317`; later code changes require their own run**.
 
 ## Scope
 
@@ -11,11 +11,13 @@ This receipt covers the matching Codex Web development environment for
 execution, end-user installation, a model benchmark, desktop dispatch or host
 artifact delivery.
 
-The local native run and the real stdio protocol smoke check passed
-separately. The [native receipt](native-final.json) covers six synthetic
-cases across five operations at `cf4a705` and local file readback. It is not a cloud
-container result. [Compatibility](../docs/COMPATIBILITY.md) records GUI,
-new-device, host/model and other-host acceptance as unverified.
+The local native run and real stdio protocol smoke check passed separately.
+The [final native receipt](native-v0.1.0-alpha.1.json) covers six synthetic
+cases across five operations at `c5c7317`, executed through the exact final
+archive's relocated Windows runtime with local file readback. It is not a
+cloud-container result. Earlier source-native receipts remain historical.
+[Compatibility](../docs/COMPATIBILITY.md) records native, package, model,
+visible GUI, new-device and other-host evidence under their own scopes.
 
 ## Saved environment
 
@@ -59,7 +61,7 @@ is configuration evidence, not a test of every permitted route.
 The root contributor rebuilt the container and ran the checks in the saved
 environment's interactive terminal through the official Codex Web interface,
 then read their results. The observed `git HEAD` was
-`cf4a705f564a8dc1c0174de4b1ad812838245614`, with Python `3.12.13` in the Linux
+`c5c73174f3507f5291df5fbcea28a67795ea0763`, with Python `3.12.13` in the Linux
 universal container. These are fresh results for the current implementation
 checkpoint, not reuse of the earlier container run.
 
@@ -67,11 +69,14 @@ checkpoint, not reuse of the earlier container run.
 | --- | --- |
 | Setup: `bash scripts/setup_codex_cloud.sh` | Success |
 | Maintenance: `bash scripts/setup_codex_cloud.sh` | Success |
-| Pytest | **163 passed in 5.66 s** |
+| Pytest | **163 passed, 1 skipped in 7.64 s** |
 | Ruff | Passed |
 | Contract/schema checker | **22 schemas passed** |
 | Real stdio MCP smoke | Passed |
-| Public-file audit | **36 public files passed** |
+| Public-file audit | **44 public files passed** |
+
+The skipped case is a Windows-only CLI test. Its skip is not a pass; the
+separate Windows CI run exercises that platform-specific case.
 
 These are actual cloud-container results for that exact commit. Subsequent
 core fixes and later commits are not covered by this run and must receive
@@ -79,13 +84,32 @@ their own applicable checks. No model-based cloud task or desktop-to-cloud
 dispatch was performed, and no MATLAB installation or licence was added to
 the container.
 
-## Earlier cloud-container run
+## Earlier cloud-container runs
+
+At `cf4a705f564a8dc1c0174de4b1ad812838245614`, the rebuilt Linux universal
+container with Python 3.12.13 passed setup, maintenance, **163 tests in
+5.66 s**, Ruff, **22 schemas**, real stdio and a **36-file public audit**.
+This is historical evidence for that earlier source.
 
 The earlier run at `f3e1e67b44a2e6758c762b98554b460e2744c7f6` also passed in
 the Linux universal container with Python 3.12.13: setup, maintenance,
 **157 tests in 5.20 s**, Ruff, **22 schemas**, real stdio smoke and a
 **33-file public audit**. This remains historical evidence for that commit;
-the current checkpoint is the `cf4a705` run above.
+the final source/runtime checkpoint is the `c5c7317` run above.
+
+## Separate final-source CI
+
+[GitHub CI run 35003649768](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35003649768)
+also passed at `c5c73174f3507f5291df5fbcea28a67795ea0763`: Windows reported
+**164 passed in 8.01 s**; Ubuntu reported **163 passed, 1 Windows-only CLI
+test skipped in 3.86 s**. Both runners passed Ruff, the **22-schema** check,
+real stdio and the **44-file** public audit. CI is separate from the actual
+Codex environment run above; it does not replace that environment evidence.
+
+The final archive's package receipt binds its runtime to the same source
+commit. Later documentation/receipt commits do not alter the immutable
+built code or retrospectively change the tested commit; future code changes
+need a new applicable check.
 
 ## Resolved discovery issue
 

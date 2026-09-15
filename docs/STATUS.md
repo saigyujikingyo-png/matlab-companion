@@ -2,36 +2,55 @@
 
 Updated: 2026-09-15. Version: 0.1.0a1 (early preview).
 
-Recorded native, clean-package and focused model-revision checkpoint:
-`6ac645d037992d1a565272f70f5e77815d69cc80`.
-The complete model-driven calibration/edit/local-delivery workflow passed
-after corrections at `cf4a705`; an updated focused revision passed at
-`6ac645d`. CI and cloud results below retain their separately recorded
-commits. These receipts do not certify later source changes or a later final
-archive. Visible setup, a new user/device, upgrades and other-host acceptance
-remain separate gates.
+Final source/runtime checkpoint:
+`c5c73174f3507f5291df5fbcea28a67795ea0763`.
+Its CI, saved cloud container, final archive runtime checks and native
+execution from that exact relocated archive passed. The earlier
+source-native pass at `6ac645d` remains historical. The complete model-driven
+calibration/edit/local-delivery workflow passed after corrections at
+`cf4a705`; the focused revision passed at `6ac645d`. Visible setup, a new
+user/device, upgrades and other-host acceptance remain separate gates.
 
 | Gate | State | Evidence / remaining work |
 | --- | --- | --- |
 | Host-neutral core | READY for bounded preview | Six tools, five operations, durable jobs and validated contracts |
-| Portable correctness | READY at recorded commit | [CI run 35000493121](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35000493121) succeeded on Windows and Ubuntu at `cf4a705`; tests, Ruff, contracts, stdio smoke and public-file audit passed |
+| Portable correctness | READY at final source checkpoint | [CI run 35003649768](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35003649768) at `c5c7317`: Windows 164 passed in 8.01 s; Ubuntu 163 passed, one Windows-only CLI test skipped, in 3.86 s. Ruff, 22 schemas, real stdio and 44-file public audit passed on both runners |
 | MCP protocol | READY for programmatic clients | Source CI and the relocated bundle exercised real stdio discovery, calls, schema resources and structured JSON fallback; target-host model acceptance remains separate |
-| Native MATLAB | READY for recorded synthetic cases | [Native checkpoint](../verification/native-release.json): six cases cover five operations at `6ac645d`, Windows 11, Python 3.12.14, backend 0.13.0 and MATLAB R2026a Update 5; other builds/devices remain unverified |
+| Native MATLAB source checkpoint | READY for historical recorded cases | [Earlier native checkpoint](../verification/native-release.json): six cases cover five operations at `6ac645d`, Windows 11, Python 3.12.14, backend 0.13.0 and MATLAB R2026a Update 5; retained separately from the final archive result |
+| Final archive native execution | READY for recorded cases | [Final native receipt](../verification/native-v0.1.0-alpha.1.json) binds `c5c7317` and the final archive SHA-256 to execution from the relocated Windows release runtime: six cases cover all five operations, with local byte/hash delivery readback; profile has native reopen, and the other operations also pass numerical checks and script rerun |
 | Local file delivery | READY for observed cases | Original bytes, size and SHA-256 readback; host attachments unverified |
-| Windows bundle | READY for recorded checkpoint archive | [Clean-package checkpoint](../verification/package-clean-release.json): clean `6ac645d` source, 33,001,516-byte archive, 3,957 manifest entries, zero mismatches/unlisted files, bundled-runtime protocol and hidden Tk checks passed after moving to a path with spaces and Chinese characters. A later archive needs its own receipt |
+| Windows bundle | READY for final archive runtime scope | [Final package receipt](../verification/package-v0.1.0-alpha.1.json): clean `c5c7317` source, 33,013,051 bytes, 3,963 manifest entries, zero mismatches/unlisted files; relocated bundled-runtime protocol and hidden Tk checks passed. Native acceptance is a separate row |
 | Visible setup and installation lifecycle | UNVERIFIED | Visible wizard, new user/device, upgrade, repeated installation, recovery and removal need actual acceptance |
 | Codex model workflow | READY for recorded cases after corrections | [Complete workflow](../verification/codex-benchmark.json) at `cf4a705`: 66 calls, 14 rejected calls, calibration and revision passed, all 16 requested local files read back. [Focused revision](../verification/codex-revision-release.json) at `6ac645d`: 8 calls, 1 run request, zero errors and native preservation/reopen/rerun passed |
 | Model efficiency | PARTIAL | Complete workflow was not a first-attempt success and loaded unrelated plugins. The focused revision has a different scope; its lower call count does not establish whole-workflow savings |
 | Other hosts | PARTIAL | ChatGPT Chat, local/cloud Work, Claude and WorkBuddy require independent acceptance |
-| Cloud environment | READY at historical recorded commit | [Cloud receipt](../verification/cloud-environment.md): Linux universal container at `cf4a705`, Python 3.12.13, setup/maintenance, 163 tests in 5.66 s, Ruff, 22 schemas, real stdio and 36-file public audit passed; earlier `f3e1e67` results retained. This does not certify `6ac645d` or later cloud source |
+| Cloud environment | READY at final source checkpoint | [Cloud receipt](../verification/cloud-environment.md): restarted Linux universal container at `c5c7317`, Python 3.12.13, setup/maintenance, 163 tests passed and one Windows-only CLI test skipped in 7.64 s; Ruff, 22 schemas, real stdio and 44-file public audit passed. Earlier runs remain historical |
 | Figure visual checks | READY for selected exports | Assistant visual inspection of the TSV calibration and light-style kinetics exports completed; this is not a visible MATLAB editing or complete figure-quality acceptance |
 | Stable release acceptance | PARTIAL | Alpha preview only; clean-device, upgrade, owner review and broader host gates open |
 
 The architecture document is an approved design record, not a list of shipped features. Warm sessions, shared IPC, remote authentication/service and host attachment adapters are not implemented.
 
-The verified checkpoint Windows archive SHA-256 is
-`b198e8417bd28dcaf9608990209dcb224a5cc42c2d0474f87b6f3ca440f4deb1`.
-Its manifest records clean source at `6ac645d` and Python 3.12.14. A focused
+## Release checkpoint
+
+The final Windows archive records clean source/runtime commit
+`c5c73174f3507f5291df5fbcea28a67795ea0763` and Python 3.12.14. Its SHA-256 is
+`8b22ed6b715f3f7ec4f474973db63d24612fc1ce27179e9ccdf62e9263a7ae2a`.
+The [package receipt](../verification/package-v0.1.0-alpha.1.json) binds the
+checks to those exact 33,013,051 bytes. Earlier package receipts, including
+the [clean `6ac645d` checkpoint](../verification/package-clean-release.json),
+remain historical.
+
+[Windows Alpha release](https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.1)
+is published with the ZIP, checksum and scoped acceptance receipts. A fresh
+GitHub download matches the tested archive byte-for-byte; the asset digest
+and downloaded checksum also match ([publication receipt](../verification/release-v0.1.0-alpha.1.json)).
+Final-archive native acceptance passed for the recorded cases. Receipt and
+documentation updates can be committed after the immutable build without
+changing its recorded code or rebuilding its bytes; they do not silently
+change the archive's source commit. Future code changes require a new build
+and matching acceptance.
+
+A focused
 scan found no exact local builder username or checkout-path bytes and no
 embedded builder metadata; it is not a comprehensive secret audit. Hidden
 Tk 8.6.12 construction/update/destruction passed with the window withdrawn.
@@ -46,7 +65,7 @@ Queued writes are idempotent. A coordinator disappearing after dispatch marks th
 
 ## Measurements and limits
 
-The recorded `6ac645d` synthetic jobs took about 11–24 seconds each including fresh MATLAB startup and verification on this machine. The relocated checkpoint bundle's portable self-test took 2.172 seconds and protocol/hidden-Tk checks took 4.687 seconds. Default output schemas are roughly 2.4–4.3 KB each. These observations do not establish general performance or token savings.
+The recorded final-archive synthetic jobs took about 11–23 seconds each including fresh MATLAB startup and verification on this machine. The final relocated bundle's portable self-test took 1.907 seconds and protocol/hidden-Tk checks took 3.938 seconds. Default output schemas are roughly 2.4–4.3 KB each. These observations do not establish general performance or token savings.
 
 Both model records requested `gpt-5.6-terra` with `max` reasoning through an
 ephemeral Codex CLI session. The complete run used the existing signed-in

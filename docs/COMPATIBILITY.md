@@ -2,13 +2,14 @@
 
 Updated: 2026-09-15. Product version: **0.1.0a1, development preview**.
 
-At `6ac645d037992d1a565272f70f5e77815d69cc80`, five scientific operations passed
-local native cases, a clean Windows checkpoint bundle passed relocation,
-protocol and hidden-Tk checks, and a focused model-driven revision passed.
-The earlier complete model workflow passed after corrections at `cf4a705`.
-Windows/Ubuntu CI and cloud-container evidence below retain their own tested
-commits. No record here certifies later source or a later final archive.
-Visible setup, a new device and cross-host delivery remain separate gates.
+Final source/runtime `c5c73174f3507f5291df5fbcea28a67795ea0763` passed
+Windows/Ubuntu CI, the saved cloud-container checks and final-archive runtime,
+relocation and hidden-Tk checks. Six native cases covering all five operations
+also passed from the exact final archive's relocated Windows runtime.
+Earlier source-native cases and the focused model revision passed at
+`6ac645d`; the complete model workflow passed after corrections at
+`cf4a705`. These records retain their separate commits and scopes. Visible
+setup, a new device and cross-host delivery remain separate gates.
 
 The [architecture](ARCHITECTURE.md) is the approved planning snapshot.
 This document describes the implementation and evidence currently available.
@@ -20,19 +21,21 @@ acceptance run is recorded.
 
 | Area | State | Evidence and limit |
 | --- | --- | --- |
-| Windows local native recipes | READY for recorded checkpoint | Six cases cover five operations in [native acceptance](../verification/native-release.json), at `6ac645d` on Windows 11 with Python 3.12.14. Runtime reports MATLAB `26.1.0.3346908 (R2026a) Update 5`. This is one development device. |
+| Windows local native source checkpoint | READY for historical recorded cases | Six cases cover five operations in [earlier native acceptance](../verification/native-release.json), at `6ac645d` on Windows 11 with Python 3.12.14 and MATLAB `26.1.0.3346908 (R2026a) Update 5`. Retained separately from final-archive evidence. |
+| Final archive native execution | READY for recorded cases | [Final native acceptance](../verification/native-v0.1.0-alpha.1.json) records `c5c7317`, the exact final archive SHA-256 and the relocated Windows release runtime: six cases cover five operations, with applicable native reopen, numerical/script checks and local byte/hash delivery readback. This remains one device and MATLAB build. |
 | Official MathWorks backend | PARTIAL | The implementation pins MATLAB MCP Server `0.13.0`, verifies the selected binary digest, requests `new` sessions with `nodesktop`, and disables upstream telemetry. The native cases exercised this route. Additional lifecycle and device acceptance remain separate. |
-| Python core | READY for recorded portable CI | [CI run 35000493121](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35000493121) passed on Windows and Ubuntu at `cf4a705`, using the Python 3.12 configuration and locked dependencies. Other Python/OS combinations remain unverified. |
+| Python core | READY for final source CI | [CI run 35003649768](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35003649768) at `c5c7317`: Windows 164 passed in 8.01 s; Ubuntu 163 passed, one Windows-only CLI test skipped, in 3.86 s. Both runners passed Ruff, 22 schemas, real stdio and the 44-file public audit. Other Python/OS combinations remain unverified. |
 | Other MATLAB releases or update builds | UNVERIFIED | Upstream version support is not Companion acceptance. Each advertised combination needs native cases and artifact reopening. |
 | Linux and macOS native execution | UNVERIFIED | Backend asset mappings exist in source; they do not establish installation, activation or working MATLAB execution on these systems. |
-| Codex cloud development environment | READY for historical recorded checkpoint | The Linux universal container at `cf4a705` used Python 3.12.13 and passed setup/maintenance, 163 tests in 5.66 s, Ruff, 22 schemas, real stdio and a 36-file public audit. Earlier `f3e1e67` results remain in [cloud verification](../verification/cloud-environment.md). These runs do not certify `6ac645d`, later source, a model task or desktop dispatch. |
+| Codex cloud development environment | READY for final source checkpoint | The restarted Linux universal container at `c5c7317` used Python 3.12.13 and passed setup/maintenance, 163 tests with one Windows-only CLI skip in 7.64 s, Ruff, 22 schemas, real stdio and a 44-file public audit. Earlier runs remain in [cloud verification](../verification/cloud-environment.md). This is not a cloud model task or desktop dispatch. |
 | University/account entitlement | UNVERIFIED beyond this local run | Successful native execution is not an entitlement audit for another device, toolbox, account, shared service or remote deployment. |
 
-The current native receipt binds the run to `6ac645d`, Python 3.12.14,
-Windows 11, backend 0.13.0 and hashes of the executed MATLAB helpers. It
-records the actual MATLAB version, job IDs, results, artifact sizes/hashes
-and local delivery readback. Earlier [first-run evidence](../verification/native-acceptance.json)
-is historical; it is not substituted for the current checkpoint.
+The final native receipt binds the run to `c5c7317` and archive SHA-256
+`8b22ed6b715f3f7ec4f474973db63d24612fc1ce27179e9ccdf62e9263a7ae2a`,
+including execution through the relocated release runtime. Earlier
+[source-native](../verification/native-release.json) and
+[first-run evidence](../verification/native-acceptance.json) remain historical
+and are not substituted for this archive check.
 
 ## Scientific operations
 
@@ -102,21 +105,26 @@ and the source receipts. No billing cost or savings is inferred.
 
 | Gate | State | Practical boundary |
 | --- | --- | --- |
-| Windows bundle after path relocation | READY for checkpoint archive | [Clean-package acceptance](../verification/package-clean-release.json): 33,001,516 bytes, 3,957 manifest entries, clean `6ac645d` source, zero mismatches and zero unlisted files; portable self-test and bundled-runtime protocol passed after moving to a path containing spaces and Chinese characters. A later final archive requires its own receipt. |
+| Windows bundle after path relocation | READY for final archive runtime scope | [Final-package acceptance](../verification/package-v0.1.0-alpha.1.json): 33,013,051 bytes, 3,963 manifest entries, clean `c5c7317` source, zero mismatches and zero unlisted files; portable self-test and bundled-runtime protocol passed after moving to a path containing spaces and Chinese characters. Native acceptance remains separate. |
 | Graphical setup and connection management | PARTIAL | Bundled Tk 8.6.12 was constructed, updated and destroyed while withdrawn. The visible wizard and host-configuration flow have not been accepted. |
 | New device/user, upgrade and repeat install | UNVERIFIED | Need isolated installation, settings preservation, path variations and real self-test. |
 | Reconnect, repair, rollback and removal | UNVERIFIED | Need actual user-facing flows and retention of unrelated host settings and research outputs. |
 | Jobs, deduplication and recovery | PARTIAL | Durable job records, locks, a ten-job active queue bound, cancellation flags and receipt reconciliation are implemented. A cancellation request is not proof MATLAB stopped. Timeout/quarantine behavior and late results need native lifecycle acceptance. |
 | Shared coordinator and retention | PARTIAL | Cross-process locks serialize native work for one runtime root. The planned shared IPC coordinator, warm reusable session, automatic retention UI and complete resource measurements remain open. |
-| Published end-user package | PARTIAL | A specific archive has passed runtime/relocation checks. Public release publication, signature/warning behavior and complete end-user release gates remain separate. |
+| Published Alpha package | READY for distribution; end-user acceptance PARTIAL | [Windows Alpha](https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.1) is published. Fresh release download, published asset digest and checksum match the tested archive. Signature/warning behavior and complete end-user release gates remain separate. |
 
-The checkpoint package receipt records clean source at `6ac645d`, bundled Python 3.12.14,
+The final package receipt records clean source at `c5c7317`, bundled Python 3.12.14,
 and archive SHA-256
-`b198e8417bd28dcaf9608990209dcb224a5cc42c2d0474f87b6f3ca440f4deb1`.
+`8b22ed6b715f3f7ec4f474973db63d24612fc1ce27179e9ccdf62e9263a7ae2a`.
 A focused byte scan found no exact local builder username or checkout path,
 and no embedded builder metadata. That scan is not a comprehensive secret
 audit. The package check did not open a visible GUI, change a host connection,
 start MATLAB, download the vendor backend or establish new-device acceptance.
+
+The [release checkpoint](STATUS.md#release-checkpoint) distinguishes this
+immutable source/runtime and archive from later documentation-only receipt
+updates. Earlier native, model and package receipts remain evidence for
+their named commits and are not relabelled as final-archive checks.
 
 No stable or end-user-ready claim is made. Keep native execution, portable
 tests, cloud containers, installation, model behavior, visual review and

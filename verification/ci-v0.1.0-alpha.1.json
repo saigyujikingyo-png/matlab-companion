@@ -1,0 +1,28 @@
+{
+  "observed_at": "2026-09-15T17:52:57.924936+00:00",
+  "source_commit": "c5c73174f3507f5291df5fbcea28a67795ea0763",
+  "scope": "Portable GitHub Actions checks only; native/package/model/cloud-container receipts are separate",
+  "run_url": "https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35003649768",
+  "outcome": "passed",
+  "jobs": [
+    {
+      "platform": "windows-latest",
+      "tests_passed": 164,
+      "tests_skipped": 0,
+      "test_seconds": 8.01
+    },
+    {
+      "platform": "ubuntu-latest",
+      "tests_passed": 163,
+      "tests_skipped": 1,
+      "test_seconds": 3.86
+    }
+  ],
+  "skip_reason": "Official Windows desktop CLI layout test is Windows only",
+  "common_checks": {
+    "ruff": "passed",
+    "schemas": 22,
+    "real_stdio": "passed",
+    "public_files_audited": 44
+  }
+}

@@ -8,6 +8,8 @@ Read [development principles](DEVELOPMENT_PRINCIPLES.md), [architecture](docs/AR
 
 ## Install and use
 
+Download the [Windows Alpha package and checksum](https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.1).
+
 Extract the Windows preview bundle to a local folder and open **Start Setup.vbs**. Select your MATLAB installation and permitted input/output folders, install or verify the official backend, and connect Codex. The bundle includes Python and dependencies; ordinary users do not need a source checkout or Python installation. Keep the extracted folder in place after connection.
 
 MATLAB must already be installed and licensed. Setup downloads the pinned official MathWorks MCP backend and checks its SHA-256. Read [installation and recovery](docs/INSTALLATION.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
