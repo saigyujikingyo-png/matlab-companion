@@ -1,0 +1,15 @@
+{
+  "observed_at": "2026-09-15T19:59:23.6025963Z",
+  "release_url": "https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.2",
+  "tag": "v0.1.0-alpha.2",
+  "prerelease": true,
+  "source_commit": "41f9cf7cb99a00b8531b522fdc20edecc7d6a4a6",
+  "archive_name": "MATLAB-Companion-0.1.0a2-windows-x64.zip",
+  "archive_size_bytes": 33054016,
+  "archive_sha256": "7f34fa35efc5969cf1e2aa6b72e573a05c1ce8c5a5e6ac93a77dfc9f0754f3c4",
+  "github_asset_digest_matches": true,
+  "downloaded_release_bytes_match": true,
+  "downloaded_checksum_matches": true,
+  "outcome": "passed",
+  "scope": "Published GitHub prerelease and fresh ZIP/checksum download readback; current-device upgrade is recorded separately in local-upgrade-v0.1.0-alpha.2.json. This is not host attachment, new-device or visible setup acceptance."
+}

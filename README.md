@@ -24,7 +24,7 @@ Example requests:
 - “Fit a free-intercept calibration with this column as relative weights. Include units and standard errors.”
 - “Simulate first-order decay at 0.25 per second, starting at 2 mmol/L, up to 8 seconds.”
 
-Original input bytes are retained. Non-profile workflows deliver a standalone `.m` script, `.mat`, `.fig`, CSV, PNG, PDF and method metadata as applicable, with native reopen and script rerun checks. Profiling has native MAT readback but does not generate or claim a standalone script rerun.
+Original input bytes are retained. Non-profile workflows produce a standalone `.m` script, `.mat`, `.fig`, CSV, PNG, PDF and method metadata as applicable, with native reopen and script rerun checks. Profiling has native MAT readback but does not generate or claim a standalone script rerun.
 
 ## Interface
 

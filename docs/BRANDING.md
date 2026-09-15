@@ -16,6 +16,8 @@ The master was created with the built-in image generation tool. The ICO is a
 format/size export of that artwork; the master remains unchanged. Assets are
 distributed with this repository's MIT licence. Do not imply vendor endorsement.
 
-The execution runtime remains the previously accepted `0.1.0a1` package. Local
-Codex cachebuster metadata identifies this installed presentation update; it
-does not identify a new calculation engine or a new native acceptance version.
+The current-device runtime is now `0.1.0a2`, built from `41f9cf7`; see the
+[scoped upgrade receipt](../verification/local-upgrade-v0.1.0-alpha.2.json).
+The original PNG/ICO are unchanged and match the refreshed Codex plugin cache.
+Local Codex cachebuster metadata identifies the adapter installation, separately
+from the runtime version and its native acceptance evidence.

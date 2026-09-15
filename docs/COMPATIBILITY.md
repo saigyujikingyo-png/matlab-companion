@@ -7,6 +7,12 @@ interruption/sentinel case and six final-package native cases across all five
 operations. Package integrity and 43 original-file local readbacks passed.
 [R1 reliability](R1_RELIABILITY.md) records exact receipts and remaining gates.
 
+The [current-device alpha.2 upgrade](../verification/local-upgrade-v0.1.0-alpha.2.json)
+also passed: the owned Codex connection, enabled plugin cache and Start-menu
+entry were refreshed; settings, existing jobs, retained alpha.1 files and other
+MCP connections were preserved. The registered command passed a read-only MCP
+probe. This is not a new model, visible-wizard or clean-device acceptance.
+
 ## Historical alpha.1 evidence
 
 The rows below retain their original alpha.1 source/runtime identities.

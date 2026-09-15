@@ -1,0 +1,50 @@
+{
+  "observed_at": "2026-09-15T19:57:53.671493+00:00",
+  "outcome": "passed",
+  "scope": "Current-device alpha.1 to alpha.2 upgrade through packaged setup and official Codex CLI; programmatic MCP read-only probe. Not a new model task, visible wizard, new device, automatic updater or broader installation lifecycle acceptance.",
+  "source_runtime_commit": "41f9cf7cb99a00b8531b522fdc20edecc7d6a4a6",
+  "package_sha256": "7f34fa35efc5969cf1e2aa6b72e573a05c1ce8c5a5e6ac93a77dfc9f0754f3c4",
+  "runtime_version": "0.1.0a2",
+  "verified_manifest_files": 3976,
+  "official_cli_owned_connection_readback": true,
+  "settings_and_existing_jobs_preserved": true,
+  "retained_alpha1_files_unchanged": true,
+  "previous_connection_receipt_backed_up": true,
+  "preexisting_other_mcp_preserved": true,
+  "preexisting_other_mcp_count_at_upgrade": 7,
+  "passive_self_test": "passed",
+  "mcp_read_only_probe": {
+    "tool_count": 6,
+    "output_schemas_present": 6,
+    "resource_count": 10,
+    "calls": [
+      "matlab_status",
+      "matlab_help"
+    ],
+    "structured_results_valid": true,
+    "json_fallback_matches": true,
+    "registered_command_used": true,
+    "native_dispatch_requested": false
+  },
+  "plugin": {
+    "version": "0.1.0-alpha.2+codex.20260915195535",
+    "installed": true,
+    "enabled": true,
+    "cached_skill_matches_source": true,
+    "icon_sha256": {
+      "icon.png": "518d940313d055d9cbc579c72d847857ed43e1dc12f011f8f63dca2364af756e",
+      "icon.ico": "80b94c3ffc9f7e14f238b17cad0eb24dae5a457e7cb609c3da6f23ba32e34f76"
+    }
+  },
+  "start_menu_shortcut": {
+    "target_version": "0.1.0a2",
+    "target_exists": true,
+    "arguments": "-I -m matlab_companion setup",
+    "old_shortcut_backed_up": true,
+    "icon_preserved": true,
+    "visible_launch": "not_run"
+  },
+  "native_acceptance": "See native-v0.1.0-alpha.2.json for separate exact-package six-case acceptance; no new native workflow was needed during this upgrade probe.",
+  "rollback": "Retained alpha.1 runtime and private connection/plugin/shortcut backups. Downgrade or removal not executed; do not infer rollback lifecycle acceptance.",
+  "privacy": "Local paths, job identifiers, job contents, account data and unrelated MCP names omitted."
+}

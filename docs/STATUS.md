@@ -15,6 +15,16 @@ See [R1 reliability](R1_RELIABILITY.md) for receipts and the retained first-prob
 failure. R2/R3 are not implemented; new model, visible setup, new-device and
 saved cloud-container acceptance remain separate.
 
+[Alpha.2 is published](https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.2);
+its GitHub asset digest, fresh ZIP download and checksum match the accepted
+archive ([publication receipt](../verification/release-v0.1.0-alpha.2.json)).
+The [current-device upgrade](../verification/local-upgrade-v0.1.0-alpha.2.json)
+passed official Codex connection readback, enabled plugin-cache verification,
+Start-menu target readback and read-only MCP status/help/resource checks through
+the registered command. Settings, existing jobs, retained alpha.1 files and
+pre-existing other MCP entries were preserved. The previous connection,
+plugin files and shortcut were backed up. Downgrade/removal were not exercised.
+
 ## Historical alpha.1 acceptance
 
 Later same-day update: the icon and current-device installation are complete;
@@ -62,7 +72,7 @@ needed correction. R1 repairs are tracked separately above; the historical
 installed default-root case did not fix or certify them. See the review for
 its original evidence and confidence levels.
 
-## Release checkpoint
+## Historical alpha.1 release checkpoint
 
 The final Windows archive records clean source/runtime commit
 `c5c73174f3507f5291df5fbcea28a67795ea0763` and Python 3.12.14. Its SHA-256 is

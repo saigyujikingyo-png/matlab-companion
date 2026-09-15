@@ -10,7 +10,7 @@ Date: 2026-09-15. Owner approved R1 after the alpha review. Runtime version:
 | Passive diagnostics | CLI status/self-test and setup use validated observations without creating Core, workers, queues or a missing root | Real CLI subprocesses and queued/dispatched byte-preservation tests; both missing and configured roots |
 | One selected root | CLI, GUI, settings and OfficialBackend use the same resolved installation root | Two deliberately different installations/backend paths, unset default and environment-override cases |
 | Durable execution isolation | Terminal or quarantined outcome is recorded under the execution lock; a pre-dispatch active marker blocks after crash or persistence failure | Controlled two-coordinator interleave, actual child-process exit, failed quarantine persistence and malformed receipt regressions |
-| Owner identity | Coordinator instance UUID plus OS creation identity; native session UUID/PID is separately observed before scientific execution | Live child-process identity tests, simulated reused PID; native observation needs the separate native gate |
+| Owner identity | Coordinator instance UUID plus OS creation identity; native session UUID/PID is separately observed before scientific execution | Live child-process identity tests, simulated reused PID and the bounded native lifecycle receipt below |
 | Late receipt | A validated terminal result cannot be downgraded by the timeout worker's stale unknown transition | Controlled reconciliation between timeout observation and state write |
 | Concurrent persistence | Each atomic JSON write exclusively creates a unique temporary file; a committed immutable manifest can complete after a transient later write failure | Deterministic same-process two-writer interleave and post-manifest failure/reconcile regressions, with unchanged original hashes and one backend invocation |
 | Usable large-file route | Over 16 MiB read returns existing not_delivered/local_copy metadata and instructions; no ResourceLink to an unreadable resource | Exact limit minus/equal/plus one tests, real MCP stdio read-to-deliver, original size/hash readback and invalid-producer rejection |
@@ -82,6 +82,17 @@ is guarded for releases without that API; unavailable PID is JSON null.
   applicable numerical/native reopen/script checks and 136.844 seconds total.
   SHA-256: `7f34fa35efc5969cf1e2aa6b72e573a05c1ce8c5a5e6ac93a77dfc9f0754f3c4`.
   The alpha.1 archive remains the rollback artifact.
+- **Publication: READY.** The [GitHub prerelease](https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.2)
+  retains that exact archive; its asset digest and a fresh ZIP/checksum download
+  match ([publication receipt](../verification/release-v0.1.0-alpha.2.json)).
+- **Current-device upgrade: READY for recorded scope.** The
+  [upgrade receipt](../verification/local-upgrade-v0.1.0-alpha.2.json) records the
+  alpha.1 to alpha.2 transition through packaged setup and the official Codex
+  CLI. Settings, jobs, alpha.1 files and pre-existing other MCP entries were
+  preserved. The enabled plugin cache and Start-menu target were refreshed;
+  the registered runtime passed passive self-test and read-only MCP checks.
+  Prior connection/plugin/shortcut backups remain private. This operator-led
+  upgrade does not establish an automatic updater or downgrade/removal support.
 - **Model, GUI and cloud-container acceptance:** historical alpha.1 evidence
   keeps its original identity. No new installed model, visible wizard, fresh
   device, additional host or saved cloud-container pass is inferred from R1 tests.
@@ -89,6 +100,6 @@ is guarded for releases without that API; unavailable PID is JSON null.
 ## Remaining work
 
 Client-independent job lifetime, bounded wait/progress, staged atomic delivery,
-unit-aware label editing, matched full model benchmarking and complete visible
-installation/upgrade/removal remain R2/R3 proposals. Warm sessions, new scientific
+unit-aware label editing, matched full model benchmarking and broader visible or
+new-device installation/upgrade/removal remain R2/R3 proposals. Warm sessions, new scientific
 operations, remote transport and new hosts are outside this increment.
