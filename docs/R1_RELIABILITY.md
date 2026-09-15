@@ -12,6 +12,7 @@ Date: 2026-09-15. Owner approved R1 after the alpha review. Candidate version:
 | Durable execution isolation | Terminal or quarantined outcome is recorded under the execution lock; a pre-dispatch active marker blocks after crash or persistence failure | Controlled two-coordinator interleave, actual child-process exit, failed quarantine persistence and malformed receipt regressions |
 | Owner identity | Coordinator instance UUID plus OS creation identity; native session UUID/PID is separately observed before scientific execution | Live child-process identity tests, simulated reused PID; native observation needs the separate native gate |
 | Late receipt | A validated terminal result cannot be downgraded by the timeout worker's stale unknown transition | Controlled reconciliation between timeout observation and state write |
+| Concurrent persistence | Each atomic JSON write exclusively creates a unique temporary file; a committed immutable manifest can complete after a transient later write failure | Deterministic same-process two-writer interleave and post-manifest failure/reconcile regressions, with unchanged original hashes and one backend invocation |
 | Usable large-file route | Over 16 MiB read returns existing not_delivered/local_copy metadata and instructions; no ResourceLink to an unreadable resource | Exact limit minus/equal/plus one tests, real MCP stdio read-to-deliver, original size/hash readback and invalid-producer rejection |
 | Recovery UI | Matching active/quarantine markers are preserved in a recovery receipt and retired only after the existing stop confirmation, locks and exact marker checks | Matching, mismatched, corrupt, changed and newly appearing active-marker regressions |
 
@@ -52,7 +53,8 @@ is guarded for releases without that API; unavailable PID is JSON null.
 ## Verification ledger
 
 - **Portable integration: READY on the development device.** `uv run pytest -q`
-  passed 213 tests. Ruff, 22 schema checks, real stdio smoke and public source
+  passed 215 tests after independent review exposed and reproduced two additional
+  persistence failures. Ruff, 22 schema checks, real stdio smoke and public source
   audit passed. The diagnostic, resource-limit and isolation defects were
   reproduced before their repairs. These tests use synthetic backend doubles
   where identified and do not claim native science.

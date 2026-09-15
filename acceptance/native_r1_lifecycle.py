@@ -55,6 +55,8 @@ from matlab_companion.core import Core
 from matlab_companion.storage import atomic_json, digest, read_json, utc_now
 
 POLL_SECONDS = 0.1
+HEARTBEAT_READ_RETRY_SECONDS = 0.75
+HEARTBEAT_MAX_STALL_SECONDS = 10
 NATIVE_TIMEOUT = 180
 WORKER_TIMEOUT = 450
 SENTINEL_START_TIMEOUT = 120
@@ -217,6 +219,7 @@ class Sentinel:
         self.log = None
         self.latest = None
         self.samples = 0
+        self.read_retries = 0
         self.first_counter = None
         self.last_advance = time.monotonic()
         self.events = []
@@ -248,14 +251,30 @@ class Sentinel:
                 require(
                     self.native.matches_matlab(self.installation), "Sentinel executable mismatch"
                 )
-                self.check("sentinel_ready")
+                self.check("sentinel_ready", deadline=deadline)
                 return
             require(self.process.poll() is None, "Sentinel exited before its first heartbeat")
             time.sleep(POLL_SECONDS)
         raise TimeoutError("Sentinel startup exceeded its bounded wait")
 
-    def check(self, phase: str | None = None) -> dict:
+    def check(self, phase: str | None = None, *, deadline: float | None = None) -> dict:
+        # MATLAB movefile replacement may briefly make the destination unavailable
+        # to a Windows reader. Retry reads only, at most 750 ms and never past the
+        # caller's existing phase deadline. No cached heartbeat substitutes for a
+        # fresh successful read; a stopped process still fails immediately.
+        read_deadline = time.monotonic() + HEARTBEAT_READ_RETRY_SECONDS
+        if deadline is not None:
+            read_deadline = min(read_deadline, deadline)
         heartbeat = optional_json(self.directory / "heartbeat.json")
+        while heartbeat is None and time.monotonic() < read_deadline:
+            require(self.native.state() == "alive", "The independent sentinel is no longer alive")
+            require(
+                time.monotonic() - self.last_advance < HEARTBEAT_MAX_STALL_SECONDS,
+                "Sentinel heartbeat stopped advancing",
+            )
+            self.read_retries += 1
+            time.sleep(min(0.02, max(0, read_deadline - time.monotonic())))
+            heartbeat = optional_json(self.directory / "heartbeat.json")
         require(heartbeat is not None, "Sentinel heartbeat became unreadable")
         require(heartbeat.get("nonce") == self.token, "Sentinel token changed")
         require(heartbeat.get("state_preserved") is True, "Sentinel state was changed")
@@ -268,7 +287,10 @@ class Sentinel:
             require(
                 heartbeat["counter"] >= self.latest["counter"], "Sentinel heartbeat went backwards"
             )
-        require(time.monotonic() - self.last_advance < 10, "Sentinel heartbeat stopped advancing")
+        require(
+            time.monotonic() - self.last_advance < HEARTBEAT_MAX_STALL_SECONDS,
+            "Sentinel heartbeat stopped advancing",
+        )
         self.latest = heartbeat
         self.samples += 1
         if self.first_counter is None:
@@ -427,6 +449,7 @@ def public_receipt(private: dict) -> dict:
                 "state_preserved",
                 "heartbeat_advanced",
                 "samples",
+                "heartbeat_read_retries",
                 "cooperative_stop_acknowledged",
                 "native_stop_observed",
             )
@@ -713,6 +736,7 @@ def main() -> int:
     sentinel = Sentinel(root, installation, token)
     native_handles = {}
     child = None
+    deadline = time.monotonic() + SENTINEL_START_TIMEOUT
     print("Private R1 acceptance directory:", root, flush=True)
     try:
         sentinel.start()
@@ -738,11 +762,11 @@ def main() -> int:
             deadline = time.monotonic() + WORKER_TIMEOUT
             last_phase = None
             while child.poll() is None:
-                sentinel.check()
+                sentinel.check(deadline=deadline)
                 current = optional_json(root / "worker-report.json") or {}
                 phase = (current.get("events") or [{}])[-1].get("phase")
                 if phase and phase != last_phase:
-                    sentinel.check(phase)
+                    sentinel.check(phase, deadline=deadline)
                     print("R1 lifecycle:", phase, flush=True)
                     last_phase = phase
                 for session_path in (root / "store" / "jobs").glob("*/native-session.json"):
@@ -767,7 +791,7 @@ def main() -> int:
                     report["worker_deadline_exceeded"] = True
                     raise TimeoutError("Owned Python acceptance worker exceeded its deadline")
                 time.sleep(POLL_SECONDS)
-        sentinel.check("worker_exit")
+        sentinel.check("worker_exit", deadline=deadline)
         report["worker"] = read_json(root / "worker-report.json")
         require(
             child.returncode == 0 and report["worker"]["outcome"] == "passed",
@@ -804,7 +828,7 @@ def main() -> int:
         sentinel_preserved = None
         if sentinel.native is not None:
             try:
-                sentinel.check("before_sentinel_shutdown")
+                sentinel.check("before_sentinel_shutdown", deadline=deadline)
                 sentinel_preserved = True
             except (AssertionError, OSError):
                 sentinel_preserved = False
@@ -818,6 +842,7 @@ def main() -> int:
                 sentinel.latest and sentinel.latest["counter"] > sentinel.first_counter
             ),
             "samples": sentinel.samples,
+            "heartbeat_read_retries": sentinel.read_retries,
             "events": sentinel.events,
             "matlab_release": sentinel.latest.get("matlab_release") if sentinel.latest else None,
             "matlab_version": sentinel.latest.get("matlab_version") if sentinel.latest else None,

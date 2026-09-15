@@ -295,3 +295,51 @@ def test_late_reconciliation_cannot_be_downgraded_by_a_timeout(tmp_path, monkeyp
     finally:
         release.set()
         core.close()
+
+
+def test_reconcile_finishes_a_manifest_commit_after_transient_storage_failure(
+    tmp_path, monkeypatch
+):
+    from test_recovery import ReceiptBackend
+
+    backend = ReceiptBackend()
+    inputs = tmp_path / "input"
+    inputs.mkdir()
+    source = inputs / "data.csv"
+    source.write_text("concentration,absorbance\n1,3\n2,5\n")
+    core = Core(tmp_path / "store", [inputs], backend=backend)
+    real_atomic = core_module.atomic_json
+
+    def fail_observation(path, value):
+        if path.name == "native-observation.json":
+            raise OSError("Transient failure after immutable manifest was saved")
+        return real_atomic(path, value)
+
+    input_id = core.call("matlab_inspect", {"path": str(source)})["input"]["input_id"]
+    monkeypatch.setattr(core_module, "atomic_json", fail_observation)
+    try:
+        arguments = {
+            "operation": "data_profile",
+            "input_id": input_id,
+            "parameters": {},
+            "idempotency_key": "commit-recovery",
+        }
+        accepted = core.call("matlab_run", arguments)
+        assert accepted["ok"]
+        job_id = accepted["job_id"]
+        core.futures[job_id].result(timeout=5)
+        assert core._state(job_id)["state"] == "unknown"
+        job = core._job_path(job_id)
+        preserved = {
+            name: (job / name).read_bytes()
+            for name in ("artifacts.json", "request.json", "dispatch.json", "receipt.json")
+        }
+        monkeypatch.setattr(core_module, "atomic_json", real_atomic)
+        result = core.call("matlab_job", {"job_id": job_id, "action": "reconcile"})
+        assert result["job"]["state"] == "completed"
+        assert all((job / name).read_bytes() == value for name, value in preserved.items())
+        assert core.call("matlab_run", arguments)["job_id"] == job_id
+        assert backend.calls == [job_id]
+        assert (core.root / "executor-quarantine.json").exists()
+    finally:
+        core.close()

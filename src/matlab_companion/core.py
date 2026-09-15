@@ -626,7 +626,8 @@ class Core:
                 current = self._state(job_id)
                 if current["state"] == "completed" or (
                     current["state"] not in ACTIVE
-                    and (current.get("error") or {}).get("code") != "OUTCOME_UNKNOWN"
+                    and (current.get("error") or {}).get("code")
+                    not in {"OUTCOME_UNKNOWN", "OUTPUT_CONTRACT_INVALID"}
                 ):
                     return current
             except (ValueError, OSError):

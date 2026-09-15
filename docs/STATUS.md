@@ -6,7 +6,7 @@ Updated: 2026-09-15. Candidate version: 0.1.0a2 (R1 early preview).
 
 The owner approved R1. Passive diagnostics, selected-root propagation, durable
 execution isolation/process identity and over-limit local-delivery routing are
-implemented. The integrated portable suite passed 213 tests, Ruff, 22 schemas,
+implemented. The integrated portable suite passed 215 tests, Ruff, 22 schemas,
 real stdio and the public audit. Candidate native/package/CI evidence is pending
 at this checkpoint; see [R1 reliability](R1_RELIABILITY.md). R2/R3 are not implemented.
 
