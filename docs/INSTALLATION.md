@@ -4,7 +4,7 @@ MATLAB Companion is an independent Chembridge plugin. MATLAB and its valid licen
 
 ## Windows package
 
-When a Windows preview package is available in GitHub Releases:
+Use the Windows preview package in [GitHub Releases](https://github.com/saigyujikingyo-png/matlab-companion/releases):
 
 1. Download the Windows x64 ZIP and verify the published package checksum.
 2. Extract the complete folder to a local location where it can remain after setup. Do not run from inside the ZIP or move the runtime after connecting your agent.
@@ -37,7 +37,7 @@ Setup manages only the `matlab-companion` entry. It uses the installation's Pyth
 
 Avoid editing the same Codex entry concurrently with a setup action. The supported CLI does not offer an atomic conditional add/remove operation; setup performs a precheck and readback and uses its own lock to prevent simultaneous setup writers. Do not treat connection readback as a real model invocation or file-delivery test.
 
-The preview requires the official Codex executable. Shell-script wrappers are not used by the graphical connector. Other compatible hosts can use the same core, but their graphical connection and original-file delivery adapters need separate implementation and acceptance.
+The preview requires the official Codex executable. Setup checks PATH, then the official Windows desktop app's local CLI directory when Explorer has no Codex PATH entry. Shell-script wrappers are not used by the graphical connector. Other compatible hosts can use the same core, but their graphical connection and original-file delivery adapters need separate implementation and acceptance.
 
 ## Executor recovery
 
@@ -65,6 +65,8 @@ Some development Python distributions omit Tk. Use a complete development Python
 
 ## Verification status
 
-The focused setup suite currently contains **15 passing tests** using real temporary filesystem state and a stateful fake at the Codex process boundary. It verifies settings preservation, repeated installation, invalid paths, corrupt settings, existing-entry protection, connection readback/recovery records, conservative rollback, passive status and quarantine recovery checks. Ruff passes for the setup module and its tests.
+The focused setup suite contains **16 passing Windows tests** using real temporary filesystem state and a stateful fake at the Codex process boundary. It verifies settings preservation, repeated installation, invalid paths, corrupt settings, existing-entry protection, connection readback/recovery records, conservative rollback, passive status, quarantine recovery and discovery when Explorer has no Codex PATH entry. The Windows-specific discovery case is skipped on Linux. Ruff passes for the setup module and its tests.
+
+A separate read-only probe discovered the installed official CLI with PATH discovery disabled and returned `codex-cli 0.154.0-alpha.6.2`. This establishes CLI discovery on the development device, not an accepted visible connection setup.
 
 These tests do not invoke the user's Codex connection commands, download the vendor binary, launch the GUI, start MATLAB or stop any process. The release coordinator separately records packaged runtime checks, actual GUI launch, real backend acquisition, native workflows, existing-configuration acceptance and each host/model/file-delivery result.

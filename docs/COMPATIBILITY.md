@@ -2,12 +2,13 @@
 
 Updated: 2026-09-15. Product version: **0.1.0a1, development preview**.
 
-At `cf4a705f564a8dc1c0174de4b1ad812838245614`, five scientific operations passed
-local native cases, Windows/Ubuntu CI passed, and the bundled Windows runtime
-passed protocol and hidden-Tk checks after path relocation. The matching
-cloud container also passed its portable checks. Visible setup, installation
-on a new device, host/model behavior and cross-host delivery remain separate;
-the current model evaluation has no accepted result yet.
+At `6ac645d037992d1a565272f70f5e77815d69cc80`, five scientific operations passed
+local native cases, a clean Windows checkpoint bundle passed relocation,
+protocol and hidden-Tk checks, and a focused model-driven revision passed.
+The earlier complete model workflow passed after corrections at `cf4a705`.
+Windows/Ubuntu CI and cloud-container evidence below retain their own tested
+commits. No record here certifies later source or a later final archive.
+Visible setup, a new device and cross-host delivery remain separate gates.
 
 The [architecture](ARCHITECTURE.md) is the approved planning snapshot.
 This document describes the implementation and evidence currently available.
@@ -19,15 +20,15 @@ acceptance run is recorded.
 
 | Area | State | Evidence and limit |
 | --- | --- | --- |
-| Windows local native recipes | READY for recorded checkpoint | Six cases cover five operations in [native acceptance](../verification/native-final.json), at `cf4a705` on Windows 11 with Python 3.12.14. Runtime reports MATLAB `26.1.0.3346908 (R2026a) Update 5`. This is one development device. |
+| Windows local native recipes | READY for recorded checkpoint | Six cases cover five operations in [native acceptance](../verification/native-release.json), at `6ac645d` on Windows 11 with Python 3.12.14. Runtime reports MATLAB `26.1.0.3346908 (R2026a) Update 5`. This is one development device. |
 | Official MathWorks backend | PARTIAL | The implementation pins MATLAB MCP Server `0.13.0`, verifies the selected binary digest, requests `new` sessions with `nodesktop`, and disables upstream telemetry. The native cases exercised this route. Additional lifecycle and device acceptance remain separate. |
 | Python core | READY for recorded portable CI | [CI run 35000493121](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35000493121) passed on Windows and Ubuntu at `cf4a705`, using the Python 3.12 configuration and locked dependencies. Other Python/OS combinations remain unverified. |
 | Other MATLAB releases or update builds | UNVERIFIED | Upstream version support is not Companion acceptance. Each advertised combination needs native cases and artifact reopening. |
 | Linux and macOS native execution | UNVERIFIED | Backend asset mappings exist in source; they do not establish installation, activation or working MATLAB execution on these systems. |
-| Codex cloud development environment | READY for recorded checkpoint | A new Linux universal container at `cf4a705` used Python 3.12.13 and passed setup/maintenance, 163 tests in 5.66 s, Ruff, 22 schemas, real stdio and a 36-file public audit. Earlier `f3e1e67` results are retained in [cloud verification](../verification/cloud-environment.md). This does not establish a model task, desktop dispatch or native MATLAB acceptance. |
+| Codex cloud development environment | READY for historical recorded checkpoint | The Linux universal container at `cf4a705` used Python 3.12.13 and passed setup/maintenance, 163 tests in 5.66 s, Ruff, 22 schemas, real stdio and a 36-file public audit. Earlier `f3e1e67` results remain in [cloud verification](../verification/cloud-environment.md). These runs do not certify `6ac645d`, later source, a model task or desktop dispatch. |
 | University/account entitlement | UNVERIFIED beyond this local run | Successful native execution is not an entitlement audit for another device, toolbox, account, shared service or remote deployment. |
 
-The current native receipt binds the run to `cf4a705`, Python 3.12.14,
+The current native receipt binds the run to `6ac645d`, Python 3.12.14,
 Windows 11, backend 0.13.0 and hashes of the executed MATLAB helpers. It
 records the actual MATLAB version, job IDs, results, artifact sizes/hashes
 and local delivery readback. Earlier [first-run evidence](../verification/native-acceptance.json)
@@ -75,13 +76,13 @@ model following a natural-language request.
 | Programmatic local MCP stdio client | READY for protocol smoke scope | A successful native scientific workflow through an actual target host remains separate. |
 | Approved local file copy | READY for recorded native cases | Destination byte/hash readback is recorded for the current checkpoint's synthetic case outputs; new destinations and end-user usability remain separate. |
 | MCP original resources and PNG content | PARTIAL | Implemented content/resource routes preserve original bytes. A resource available to a client is not proof that a target host received or opened it. |
-| Codex local, projectless end-user workflow | IN PROGRESS | A model evaluation is running; no passing result is recorded yet. Installation, actual model request, continued edit and received-file reopening without a coding project remain separate from protocol checks. |
+| Codex local model workflow | READY for recorded bounded cases | The [complete ephemeral CLI workflow](../verification/codex-benchmark.json) at `cf4a705` passed calibration, continued revision and 16 local-file readbacks after corrections. A [focused revision](../verification/codex-revision-release.json) at `6ac645d` passed with 8 calls, one run request and zero errors. Visible setup and fresh-user projectless use remain unverified. |
 | ChatGPT Chat | UNVERIFIED | A supported authenticated connection/device route, actual model call and original-file delivery. |
 | ChatGPT local Work | UNVERIFIED | Actual available host connection and received-file checks. The known project-sync frontend issue remains outside this product task. |
 | ChatGPT cloud Work | UNVERIFIED | Remote executor connection, receiving-workspace materialization, host attachment contract and destination readback. |
 | Claude local-capable hosts | UNVERIFIED | Installed adapter, tool invocation by a real model and native-artifact receipt. |
 | WorkBuddy and other suitable agents | UNVERIFIED | Discover actual MCP/authentication/file capabilities, then run the same acceptance workflow. |
-| GPT-5.6 Terra, max reasoning | UNVERIFIED | Exact available host/model/effort, common-case outcomes, corrections, time and actual usage where available. Protocol tests are not this benchmark. |
+| GPT-5.6 Terra, max reasoning | PARTIAL benchmark | Both Codex CLI records requested this model/effort and report actual outcomes and host usage. The complete run had 66 calls, 14 rejected calls and first-attempt failure; its successful corrected workflow does not establish efficiency. The later focused revision is a separate, narrower case. |
 | Other target models and ELM | UNVERIFIED | Per-host/model capability and acceptance evidence. No paid model service is provisioned by default. |
 
 The implementation offers stdio and approved local delivery. A remote HTTP
@@ -90,11 +91,18 @@ are not implemented. The reserved `host_attachment` contract value does not
 advertise such an adapter. Inline resource transfer is bounded to 16 MiB;
 larger files require an implemented authorized delivery route.
 
+The complete model run took 628.875 seconds and loaded unrelated installed
+plugins; it is not an isolated six-tool efficiency measurement. The focused
+revision disabled unrelated plugins and took 85.141 seconds. Its recorded
+scope excludes a repeated full calibration/local-delivery acceptance.
+Token counters and their subset semantics are recorded in [status](STATUS.md)
+and the source receipts. No billing cost or savings is inferred.
+
 ## Installation, recovery and remaining release gates
 
 | Gate | State | Practical boundary |
 | --- | --- | --- |
-| Windows bundle after path relocation | READY for recorded archive | [Package acceptance](../verification/package-final.json): 32,994,484 bytes, 3,955 manifest entries, zero mismatches and zero unlisted files; portable self-test and bundled-runtime protocol passed after moving to a path containing spaces and Chinese characters. |
+| Windows bundle after path relocation | READY for checkpoint archive | [Clean-package acceptance](../verification/package-clean-release.json): 33,001,516 bytes, 3,957 manifest entries, clean `6ac645d` source, zero mismatches and zero unlisted files; portable self-test and bundled-runtime protocol passed after moving to a path containing spaces and Chinese characters. A later final archive requires its own receipt. |
 | Graphical setup and connection management | PARTIAL | Bundled Tk 8.6.12 was constructed, updated and destroyed while withdrawn. The visible wizard and host-configuration flow have not been accepted. |
 | New device/user, upgrade and repeat install | UNVERIFIED | Need isolated installation, settings preservation, path variations and real self-test. |
 | Reconnect, repair, rollback and removal | UNVERIFIED | Need actual user-facing flows and retention of unrelated host settings and research outputs. |
@@ -102,9 +110,9 @@ larger files require an implemented authorized delivery route.
 | Shared coordinator and retention | PARTIAL | Cross-process locks serialize native work for one runtime root. The planned shared IPC coordinator, warm reusable session, automatic retention UI and complete resource measurements remain open. |
 | Published end-user package | PARTIAL | A specific archive has passed runtime/relocation checks. Public release publication, signature/warning behavior and complete end-user release gates remain separate. |
 
-The package receipt records clean source at `cf4a705`, bundled Python 3.12.14,
+The checkpoint package receipt records clean source at `6ac645d`, bundled Python 3.12.14,
 and archive SHA-256
-`a5f88345e3f5249697bbf5e483c675452e837a3ab5480936c6c042d4c5ecb698`.
+`b198e8417bd28dcaf9608990209dcb224a5cc42c2d0474f87b6f3ca440f4deb1`.
 A focused byte scan found no exact local builder username or checkout path,
 and no embedded builder metadata. That scan is not a comprehensive secret
 audit. The package check did not open a visible GUI, change a host connection,

@@ -116,6 +116,15 @@ def runtime_python_path() -> Path:
 
 def _codex_command(explicit: str | None) -> str:
     command = explicit or shutil.which("codex.exe" if os.name == "nt" else "codex")
+    if not command and os.name == "nt":
+        # The Windows desktop app supplies its CLI in its official local bin
+        # directory without necessarily adding it to Explorer's inherited PATH.
+        local = os.environ.get("LOCALAPPDATA")
+        if local:
+            installed = Path(local) / "OpenAI" / "Codex" / "bin"
+            candidates = [p for p in installed.glob("*/codex.exe") if p.is_file()]
+            if candidates:
+                command = str(max(candidates, key=lambda p: p.stat().st_mtime_ns))
     if not command:
         raise SetupError(
             "Codex CLI was not found. Install Codex or make its official executable available, then reopen setup."

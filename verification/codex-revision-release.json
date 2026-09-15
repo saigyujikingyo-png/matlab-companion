@@ -1,0 +1,39 @@
+{
+  "observed_at": "2026-09-15T17:36:29.822889Z",
+  "source_commit": "6ac645d037992d1a565272f70f5e77815d69cc80",
+  "model_requested": "gpt-5.6-terra",
+  "reasoning_requested": "max",
+  "host": "Codex CLI ephemeral with unrelated plugins disabled",
+  "seconds": 85.141,
+  "exit_code": 0,
+  "tool_calls": 8,
+  "run_requests": 1,
+  "errors": [],
+  "jobs": [
+    {
+      "job_id": "6a607e74-b249-419a-bc75-6057076f3992",
+      "operation": "revise_figure",
+      "state": "completed",
+      "summary": "Figure presentation revised while preserving all numeric curves.",
+      "metrics": [],
+      "verification": {
+        "native_reopen": true,
+        "numerical": true,
+        "script_rerun": true
+      },
+      "artifact_count": 8,
+      "error": null
+    }
+  ],
+  "usage": [
+    {
+      "input_tokens": 203246,
+      "cached_input_tokens": 168192,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2276,
+      "reasoning_output_tokens": 1465
+    }
+  ],
+  "scope": "Focused continuation after clarifying revision identity; native owned-figure revision only. Earlier full calibration and local delivery are a separate run.",
+  "outcome": "passed"
+}

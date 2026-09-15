@@ -20,6 +20,18 @@ from matlab_companion.setup_ui import (
 from matlab_companion.storage import atomic_json, file_lock, read_json
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows desktop app layout")
+def test_explorer_without_codex_in_path_finds_official_desktop_cli(tmp_path, monkeypatch):
+    from matlab_companion import setup_ui
+
+    installed = tmp_path / "OpenAI" / "Codex" / "bin" / "installed-build" / "codex.exe"
+    installed.parent.mkdir(parents=True)
+    installed.write_bytes(b"test CLI fixture")
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    monkeypatch.setattr(setup_ui.shutil, "which", lambda name: None)
+    assert setup_ui._codex_command(None) == str(installed)
+
+
 @pytest.fixture
 def folders(tmp_path):
     input_dir = tmp_path / "Input with spaces"

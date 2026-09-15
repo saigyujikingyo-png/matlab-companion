@@ -1,0 +1,153 @@
+{
+  "observed_at": "2026-09-15T17:32:52.847212Z",
+  "model_requested": "gpt-5.6-terra",
+  "reasoning_requested": "max",
+  "host": "Codex CLI ephemeral, existing signed-in account",
+  "exit_code": 0,
+  "seconds": 628.875,
+  "usage": [
+    {
+      "input_tokens": 2377535,
+      "cached_input_tokens": 2234368,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 21488,
+      "reasoning_output_tokens": 15212
+    }
+  ],
+  "completed_jobs": [
+    {
+      "job_id": "0011258c-492a-4a4d-b62a-74590f2ff12d",
+      "operation": "data_profile",
+      "verification": {
+        "native_reopen": true,
+        "numerical": false,
+        "script_rerun": false
+      }
+    },
+    {
+      "job_id": "5333e06e-e379-4760-ac44-028273a76752",
+      "operation": "revise_figure",
+      "verification": {
+        "native_reopen": true,
+        "numerical": true,
+        "script_rerun": true
+      }
+    },
+    {
+      "job_id": "692fdd47-e550-4dc5-a2db-44b2fa26bc5c",
+      "operation": "linear_calibration",
+      "verification": {
+        "native_reopen": true,
+        "numerical": true,
+        "script_rerun": true
+      }
+    }
+  ],
+  "tool_call_count": 66,
+  "delivery_readback": [
+    {
+      "name": "input.csv",
+      "operation": "data_profile",
+      "verified": true
+    },
+    {
+      "name": "analysis.mat",
+      "operation": "data_profile",
+      "verified": false
+    },
+    {
+      "name": "results.csv",
+      "operation": "data_profile",
+      "verified": false
+    },
+    {
+      "name": "method.json",
+      "operation": "data_profile",
+      "verified": false
+    },
+    {
+      "name": "source.fig",
+      "operation": "revise_figure",
+      "verified": true
+    },
+    {
+      "name": "analysis.mat",
+      "operation": "revise_figure",
+      "verified": true
+    },
+    {
+      "name": "results.csv",
+      "operation": "revise_figure",
+      "verified": true
+    },
+    {
+      "name": "figure.fig",
+      "operation": "revise_figure",
+      "verified": true
+    },
+    {
+      "name": "figure.png",
+      "operation": "revise_figure",
+      "verified": true
+    },
+    {
+      "name": "figure.pdf",
+      "operation": "revise_figure",
+      "verified": true
+    },
+    {
+      "name": "reproduce.m",
+      "operation": "revise_figure",
+      "verified": true
+    },
+    {
+      "name": "method.json",
+      "operation": "revise_figure",
+      "verified": true
+    },
+    {
+      "name": "input.csv",
+      "operation": "linear_calibration",
+      "verified": true
+    },
+    {
+      "name": "analysis.mat",
+      "operation": "linear_calibration",
+      "verified": true
+    },
+    {
+      "name": "results.csv",
+      "operation": "linear_calibration",
+      "verified": true
+    },
+    {
+      "name": "figure.fig",
+      "operation": "linear_calibration",
+      "verified": true
+    },
+    {
+      "name": "figure.png",
+      "operation": "linear_calibration",
+      "verified": true
+    },
+    {
+      "name": "figure.pdf",
+      "operation": "linear_calibration",
+      "verified": true
+    },
+    {
+      "name": "reproduce.m",
+      "operation": "linear_calibration",
+      "verified": true
+    },
+    {
+      "name": "method.json",
+      "operation": "linear_calibration",
+      "verified": true
+    }
+  ],
+  "independent_calibration_check": true,
+  "source_commit": "cf4a705f564a8dc1c0174de4b1ad812838245614",
+  "scope": "One synthetic calibration and continued figure edit, local original files; not GUI/new-device/all-host acceptance",
+  "outcome": "partial"
+}

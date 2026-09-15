@@ -63,7 +63,17 @@ class ArtifactsInput(ContractModel):
     job_id: JobId | None = None
     action: Literal["list", "read", "deliver", "read_result", "read_schema"] = "list"
     artifact_id: Identifier | None = None
-    destination: Annotated[str, Field(min_length=1, max_length=4096)] | None = None
+    destination: (
+        Annotated[
+            str,
+            Field(
+                min_length=1,
+                max_length=4096,
+                description="Full destination FILE path including the artifact filename, under a setup-approved output folder; for example <output folder>/figure.fig.",
+            ),
+        ]
+        | None
+    ) = None
     operation: Operation | None = None
     schema_kind: Literal["parameters", "result"] = "parameters"
 
@@ -82,7 +92,7 @@ TOOL_DESCRIPTIONS = {
     "matlab_inspect": "Register a user-selected CSV/TSV inside setup-approved folders; returns an input ID and original hash.",
     "matlab_run": "Queue an operation using help's parameter schema. Reuse an idempotency key for retries. For figure revisions provide source_job_id, source_artifact_id and expected_revision=source_job_id (the producing job UUID).",
     "matlab_job": "Read status, request cooperative cancellation or reconcile the existing native receipt. Cancellation requested is not stopped. Never replay an unknown write.",
-    "matlab_artifacts": "List/read original files, retrieve schemas/results, or copy to an approved local destination with hash readback. MCP file availability does not prove host receipt.",
+    "matlab_artifacts": "List/read original files, retrieve schemas/results, or deliver with hash readback. For deliver, destination is the full file path INCLUDING filename, not just a folder. MCP availability does not prove host receipt.",
 }
 MAX_INLINE_BYTES = 16 * 1024 * 1024
 

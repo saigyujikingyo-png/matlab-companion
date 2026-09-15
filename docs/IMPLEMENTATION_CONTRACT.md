@@ -1,6 +1,6 @@
 # Initial integration contract
 
-Status: implementation in progress; this file fixes the native/core seam for parallel contributors. Public output contracts must be defined in `contracts.py` and validated before delivery.
+Status: implemented integration boundary for the bounded alpha. Acceptance is recorded separately in `STATUS.md`. Public output contracts are defined in `contracts.py` and validated before delivery.
 
 ## Native request
 
