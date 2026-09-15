@@ -3,12 +3,19 @@
 import argparse
 import math
 import platform
+import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
 
-from matlab_companion.backend import BACKEND_VERSION, native_code_root
+from matlab_companion.backend import (
+    ASSETS,
+    BACKEND_VERSION,
+    backend_path,
+    matlab_root,
+    native_code_root,
+)
 from matlab_companion.core import Core
 from matlab_companion.storage import atomic_json, default_root, digest, utc_now
 
@@ -16,6 +23,8 @@ from matlab_companion.storage import atomic_json, default_root, digest, utc_now
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default="verification/native-acceptance.json")
+    parser.add_argument("--backend-source", type=Path)
+    parser.add_argument("--matlab-root", type=Path)
     args = parser.parse_args()
     run_root = default_root() / "acceptance" / ("integrated-" + str(time.time_ns()))
     inputs, delivered = run_root / "fixtures", run_root / "delivered"
@@ -27,7 +36,28 @@ def main():
         newline="\n",
     )
     original_hash = digest(source)
-    core = Core(run_root / "store", [inputs], [delivered])
+    store = run_root / "store"
+    selected_backend = args.backend_source or backend_path()
+    installation = args.matlab_root or matlab_root()
+    if (
+        installation is None
+        or digest(selected_backend) != ASSETS[(platform.system(), platform.machine())][1]
+    ):
+        raise SystemExit("Select an installed MATLAB and the verified pinned official backend")
+    isolated_backend = backend_path(store)
+    isolated_backend.parent.mkdir(parents=True)
+    shutil.copyfile(selected_backend, isolated_backend)
+    isolated_backend.chmod(0o755)
+    assert digest(isolated_backend) == digest(selected_backend)
+    atomic_json(
+        store / "settings.json",
+        {
+            "matlab_root": str(installation.resolve()),
+            "allowed_roots": [str(inputs)],
+            "output_roots": [str(delivered)],
+        },
+    )
+    core = Core(store, [inputs], [delivered])
     evidence = {
         "scope": "Synthetic native execution, numerical/native readback and local copy delivery; not host-model or installer acceptance",
         "observed_at": utc_now(),

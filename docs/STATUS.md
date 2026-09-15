@@ -1,6 +1,16 @@
 # Implementation status
 
-Updated: 2026-09-15. Version: 0.1.0a1 (early preview).
+Updated: 2026-09-15. Candidate version: 0.1.0a2 (R1 early preview).
+
+## Current R1 candidate
+
+The owner approved R1. Passive diagnostics, selected-root propagation, durable
+execution isolation/process identity and over-limit local-delivery routing are
+implemented. The integrated portable suite passed 213 tests, Ruff, 22 schemas,
+real stdio and the public audit. Candidate native/package/CI evidence is pending
+at this checkpoint; see [R1 reliability](R1_RELIABILITY.md). R2/R3 are not implemented.
+
+## Historical alpha.1 acceptance
 
 Later same-day update: the icon and current-device installation are complete;
 see [installation receipt](../verification/local-installation-2026-09-15.json).
@@ -39,12 +49,13 @@ user/device, upgrades and other-host acceptance remain separate gates.
 
 The architecture document is an approved design record, not a list of shipped features. Warm sessions, shared IPC, remote authentication/service and host attachment adapters are not implemented.
 
-The current source review identifies two P1 reliability concerns: CLI diagnostics
+The alpha.1 source review identified two P1 reliability concerns: CLI diagnostics
 can resume an orphaned queue during core construction, and failure quarantine
 is published after execution-lock release, creating a potential cross-coordinator
 dispatch window. Custom-root propagation and over-limit resource routing also
-need correction. These findings remain open; the installed default-root case
-does not fix or certify them. See the review for evidence and confidence levels.
+needed correction. R1 repairs are tracked separately above; the historical
+installed default-root case did not fix or certify them. See the review for
+its original evidence and confidence levels.
 
 ## Release checkpoint
 

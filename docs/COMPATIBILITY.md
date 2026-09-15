@@ -1,6 +1,10 @@
 # Compatibility and acceptance
 
-Updated: 2026-09-15. Product version: **0.1.0a1, development preview**.
+Updated: 2026-09-15. Current candidate: **0.1.0a2, R1 development preview**.
+
+R1 implementation and fresh candidate gates are tracked in
+[R1 reliability](R1_RELIABILITY.md). The rows below retain the historical alpha.1
+source/runtime identities; they do not automatically certify the new candidate.
 
 Current-device icon and installation results are recorded in the
 [installation receipt](../verification/local-installation-2026-09-15.json).

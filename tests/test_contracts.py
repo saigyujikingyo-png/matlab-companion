@@ -590,6 +590,69 @@ def test_resource_availability_does_not_imply_file_delivery():
     assert received.state == "verified"
 
 
+def oversized_read_example():
+    raw = public_examples()["matlab_artifacts"]
+    size = 16 * 1024 * 1024 + 1
+    raw["artifacts"][0]["size_bytes"] = size
+    raw["delivery"] = {
+        "artifact_id": raw["artifacts"][0]["artifact_id"],
+        "state": "not_delivered",
+        "method": "local_copy",
+        "destination": None,
+        "size_bytes": size,
+        "sha256": SHA,
+        "reason": "Use action=deliver with a filename inside an approved output folder.",
+    }
+    return raw
+
+
+def test_over_limit_read_exposes_pending_local_delivery_without_new_fields():
+    output = validate_dispatch_output("matlab_artifacts", "read", oversized_read_example())
+    payload = output.model_dump(mode="json")
+    for schema in (
+        tool_output_model("matlab_artifacts").model_json_schema(),
+        dispatch_schemas()["matlab_artifacts.read"]["result"],
+    ):
+        Draft202012Validator(schema).validate(payload)
+        malformed = copy.deepcopy(payload)
+        malformed["delivery"]["attachment_url"] = "https://example.invalid/fabricated"
+        assert not Draft202012Validator(schema).is_valid(malformed)
+    assert output.delivery.state == "not_delivered"
+    assert output.delivery.destination is None
+    assert output.delivery.sha256 == output.artifacts[0].sha256
+    with pytest.raises(ValidationError, match="delivered or verified"):
+        validate_dispatch_output("matlab_artifacts", "deliver", payload)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        {"state": "available", "method": "mcp_resource"},
+        {"method": "host_attachment"},
+        {"reason": None},
+        {"sha256": None},
+        {"sha256": "b" * 64},
+        {"size_bytes": None},
+        {"size_bytes": 16 * 1024 * 1024},
+        {"destination": "C:/chosen/not-copied.bin"},
+        {"state": "verified", "destination": "C:/chosen/not-copied.bin"},
+        {"attachment_url": "https://example.invalid/fabricated"},
+    ],
+)
+def test_over_limit_read_rejects_misleading_route_and_metadata(mutation):
+    raw = oversized_read_example()
+    raw["delivery"].update(mutation)
+    with pytest.raises(ValidationError):
+        validate_dispatch_output("matlab_artifacts", "read", raw)
+
+
+def test_over_limit_read_requires_explicit_delivery_route():
+    raw = oversized_read_example()
+    raw["delivery"] = None
+    with pytest.raises(ValidationError, match="over-limit"):
+        validate_dispatch_output("matlab_artifacts", "read", raw)
+
+
 def test_failed_job_query_is_successful_query_with_failed_payload():
     raw = public_examples()["matlab_job"]
     raw["result"] = None

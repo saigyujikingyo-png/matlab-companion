@@ -20,6 +20,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from . import backend
+from .diagnostics import passive_status, resolve_root
 from .storage import atomic_json, default_root, digest, file_lock, read_json, utc_now
 
 SERVER_NAME = "matlab-companion"
@@ -367,6 +368,26 @@ def clear_quarantine(root: Path, *, confirmed_stopped: bool, expected_sha256: st
                 raise SetupError(
                     "The recovery marker changed. Refresh setup and review the new job before confirming again."
                 )
+            active_path = root / "executor-active.json"
+            active = None
+            active_sha256 = None
+            if active_path.exists():
+                try:
+                    active_bytes = active_path.read_bytes()
+                    active = json.loads(active_bytes.decode("utf-8-sig"))
+                    active_sha256 = hashlib.sha256(active_bytes).hexdigest()
+                except (OSError, ValueError) as error:
+                    raise SetupError(
+                        "The active executor marker could not be read. Both recovery markers were preserved."
+                    ) from error
+                if (
+                    not isinstance(active, dict)
+                    or not isinstance(active.get("job_id"), str)
+                    or active["job_id"] != current["job_id"]
+                ):
+                    raise SetupError(
+                        "The active executor marker identifies a different or unknown job. Both markers were preserved."
+                    )
             record_path = root / "setup-recovery" / f"executor-{uuid.uuid4().hex}.json"
             atomic_json(
                 record_path,
@@ -374,6 +395,8 @@ def clear_quarantine(root: Path, *, confirmed_stopped: bool, expected_sha256: st
                     "observed_at": utc_now(),
                     "user_confirmed_owned_session_stopped": True,
                     "previous_quarantine": current,
+                    "previous_active_executor": active,
+                    "active_executor_sha256": active_sha256,
                     "action": "clear_quarantine_only",
                 },
             )
@@ -382,6 +405,18 @@ def clear_quarantine(root: Path, *, confirmed_stopped: bool, expected_sha256: st
                 raise SetupError(
                     "The recovery marker changed while saving the receipt; it was preserved."
                 )
+            if active_sha256 is None:
+                if active_path.exists():
+                    raise SetupError(
+                        "The active executor marker appeared while saving the receipt. Both markers were preserved."
+                    )
+            elif not active_path.is_file() or digest(active_path) != active_sha256:
+                raise SetupError(
+                    "The active executor marker changed while saving the receipt. Both markers were preserved."
+                )
+            else:
+                # Keep quarantine blocking if removal fails after retiring the matching active marker.
+                active_path.unlink()
             target.unlink()
             return {
                 "state": "cleared",
@@ -397,14 +432,8 @@ def clear_quarantine(root: Path, *, confirmed_stopped: bool, expected_sha256: st
 def setup_status(root: Path) -> dict:
     """Passive checks only: do not construct Core, which can resume queued jobs."""
     settings = load_settings(root)
-    installation = settings.get("matlab_root")
-    installed = False
-    if installation:
-        try:
-            _matlab_directory(installation)
-            installed = True
-        except SetupError:
-            pass
+    installation = backend.matlab_root(root)
+    installed = installation is not None
     try:
         binary = backend.backend_path(root)
         _, expected = backend.ASSETS[(backend.platform.system(), backend.platform.machine())]
@@ -412,6 +441,7 @@ def setup_status(root: Path) -> dict:
     except (KeyError, OSError):
         verified_backend = False
     return {
+        "status": passive_status(root),
         "backend_verified": verified_backend,
         "matlab_installation_found": installed,
         "native_execution": "unverified",
@@ -428,7 +458,7 @@ class SetupWindow:
         import tkinter as tk
         from tkinter import filedialog, ttk
 
-        self.root = (root or default_root()).resolve()
+        self.root = resolve_root(root)
         self.window = tk.Tk()
         self.window.title("MATLAB Companion setup")
         self.window.geometry("850x700")
@@ -536,7 +566,7 @@ class SetupWindow:
             ):
                 value = next((item for item in settings.get(key, []) if Path(item).is_dir()), "")
                 variable.set(value)
-            selected = settings.get("matlab_root") or backend.matlab_root()
+            selected = backend.matlab_root(self.root)
             self.matlab_folder.set(str(selected) if selected else "")
             self._refresh_recovery()
             self._log(

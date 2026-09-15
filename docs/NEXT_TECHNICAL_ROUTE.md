@@ -1,6 +1,7 @@
 # Next technical route
 
-Date: 2026-09-15. **Proposal awaiting owner approval. Next-stage implementation has not started.**
+Date: 2026-09-15. **R1 approved and in implementation. R2/R3 and later options remain proposals.**
+Current evidence is in [R1 reliability](R1_RELIABILITY.md).
 
 ## Decision
 
@@ -9,13 +10,12 @@ installed use. Keep one host-neutral core, six public tools, the locked Python
 environment and the accepted MathWorks backend. Reliability, recoverable jobs
 and usable original-file delivery take priority over additional recipes or hosts.
 
-The first coding increment proposed for approval is **R1 below**. Approval of this
-document should not be interpreted as acceptance of every later host, a shared
+The owner approved **R1 below**. That approval is not acceptance of every later host, a shared
 MATLAB service, an automatic dependency upgrade or a warm-session implementation.
 
-## Current alpha: what the evidence supports
+## Baseline alpha before R1: what the evidence supported
 
-The runtime remains `c5c73174f3507f5291df5fbcea28a67795ea0763`, packaged as
+The baseline runtime was `c5c73174f3507f5291df5fbcea28a67795ea0763`, packaged as
 `0.1.0a1`. Icon assets, adapter metadata, local installation and planning records
 do not change its calculation or recovery code.
 
@@ -205,7 +205,6 @@ cloud development and release integrity. Publish an alpha only for the scopes
 that passed; do not turn a repaired diagnostic or schema check into a stable
 release claim. Retain the current package as the explicit rollback artifact.
 
-**Stop point:** the icon and current-device installation are complete. R1–R3
-and all later options remain designs. No implementation of this roadmap,
-runtime change, dependency change or native-recipe change is authorized by this
-document alone. Wait for the owner's next explicit instruction before coding.
+**Current boundary:** the owner authorized R1 implementation and verification.
+R2/R3 and later options remain designs. Finish the R1 gates and report their
+actual evidence before beginning a later increment.

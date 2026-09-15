@@ -78,6 +78,50 @@ def process_alive(pid: int) -> bool:
         return True
 
 
+def process_start_identity(pid: int) -> str | None:
+    """Read an OS process incarnation, without signalling or claiming native exit.
+
+    None means unobserved, including access restrictions and unsupported platforms.
+    Callers must retain ownership conservatively when identity cannot be checked.
+    """
+    if not isinstance(pid, int) or pid <= 0:
+        return None
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        kernel.OpenProcess.restype = wintypes.HANDLE
+        kernel.GetProcessTimes.argtypes = [wintypes.HANDLE] + [
+            ctypes.POINTER(wintypes.FILETIME)
+        ] * 4
+        kernel.GetProcessTimes.restype = wintypes.BOOL
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        handle = kernel.OpenProcess(0x1000, False, pid)
+        if not handle:
+            return None
+        try:
+            creation, exit_time, kernel_time, user_time = (wintypes.FILETIME() for _ in range(4))
+            if not kernel.GetProcessTimes(
+                handle,
+                *(ctypes.byref(item) for item in (creation, exit_time, kernel_time, user_time)),
+            ):
+                return None
+            ticks = (creation.dwHighDateTime << 32) | creation.dwLowDateTime
+            return f"windows-filetime:{ticks}"
+        finally:
+            kernel.CloseHandle(handle)
+    try:
+        # /proc stat's command may contain spaces and parentheses; fields after
+        # its last ')' start at field 3. Start time is field 22 (index 19 below).
+        fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+        boot = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+        return f"linux-proc:{boot}:{int(fields[19])}"
+    except (OSError, ValueError, IndexError):
+        return None
+
+
 @contextlib.contextmanager
 def file_lock(path: Path, timeout: float = 0):
     """OS-released lock, including after a crashed coordinator process."""

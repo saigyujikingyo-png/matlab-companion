@@ -48,7 +48,13 @@ An interrupted or unconfirmed native execution can place the executor in quarant
 3. Tick **I verified that the displayed job's owned MATLAB session has stopped** only after establishing that fact.
 4. Select **Clear this executor quarantine**.
 
-Setup never terminates MATLAB. It checks that no executor/recovery lock is held and that the displayed quarantine marker has not changed, writes a recovery receipt, then removes only that marker. Existing jobs, original inputs, artifacts and native receipts remain intact. A changed marker or busy executor prevents clearing. Clearing quarantine is not proof that a previous operation succeeded and does not authorise replaying its write; reconcile the original job first.
+Setup never terminates MATLAB. It checks that no executor/recovery lock is held and that the displayed quarantine marker has not changed, then writes a recovery receipt. If a crash left an active-executor marker, that marker must identify the same job and remain unchanged; it is preserved in the receipt before both matching markers are removed. Existing jobs, original inputs, artifacts and native receipts remain intact. A changed marker, different active job or busy executor prevents clearing. Clearing quarantine is not proof that a previous operation succeeded and does not authorise replaying its write; reconcile the original job first.
+
+R1 records a coordinator instance UUID and process creation identity separately
+from `native-session.json`, which observes the owned MATLAB session and its PID
+when the documented API is available. Neither a PID nor a session record proves
+native exit. Legacy or inaccessible coordinator identities are treated
+conservatively while their process may still exist.
 
 ## Development installation
 
@@ -63,15 +69,17 @@ This route requires a coding checkout and development terminal. The window ident
 
 Some development Python distributions omit Tk. Use a complete development Python/Tk installation or the tested complete Windows package. Importing the setup module and running its portable tests do not require creating a Tk window.
 
-The alpha review found that `Run Self Test.cmd` and CLI `status` construct the
-job coordinator and can resume previously queued work. They are therefore not
-unconditionally passive checks. Use the setup window's **Check setup** for a
-passive configuration check. This confirmed behavior is scheduled for repair;
-it has not been changed in the current runtime. See [alpha review](ALPHA_REVIEW_2026-09-15.md).
+In R1 (`0.1.0a2`), `Run Self Test.cmd`, CLI `status` and setup's **Check setup**
+use passive observations. They do not construct a coordinator, resume queued
+jobs, start a worker or create a missing runtime directory. CLI `--root` reaches
+setup and every execution/configuration component. Only ordinary service startup
+can recover a previously accepted, undispatched queue under the existing
+idempotency policy. The older `0.1.0a1` diagnostic side effect remains documented
+in the [historical alpha review](ALPHA_REVIEW_2026-09-15.md).
 
 ## Verification status
 
-The focused setup suite contains **16 passing Windows tests** using real temporary filesystem state and a stateful fake at the Codex process boundary. It verifies settings preservation, repeated installation, invalid paths, corrupt settings, existing-entry protection, connection readback/recovery records, conservative rollback, passive status, quarantine recovery and discovery when Explorer has no Codex PATH entry. The Windows-specific discovery case is skipped on Linux. Ruff passes for the setup module and its tests.
+The alpha.1 setup suite recorded **16 passing Windows tests** using real temporary filesystem state and a stateful fake at the Codex process boundary. R1 adds diagnostic and root-isolation regressions plus matched active-marker recovery checks; current results are tracked in [R1 acceptance](R1_RELIABILITY.md). The Windows-specific CLI discovery case is skipped on Linux.
 
 A separate read-only probe discovered the installed official CLI with PATH discovery disabled and returned `codex-cli 0.154.0-alpha.6.2`. This establishes CLI discovery on the development device, not an accepted visible connection setup.
 

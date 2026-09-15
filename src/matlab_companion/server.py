@@ -15,6 +15,7 @@ from pydantic import Field, ValidationError
 
 from . import __version__
 from .contracts import (
+    MAX_INLINE_BYTES,
     TOOL_OUTPUT_MODELS,
     ContractModel,
     Identifier,
@@ -92,9 +93,8 @@ TOOL_DESCRIPTIONS = {
     "matlab_inspect": "Register a user-selected CSV/TSV inside setup-approved folders; returns an input ID and original hash.",
     "matlab_run": "Queue an operation using help's parameter schema. Reuse an idempotency key for retries. For figure revisions provide source_job_id, source_artifact_id and expected_revision=source_job_id (the producing job UUID).",
     "matlab_job": "Read status, request cooperative cancellation or reconcile the existing native receipt. Cancellation requested is not stopped. Never replay an unknown write.",
-    "matlab_artifacts": "List/read original files, retrieve schemas/results, or deliver with hash readback. For deliver, destination is the full file path INCLUDING filename, not just a folder. MCP availability does not prove host receipt.",
+    "matlab_artifacts": "List/read original files, retrieve schemas/results, or deliver with hash readback. Files above 16 MiB require action=deliver; their artifact URI identifies the original but cannot transfer its bytes. For deliver, destination is the full file path INCLUDING filename, not just a folder. MCP availability does not prove host receipt.",
 }
-MAX_INLINE_BYTES = 16 * 1024 * 1024
 
 
 def resource_content(core: Core, uri: str):
@@ -167,15 +167,6 @@ def create_server(core: Core) -> Server:
                     record = output["artifacts"][0]
                     if record["size_bytes"] <= MAX_INLINE_BYTES:
                         uri = record["uri"]
-                    else:
-                        content.append(
-                            types.ResourceLink(
-                                uri=record["uri"],
-                                name=record["name"],
-                                mimeType=record["media_type"],
-                                size=record["size_bytes"],
-                            )
-                        )
                 elif action == "read_result":
                     uri = f"matlab-companion://results/{args['job_id']}"
                 elif action == "read_schema":

@@ -19,6 +19,7 @@ from pydantic import (
 )
 
 CONTRACT_VERSION = "1.0"
+MAX_INLINE_BYTES = 16 * 1024 * 1024
 Identifier = Annotated[
     str, StringConstraints(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9_.-]+$")
 ]
@@ -605,7 +606,7 @@ class ArtifactsOutput(ToolOutput):
         return self
 
 
-class ArtifactReadOutput(ArtifactsOutput):
+class SingleArtifactOutput(ArtifactsOutput):
     @model_validator(mode="after")
     def identifies_one_original(self) -> Self:
         if self.ok and len(self.artifacts) != 1:
@@ -613,7 +614,27 @@ class ArtifactReadOutput(ArtifactsOutput):
         return self
 
 
-class ArtifactDeliverOutput(ArtifactReadOutput):
+class ArtifactReadOutput(SingleArtifactOutput):
+    @model_validator(mode="after")
+    def oversized_read_requires_local_delivery(self) -> Self:
+        if self.ok and self.artifacts[0].size_bytes > MAX_INLINE_BYTES:
+            artifact = self.artifacts[0]
+            delivery = self.delivery
+            if (
+                delivery is None
+                or delivery.state != "not_delivered"
+                or delivery.method != "local_copy"
+                or delivery.destination is not None
+                or delivery.size_bytes != artifact.size_bytes
+                or delivery.sha256 != artifact.sha256
+            ):
+                raise ValueError(
+                    "over-limit artifact reads require pending local delivery with matching size and SHA-256"
+                )
+        return self
+
+
+class ArtifactDeliverOutput(SingleArtifactOutput):
     @model_validator(mode="after")
     def has_delivery_receipt(self) -> Self:
         if self.ok and self.delivery is None:

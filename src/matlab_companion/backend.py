@@ -9,6 +9,7 @@ import platform
 import shutil
 import tempfile
 import urllib.request
+import uuid
 from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
@@ -74,9 +75,12 @@ def matlab_root(settings_root: Path | None = None) -> Path | None:
     explicit = os.environ.get("MATLAB_COMPANION_MATLAB_ROOT")
     settings = (settings_root or default_root()) / "settings.json"
     if not explicit and settings.is_file():
-        explicit = read_json(settings).get("matlab_root")
+        saved = read_json(settings)
+        if not isinstance(saved, dict):
+            raise ValueError("Installation settings must be an object")
+        explicit = saved.get("matlab_root")
     if explicit:
-        root = Path(explicit).resolve()
+        root = Path(explicit).expanduser().resolve()
         executable_name = "matlab.exe" if os.name == "nt" else "matlab"
         return root if (root / "bin" / executable_name).is_file() else None
     executable = shutil.which("matlab")
@@ -118,11 +122,14 @@ def archive_backend_logs(short_logs: Path, job: Path) -> None:
 
 class OfficialBackend:
     def __init__(self, root: Path | None = None, timeout: float = 240):
-        self.root = root or default_root()
+        self.root = (root or default_root()).resolve()
         self.timeout = timeout
 
     def available(self) -> bool:
-        return backend_path(self.root).is_file() and matlab_root(self.root) is not None
+        try:
+            return backend_path(self.root).is_file() and matlab_root(self.root) is not None
+        except KeyError:  # No official asset for this platform; observation never installs it.
+            return False
 
     async def execute(self, job: Path) -> None:
         binary = backend_path(self.root)
@@ -134,9 +141,42 @@ class OfficialBackend:
             raise ValueError("Backend checksum mismatch; run setup to repair")
         if installation is None:
             raise FileNotFoundError("MATLAB was not found; select an installation in setup")
+        session_id = str(uuid.uuid4())
+        job_id = str(uuid.UUID(job.name))
+        session_temporary = job / f"native-session-{session_id}.tmp"
+        session_record = job / "native-session.json"
         launcher = job / "launch_companion.m"
         launcher.write_text(
             f"addpath({matlab_quote(native_code_root())});\n"
+            # This observation identifies the MATLAB process; it never confirms a stop.
+            "companion_session_pid = NaN;\n"
+            "if exist('matlabProcessID', 'builtin') || exist('matlabProcessID', 'file')\n"
+            "    companion_session_pid = matlabProcessID;\n"
+            "end\n"
+            "companion_session = struct('contract_version', '1.0', "
+            f"'job_id', '{job_id}', 'session_id', '{session_id}', "
+            "'matlab_pid', companion_session_pid);\n"
+            "companion_session_bytes = unicode2native("
+            "jsonencode(companion_session, 'ConvertInfAndNaN', true), 'UTF-8');\n"
+            f"companion_session_file = fopen({matlab_quote(session_temporary)}, 'wb');\n"
+            "if companion_session_file < 0\n"
+            "    error('Companion:SESSION_IDENTITY_FAILED', 'Could not write session identity.');\n"
+            "end\n"
+            "try\n"
+            "    companion_session_written = fwrite("
+            "companion_session_file, companion_session_bytes, 'uint8');\n"
+            "catch companion_session_error\n"
+            "    fclose(companion_session_file);\n"
+            "    rethrow(companion_session_error);\n"
+            "end\n"
+            "companion_session_closed = fclose(companion_session_file);\n"
+            "if companion_session_written ~= numel(companion_session_bytes) "
+            "|| companion_session_closed ~= 0\n"
+            "    error('Companion:SESSION_IDENTITY_FAILED', 'Session identity write was incomplete.');\n"
+            "end\n"
+            f"if ~movefile({matlab_quote(session_temporary)}, {matlab_quote(session_record)}, 'f')\n"
+            "    error('Companion:SESSION_IDENTITY_FAILED', 'Could not commit session identity.');\n"
+            "end\n"
             f"companion.execute({matlab_quote(job / 'request.json')});\n",
             encoding="utf-8",
         )

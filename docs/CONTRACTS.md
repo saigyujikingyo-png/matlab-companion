@@ -53,7 +53,7 @@ Metric values are finite numbers or null. `available` requires a value, includin
 | --- | --- |
 | `matlab_job.status`, `.cancel`, `.reconcile` | Shared job lifecycle model. The action determines core behavior; the response preserves the actual observed state, including terminal-state races. |
 | `matlab_artifacts.list` | Bounded artifact metadata. |
-| `matlab_artifacts.read` | Successful reads identify exactly one original artifact. |
+| `matlab_artifacts.read` | Identifies exactly one original artifact. At or below 16 MiB the original bytes can accompany the response; above that limit `delivery` must be `not_delivered` / `local_copy`, with matching size/hash and an actionable reason. No unreadable ResourceLink is emitted. |
 | `matlab_artifacts.deliver` | Successful delivery identifies one artifact and has a delivered/verified receipt; resource availability alone cannot pass. |
 | `matlab_artifacts.read_result` | The known job identity is required; the scientific JSON content is separately validated by its operation model. |
 | `matlab_artifacts.read_schema` | The generated registry supplies the JSON schema content. |

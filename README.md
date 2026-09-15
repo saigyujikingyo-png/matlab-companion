@@ -2,17 +2,17 @@
 
 An independent Chembridge plugin for reproducible MATLAB analysis, editable native artifacts and natural-language agent workflows. Ask an agent to inspect CSV/TSV data, plot XY data, fit a linear calibration, simulate first-order decay or revise a Companion-owned figure.
 
-**0.1.0a1 is an early Windows preview.** Five bounded operations have run on licensed MATLAB R2026a Update 5. Portable, native, installation, model and host-delivery acceptance remain separate. See [current status](docs/STATUS.md) and [compatibility](docs/COMPATIBILITY.md). This project is not affiliated with MathWorks or the University of Edinburgh.
+**0.1.0a2 is the R1 Windows alpha candidate.** It repairs passive diagnostics, selected-root propagation, execution ownership and over-limit artifact routing. Five bounded operations have historical native acceptance on MATLAB R2026a Update 5; each candidate's current portable, native, installation, model and host-delivery evidence remains separate. See [current status](docs/STATUS.md) and [compatibility](docs/COMPATIBILITY.md). This project is not affiliated with MathWorks or the University of Edinburgh.
 
-The [current alpha review](docs/ALPHA_REVIEW_2026-09-15.md) records open diagnostic,
-recovery, configuration and large-file delivery issues. The
-[next technical route](docs/NEXT_TECHNICAL_ROUTE.md) is a design awaiting approval.
+The [alpha review](docs/ALPHA_REVIEW_2026-09-15.md) records the original findings.
+[R1 implementation and acceptance](docs/R1_RELIABILITY.md) tracks their repairs.
+The [technical route](docs/NEXT_TECHNICAL_ROUTE.md) keeps later R2/R3 work separate.
 
 Read [development principles](DEVELOPMENT_PRINCIPLES.md), [architecture](docs/ARCHITECTURE.md) and [implementation contract](docs/IMPLEMENTATION_CONTRACT.md). Native execution, portable checks, installation, model calls and host file delivery have separate evidence.
 
 ## Install and use
 
-Download the [Windows Alpha package and checksum](https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.1).
+Download the [Windows Alpha package and checksum](https://github.com/saigyujikingyo-png/matlab-companion/releases).
 
 Extract the Windows preview bundle to a local folder and open **Start Setup.vbs**. Select your MATLAB installation and permitted input/output folders, install or verify the official backend, and connect Codex. The bundle includes Python and dependencies; ordinary users do not need a source checkout or Python installation. Keep the extracted folder in place after connection.
 
@@ -45,6 +45,6 @@ uv run python scripts/smoke_mcp.py
 uv run python scripts/check_release.py
 ```
 
-`uv run python scripts/native_acceptance.py` explicitly starts licensed local MATLAB. `uv run python scripts/build_windows_bundle.py` builds the preview with a clean CPython 3.12 runtime and locked production dependencies. Package version is `0.1.0a1`; the optional Codex guidance adapter uses semantic version `0.1.0-alpha.1`. It uses the MCP connection created by setup and is not another execution core.
+`uv run python scripts/native_acceptance.py` explicitly starts licensed local MATLAB. `uv run python scripts/build_windows_bundle.py` builds the preview with a clean CPython 3.12 runtime and locked production dependencies. Package version is `0.1.0a2`; the optional Codex guidance adapter uses semantic version `0.1.0-alpha.2`. It uses the MCP connection created by setup and is not another execution core.
 
 [Cloud environment receipt](verification/cloud-environment.md) · [MIT source licence](LICENSE)

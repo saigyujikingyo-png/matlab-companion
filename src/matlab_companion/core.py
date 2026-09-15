@@ -19,6 +19,7 @@ from pydantic import ValidationError
 
 from .backend import OfficialBackend
 from .contracts import (
+    MAX_INLINE_BYTES,
     PARAMETER_MODELS,
     TOOL_OUTPUT_MODELS,
     Artifact,
@@ -28,6 +29,7 @@ from .contracts import (
     validate_operation_result,
     validate_parameters,
 )
+from .diagnostics import status_fields
 from .storage import (
     atomic_json,
     contained,
@@ -35,6 +37,7 @@ from .storage import (
     digest,
     file_lock,
     process_alive,
+    process_start_identity,
     read_json,
     utc_now,
 )
@@ -63,7 +66,11 @@ class Core:
         self.root = (root or default_root()).resolve()
         self.allowed_roots = [Path(p).resolve() for p in allowed_roots]
         self.output_roots = [Path(p).resolve() for p in output_roots]
-        self.backend = backend or OfficialBackend()
+        self.backend = backend or OfficialBackend(self.root)
+        self.coordinator_identity = {
+            "instance_id": str(uuid.uuid4()),
+            "process_start": process_start_identity(os.getpid()),
+        }
         for name in ("jobs", "inputs"):
             (self.root / name).mkdir(parents=True, exist_ok=True)
         self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="matlab-companion")
@@ -117,6 +124,18 @@ class Core:
             file_lock(self.root / ".recovery.lock", timeout=10),
             file_lock(self.root / ".index.lock", timeout=10),
         ):
+            active = self.root / "executor-active.json"
+            if active.exists():
+                try:
+                    with file_lock(self.root / ".execution.lock"):
+                        if active.exists():
+                            previous = read_json(active)
+                            self._publish_quarantine(
+                                previous["job_id"],
+                                "Execution ownership ended without a durable return; verify native stop before recovery.",
+                            )
+                except TimeoutError:
+                    pass  # A current owner still holds execution; observe its existing jobs.
             for path in (self.root / "jobs").glob("*/state.json"):
                 state = read_json(path)
                 if state.get("state") not in ACTIVE:
@@ -126,7 +145,7 @@ class Core:
                 scheduler = job / "scheduler.json"
                 owner_file = dispatch if dispatch.exists() else scheduler
                 owner = read_json(owner_file) if owner_file.exists() else {}
-                if process_alive(owner.get("coordinator_pid", 0)):
+                if self._owner_may_be_alive(owner):
                     continue
                 if dispatch.exists() or state["state"] != "queued":
                     atomic_json(
@@ -138,6 +157,7 @@ class Core:
                     )
                     self._save_state(
                         state["job_id"],
+                        expected_states=ACTIVE,
                         state="unknown",
                         summary="Coordinator exited; native outcome is unknown",
                         error={
@@ -180,9 +200,24 @@ class Core:
                         atomic_json(index_path, index)
                     atomic_json(
                         scheduler,
-                        owner | {"coordinator_pid": os.getpid(), "recovered_at": utc_now()},
+                        owner
+                        | {
+                            "coordinator_pid": os.getpid(),
+                            "coordinator_identity": self.coordinator_identity,
+                            "recovered_at": utc_now(),
+                        },
                     )
                     self.futures[state["job_id"]] = self.pool.submit(self._execute, state["job_id"])
+
+    def _owner_may_be_alive(self, owner):
+        pid = owner.get("coordinator_pid", 0)
+        if not process_alive(pid):
+            return False
+        identity = owner.get("coordinator_identity")
+        expected = identity.get("process_start") if isinstance(identity, dict) else None
+        actual = process_start_identity(pid)
+        # Legacy/unobservable identity is not proof that ownership ended.
+        return not expected or not actual or expected == actual
 
     def call(self, tool: str, arguments: dict) -> dict:
         if tool not in TOOL_OUTPUT_MODELS:
@@ -233,31 +268,7 @@ class Core:
             return TOOL_OUTPUT_MODELS[tool].model_validate(failure).model_dump(mode="json")
 
     def _status(self):
-        available = self.backend.available()
-        observation = self.root / "native-observation.json"
-        observed = read_json(observation) if observation.is_file() else {}
-        state = "unverified" if available else "unavailable"
-        reason = (
-            "Installed backend detected; use a synthetic workflow to verify native capability."
-            if available
-            else "Complete setup and select a licensed MATLAB installation."
-        )
-        return {
-            "backend": {
-                "state": state,
-                "reason": reason,
-                "matlab_version": observed.get("matlab_version"),
-                "matlab_release": observed.get("matlab_release"),
-            },
-            "capabilities": [
-                {
-                    "name": op,
-                    "state": "unverified" if available else "unavailable",
-                    "reason": reason,
-                }
-                for op in PARAMETER_MODELS
-            ],
-        }
+        return status_fields(self.root, backend=self.backend)
 
     def _help(self, operation=None):
         names = [operation] if operation is not None else list(PARAMETER_MODELS)
@@ -461,6 +472,7 @@ class Core:
                 job / "scheduler.json",
                 {
                     "coordinator_pid": os.getpid(),
+                    "coordinator_identity": self.coordinator_identity,
                     "accepted_at": utc_now(),
                     "idempotency_key": key,
                     "signature": signature,
@@ -474,91 +486,126 @@ class Core:
 
     def _execute(self, job_id):
         job = self._job_path(job_id)
+        acquired = False
         try:
             with file_lock(self.root / ".execution.lock", timeout=600):
-                current = self._state(job_id)
-                if current["state"] not in ACTIVE:
-                    return
-                if (job / "dispatch.json").exists():
-                    reconciled = self._reconcile(job_id)
-                    if reconciled["state"] in {"completed", "failed", "cancelled"}:
-                        return
-                    raise RuntimeError("An existing native dispatch cannot be replayed")
-                if current["state"] not in {"queued", "cancel_requested"}:
-                    raise RuntimeError("An unconfirmed running job cannot be dispatched again")
-                if (self.root / "executor-quarantine.json").exists():
-                    self._save_state(
-                        job_id,
-                        state="failed",
-                        summary="Waiting for recovery of a previous executor",
-                        error={
-                            "code": "EXECUTOR_RECOVERY_REQUIRED",
-                            "message": "No native dispatch occurred for this job; recover the earlier executor.",
-                        },
-                    )
-                    return
-                if (job / "cancel.flag").exists():
-                    self._save_state(
-                        job_id, state="cancelled", summary="Cancelled before native dispatch"
-                    )
-                    return
-                self._save_state(
-                    job_id, state="running", summary="Running in an owned MATLAB session"
-                )
-                atomic_json(
-                    job / "dispatch.json",
-                    {
-                        "coordinator_pid": os.getpid(),
-                        "coordinator_identity": None,
-                        "dispatched_at": utc_now(),
-                    },
-                )
-                asyncio.run(self.backend.execute(job))
-                if not (job / "receipt.json").is_file():
-                    raise RuntimeError("Native backend returned without a completion receipt")
-                self._reconcile(job_id)
-        except Exception as error:  # noqa: BLE001 -- Native failures must preserve uncertain writes.
-            if not (job / "dispatch.json").exists():
-                busy = isinstance(error, TimeoutError)
-                self._save_state(
-                    job_id,
-                    expected_states=ACTIVE,
-                    state="failed",
-                    summary="Executor was busy; no native dispatch occurred"
-                    if busy
-                    else "Execution could not start; no native dispatch occurred",
-                    error={
-                        "code": "EXECUTOR_BUSY" if busy else "DISPATCH_FAILED",
-                        "message": "The job did not reach native dispatch. No cancellation or executor quarantine was required.",
-                    },
-                )
+                acquired = True
+                try:
+                    self._execute_owned(job_id, job)
+                except Exception as error:  # noqa: BLE001 -- Preserve uncertain native writes.
+                    # Publish uncertainty before another coordinator can acquire execution.
+                    self._execution_failed(job_id, job, error)
+        except Exception as error:
+            if acquired:
+                # A persistence failure must not be retried outside ownership.
+                # The active marker remains a durable barrier for the next owner.
+                raise
+            self._execution_failed(job_id, job, error)
+
+    def _publish_quarantine(self, job_id, reason):
+        path = self.root / "executor-quarantine.json"
+        if not path.exists():
+            atomic_json(path, {"job_id": job_id, "reason": reason})
+
+    def _release_active(self, job_id):
+        active = self.root / "executor-active.json"
+        if active.exists() and read_json(active).get("job_id") == job_id:
+            active.unlink()
+
+    def _execute_owned(self, job_id, job):
+        current = self._state(job_id)
+        if current["state"] not in ACTIVE:
+            return
+        if (job / "dispatch.json").exists():
+            reconciled = self._reconcile(job_id)
+            if reconciled["state"] in {"completed", "failed", "cancelled"}:
                 return
-            (job / "cancel.flag").write_text(
-                "cancel requested after loss of executor response\n", encoding="utf-8"
+            raise RuntimeError("An existing native dispatch cannot be replayed")
+        if current["state"] not in {"queued", "cancel_requested"}:
+            raise RuntimeError("An unconfirmed running job cannot be dispatched again")
+        active = self.root / "executor-active.json"
+        if active.exists():
+            # The former owner released its OS lock without finishing its durable
+            # transition (crash, process exit, or failed persistence). Even a
+            # coordinator created before that exit must respect this barrier.
+            previous = read_json(active)
+            self._publish_quarantine(
+                previous["job_id"], "Previous execution ownership ended without a durable return."
             )
-            atomic_json(
-                self.root / "executor-quarantine.json",
-                {
-                    "job_id": job_id,
-                    "reason": "No confirmed native return; cooperative cancellation requested.",
+        if (self.root / "executor-quarantine.json").exists():
+            self._save_state(
+                job_id,
+                state="failed",
+                summary="Waiting for recovery of a previous executor",
+                error={
+                    "code": "EXECUTOR_RECOVERY_REQUIRED",
+                    "message": "No native dispatch occurred for this job; recover the earlier executor.",
                 },
             )
-            if (job / "receipt.json").exists():
-                self._reconcile(job_id)
-            else:
-                atomic_json(
-                    job / "execution-error.json",
-                    {"type": type(error).__name__, "observed_at": utc_now()},
-                )
-                self._save_state(
-                    job_id,
-                    state="unknown",
-                    summary="Execution outcome needs reconciliation",
-                    error={
-                        "code": "OUTCOME_UNKNOWN",
-                        "message": "The executor stopped responding without a valid receipt; do not repeat the write.",
-                    },
-                )
+            return
+        if (job / "cancel.flag").exists():
+            self._save_state(job_id, state="cancelled", summary="Cancelled before native dispatch")
+            return
+        ownership = {
+            "job_id": job_id,
+            "coordinator_pid": os.getpid(),
+            "coordinator_identity": self.coordinator_identity,
+            "dispatch_id": str(uuid.uuid4()),
+            "dispatched_at": utc_now(),
+        }
+        # Write the crash barrier first. It is intentionally retained if any
+        # later persistence operation fails; a new owner cannot skip it.
+        atomic_json(active, ownership)
+        atomic_json(job / "dispatch.json", ownership)
+        self._save_state(job_id, state="running", summary="Running in an owned MATLAB session")
+        asyncio.run(self.backend.execute(job))
+        if not (job / "receipt.json").is_file():
+            raise RuntimeError("Native backend returned without a completion receipt")
+        reconciled = self._reconcile(job_id)
+        if reconciled["state"] == "unknown":
+            self._publish_quarantine(job_id, "Native receipt or artifacts could not be validated.")
+        self._release_active(job_id)
+
+    def _execution_failed(self, job_id, job, error):
+        if not (job / "dispatch.json").exists():
+            busy = isinstance(error, TimeoutError)
+            self._save_state(
+                job_id,
+                expected_states=ACTIVE,
+                state="failed",
+                summary="Executor was busy; no native dispatch occurred"
+                if busy
+                else "Execution could not start; no native dispatch occurred",
+                error={
+                    "code": "EXECUTOR_BUSY" if busy else "DISPATCH_FAILED",
+                    "message": "The job did not reach native dispatch. No cancellation was required.",
+                },
+            )
+            return
+        self._publish_quarantine(
+            job_id, "No confirmed native return; cooperative cancellation requested."
+        )
+        (job / "cancel.flag").write_text(
+            "cancel requested after loss of executor response\n", encoding="utf-8"
+        )
+        if (job / "receipt.json").exists():
+            self._reconcile(job_id)
+        else:
+            atomic_json(
+                job / "execution-error.json",
+                {"type": type(error).__name__, "observed_at": utc_now()},
+            )
+            self._save_state(
+                job_id,
+                expected_states=ACTIVE,
+                state="unknown",
+                summary="Execution outcome needs reconciliation",
+                error={
+                    "code": "OUTCOME_UNKNOWN",
+                    "message": "The executor stopped responding without a valid receipt; do not repeat the write.",
+                },
+            )
+        self._release_active(job_id)
 
     def _reconcile(self, job_id):
         job = self._job_path(job_id)
@@ -686,6 +733,7 @@ class Core:
         except (ValidationError, ValueError, OSError, KeyError):
             return self._save_state(
                 job_id,
+                expected_states=ACTIVE | {"unknown"},
                 state="unknown",
                 summary="Native receipt or artifacts failed validation",
                 error={
@@ -770,6 +818,15 @@ class Core:
             return {"job_id": job_id, "artifacts": records}
         record, source = self.artifact_path(job_id, artifact_id)
         delivery = {"artifact_id": artifact_id, "state": "available", "method": "mcp_resource"}
+        if action == "read" and record["size_bytes"] > MAX_INLINE_BYTES:
+            delivery = {
+                "artifact_id": artifact_id,
+                "state": "not_delivered",
+                "method": "local_copy",
+                "size_bytes": record["size_bytes"],
+                "sha256": record["sha256"],
+                "reason": "File exceeds the 16 MiB MCP transfer limit. Call matlab_artifacts with action=deliver and a full destination filename under a setup-approved output folder.",
+            }
         if action == "deliver":
             target = self._authorised(destination, self.output_roots)
             target.parent.mkdir(parents=True, exist_ok=True)

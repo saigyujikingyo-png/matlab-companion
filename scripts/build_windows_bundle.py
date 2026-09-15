@@ -11,6 +11,7 @@ import time
 import zipfile
 from pathlib import Path
 
+from matlab_companion import __version__
 from matlab_companion.storage import digest
 
 
@@ -28,7 +29,7 @@ def main():
         not p.name.startswith("pip-") for p in (base / "Lib" / "site-packages").glob("*.dist-info")
     ):
         raise SystemExit("Base CPython contains installed packages; use a clean managed runtime")
-    version = "0.1.0a1"
+    version = __version__
     staging = repo / "dist" / f"bundle-{time.time_ns()}"
     bundle = staging / f"MATLAB-Companion-{version}-windows-x64"
     bundle.mkdir(parents=True)

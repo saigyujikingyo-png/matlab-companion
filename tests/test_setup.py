@@ -281,3 +281,140 @@ def test_unsupported_codex_list_shape_cannot_be_treated_as_absent_entry(tmp_path
             tmp_path / "settings", runtime_python=runtime, codex_command="codex", runner=runner
         )
     assert len(calls) == 1 and calls[0][2] == "list"
+
+
+def test_quarantine_clear_preserves_and_removes_matching_active_marker(tmp_path):
+    root = tmp_path / "runtime"
+    active = {"job_id": "owned-job", "instance_id": "owned-instance", "phase": "dispatch"}
+    atomic_json(root / "executor-active.json", active)
+    atomic_json(root / "executor-quarantine.json", {"job_id": "owned-job", "reason": "Unknown."})
+    current = quarantine_status(root)
+
+    result = clear_quarantine(root, confirmed_stopped=True, expected_sha256=current["sha256"])
+
+    assert result["state"] == "cleared"
+    assert not (root / "executor-active.json").exists()
+    assert not (root / "executor-quarantine.json").exists()
+    assert read_json(Path(result["receipt"]))["previous_active_executor"] == active
+
+
+def test_quarantine_clear_refuses_a_different_active_job(tmp_path):
+    root = tmp_path / "runtime"
+    atomic_json(root / "executor-active.json", {"job_id": "another-job"})
+    atomic_json(root / "executor-quarantine.json", {"job_id": "shown-job", "reason": "Unknown."})
+    current = quarantine_status(root)
+    active_bytes = (root / "executor-active.json").read_bytes()
+    quarantine_bytes = (root / "executor-quarantine.json").read_bytes()
+
+    with pytest.raises(SetupError, match="different"):
+        clear_quarantine(root, confirmed_stopped=True, expected_sha256=current["sha256"])
+
+    assert (root / "executor-active.json").read_bytes() == active_bytes
+    assert (root / "executor-quarantine.json").read_bytes() == quarantine_bytes
+
+
+@pytest.mark.parametrize("initially_present", [False, True])
+def test_quarantine_clear_refuses_active_marker_changes_during_receipt(
+    tmp_path, monkeypatch, initially_present
+):
+    from matlab_companion import setup_ui
+
+    root = tmp_path / "runtime"
+    active_path = root / "executor-active.json"
+    if initially_present:
+        atomic_json(active_path, {"job_id": "shown-job", "instance_id": "old"})
+    atomic_json(root / "executor-quarantine.json", {"job_id": "shown-job", "reason": "Unknown."})
+    current = quarantine_status(root)
+    changed = {"job_id": "shown-job", "instance_id": "new"}
+
+    def change_after_receipt(path, value):
+        atomic_json(path, value)
+        atomic_json(active_path, changed)
+
+    monkeypatch.setattr(setup_ui, "atomic_json", change_after_receipt)
+    with pytest.raises(SetupError, match="active executor marker"):
+        clear_quarantine(root, confirmed_stopped=True, expected_sha256=current["sha256"])
+
+    assert read_json(active_path) == changed
+    assert quarantine_status(root)["sha256"] == current["sha256"]
+
+
+@pytest.mark.parametrize("active_bytes", [b"invalid JSON", b"[]", b'{"job_id":null}'])
+def test_quarantine_clear_preserves_invalid_active_marker(tmp_path, active_bytes):
+    root = tmp_path / "runtime"
+    atomic_json(root / "executor-quarantine.json", {"job_id": "shown-job", "reason": "Unknown."})
+    active_path = root / "executor-active.json"
+    active_path.write_bytes(active_bytes)
+    current = quarantine_status(root)
+
+    with pytest.raises(SetupError):
+        clear_quarantine(root, confirmed_stopped=True, expected_sha256=current["sha256"])
+
+    assert active_path.read_bytes() == active_bytes
+    assert quarantine_status(root)["sha256"] == current["sha256"]
+
+
+def test_active_marker_without_quarantine_is_not_removed(tmp_path):
+    root = tmp_path / "runtime"
+    active = {"job_id": "not-yet-reconciled"}
+    atomic_json(root / "executor-active.json", active)
+
+    result = clear_quarantine(root, confirmed_stopped=True, expected_sha256="no-quarantine")
+
+    assert result["state"] == "already_clear"
+    assert read_json(root / "executor-active.json") == active
+
+
+def test_quarantine_still_blocks_if_removal_fails_after_active_marker_is_retired(
+    tmp_path, monkeypatch
+):
+    root = tmp_path / "runtime"
+    atomic_json(root / "executor-active.json", {"job_id": "shown-job"})
+    quarantine_path = root / "executor-quarantine.json"
+    atomic_json(quarantine_path, {"job_id": "shown-job", "reason": "Unknown."})
+    current = quarantine_status(root)
+    unlink = Path.unlink
+
+    def deny_quarantine_removal(path, *args, **kwargs):
+        if path == quarantine_path:
+            raise PermissionError("Injected removal failure")
+        return unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", deny_quarantine_removal)
+    with pytest.raises(SetupError):
+        clear_quarantine(root, confirmed_stopped=True, expected_sha256=current["sha256"])
+
+    assert not (root / "executor-active.json").exists()
+    assert quarantine_path.is_file()
+    assert list((root / "setup-recovery").glob("executor-*.json"))
+
+
+def test_setup_window_field_discovery_uses_selected_root(tmp_path, monkeypatch):
+    from matlab_companion import setup_ui
+
+    class Field:
+        def set(self, value):
+            self.value = value
+
+    root = tmp_path / "chosen-runtime"
+    selected = tmp_path / "Chosen MATLAB"
+    observed_roots = []
+
+    def discover(settings_root):
+        observed_roots.append(settings_root)
+        return selected
+
+    monkeypatch.setattr(setup_ui.backend, "matlab_root", discover)
+    window = object.__new__(setup_ui.SetupWindow)
+    window.root = root
+    window.input_folder = Field()
+    window.output_folder = Field()
+    window.matlab_folder = Field()
+    window._refresh_recovery = lambda: None
+    window._log = lambda _: None
+
+    window._load_fields()
+
+    assert observed_roots == [root]
+    assert window.matlab_folder.value == str(selected)
+    assert not root.exists()
