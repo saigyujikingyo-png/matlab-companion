@@ -1,18 +1,23 @@
 # Compatibility and acceptance
 
-Updated: 2026-09-15. Current candidate: **0.1.0a2, R1 development preview**.
+Updated: 2026-09-15. Current version: **0.1.0a2, R1 development preview**.
 
-R1 implementation and fresh candidate gates are tracked in
-[R1 reliability](R1_RELIABILITY.md). The rows below retain the historical alpha.1
-source/runtime identities; they do not automatically certify the new candidate.
+R1 runtime `41f9cf7` passed current Windows/Ubuntu CI, the bounded native
+interruption/sentinel case and six final-package native cases across all five
+operations. Package integrity and 43 original-file local readbacks passed.
+[R1 reliability](R1_RELIABILITY.md) records exact receipts and remaining gates.
+
+## Historical alpha.1 evidence
+
+The rows below retain their original alpha.1 source/runtime identities.
 
 Current-device icon and installation results are recorded in the
 [installation receipt](../verification/local-installation-2026-09-15.json).
 The installed registered command completed one kinetics case with seven original
 files read back. Visible setup, a new device and a new installed-host model run
 remain unverified. The [independent alpha review](ALPHA_REVIEW_2026-09-15.md)
-records open reliability/configuration/delivery findings; their proposed repairs
-in [the next route](NEXT_TECHNICAL_ROUTE.md) have not been implemented.
+records the original reliability/configuration/delivery findings; R1 repairs are
+tracked above, separately from the earlier installed case.
 
 Final source/runtime `c5c73174f3507f5291df5fbcea28a67795ea0763` passed
 Windows/Ubuntu CI, the saved cloud-container checks and final-archive runtime,

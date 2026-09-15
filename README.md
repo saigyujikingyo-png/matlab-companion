@@ -2,7 +2,7 @@
 
 An independent Chembridge plugin for reproducible MATLAB analysis, editable native artifacts and natural-language agent workflows. Ask an agent to inspect CSV/TSV data, plot XY data, fit a linear calibration, simulate first-order decay or revise a Companion-owned figure.
 
-**0.1.0a2 is the R1 Windows alpha candidate.** It repairs passive diagnostics, selected-root propagation, execution ownership and over-limit artifact routing. Five bounded operations have historical native acceptance on MATLAB R2026a Update 5; each candidate's current portable, native, installation, model and host-delivery evidence remains separate. See [current status](docs/STATUS.md) and [compatibility](docs/COMPATIBILITY.md). This project is not affiliated with MathWorks or the University of Edinburgh.
+**0.1.0a2 is the R1 Windows alpha.** It repairs passive diagnostics, selected-root propagation, execution ownership and over-limit artifact routing. Its final package passed six native cases covering all five operations on MATLAB R2026a Update 5. Portable, native, installation, model and host-delivery evidence remains separate. See [current status](docs/STATUS.md) and [compatibility](docs/COMPATIBILITY.md). This project is not affiliated with MathWorks or the University of Edinburgh.
 
 The [alpha review](docs/ALPHA_REVIEW_2026-09-15.md) records the original findings.
 [R1 implementation and acceptance](docs/R1_RELIABILITY.md) tracks their repairs.

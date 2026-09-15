@@ -1,0 +1,53 @@
+{
+  "scope": "Windows synthetic native lifecycle and unrelated owned-session preservation; coordinator timeout injection with retained official native call. Not upstream RPC cancellation, host-model, installer, or release acceptance.",
+  "observed_at": "2026-09-15T19:36:59.190325Z",
+  "outcome": "failed",
+  "source_commit": "bc6b491e71c81f79666bd65a26e0a59a4d216a99",
+  "source_dirty": false,
+  "source_commit_scope": "Working-directory Git checkout; not imported-runtime binding by itself",
+  "runtime_version": "0.1.0a2",
+  "runtime_sources": {
+    "backend": "c41f350d459e3c65ebe4fd2bebc4e2e918ac483e477a47139136d370785f4286",
+    "core": "92d169f5ed5660c9f545576b6502dda34ab134bd28c924548212f0190c2c861c",
+    "storage": "f36c310ef409b8da712ab8eefd4a9f09857849079ecd6755362bca96ef15466d",
+    "contracts": "885b28dad7a2a1e24a47e57772d962260997cfb72f9d6e63df5075220d2c25b0"
+  },
+  "harness_sha256": "7d7e2eb46e7b95c0c8db4fcabd87cba94f6c26dcc0884520b8b2433e26d2ec37",
+  "native_sources": {
+    "execute.m": "32b83a8e6b2e91fe56932199c879a90e34dafb9c06532d6a540966d09cffd829",
+    "run_recipe.m": "3719cc0814cb1e360e2188b747b4bba1263484058c91b97a504dc70915a53445"
+  },
+  "environment": {
+    "platform": "Windows",
+    "backend": "0.13.0",
+    "matlab_release": "2026a",
+    "matlab_version": "26.1.0.3346908 (R2026a) Update 5"
+  },
+  "normal_case": null,
+  "interruption": null,
+  "sentinel": {
+    "identity_observed": true,
+    "state_preserved": true,
+    "heartbeat_advanced": true,
+    "samples": 199,
+    "cooperative_stop_acknowledged": true,
+    "native_stop_observed": true
+  },
+  "native_observations": [
+    {
+      "case": "normal",
+      "identity_observed": true,
+      "process_state": "alive",
+      "native_stopped": false,
+      "basis": "WaitForSingleObject on held native process handle with birth/executable"
+    }
+  ],
+  "worker_deadline_exceeded": false,
+  "error_type": "AssertionError",
+  "limitations": [
+    "Sentinel is an explicitly owned independent test session, not a user's session.",
+    "The injected coordinator timeout does not test upstream RPC cancellation.",
+    "A native process is stopped only when its independently held OS handle signals exit.",
+    "An absent late receipt is recorded as unobserved; no native work is replayed."
+  ]
+}

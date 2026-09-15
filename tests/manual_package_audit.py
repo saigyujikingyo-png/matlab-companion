@@ -101,7 +101,8 @@ from matlab_companion.setup_ui import SetupWindow
 
 async def main():
     root = Path(sys.argv[1])
-    root.mkdir()
+    # Passive self-test no longer creates the acceptance parent directory.
+    root.mkdir(parents=True)
     input_folder = root / "inputs"
     input_folder.mkdir()
     fixture = input_folder / "synthetic.csv"

@@ -1,0 +1,21 @@
+{
+  "scope": "Recovery of the first harness-interrupted existing dispatched job; refusing fake backend, no MATLAB launch",
+  "observed_at": "2026-09-15T19:43:04.882237Z",
+  "source_commit": "41f9cf7cb99a00b8531b522fdc20edecc7d6a4a6",
+  "original_case_commit": "bc6b491e71c81f79666bd65a26e0a59a4d216a99",
+  "state_before": "running",
+  "state_after": "unknown",
+  "error_code": "OUTCOME_UNKNOWN",
+  "backend_execute_calls": 0,
+  "scheduled_futures": 0,
+  "existing_job_count": 1,
+  "original_dispatch_request_input_preserved": true,
+  "existing_output_bytes_preserved": true,
+  "late_receipt_observed": false,
+  "active_barrier_retained": true,
+  "quarantine_retained": true,
+  "quarantine_automatically_cleared": false,
+  "prior_native_identity_replacement_observed": true,
+  "replacement_observation_basis": "Earlier read-only PID observation found a different creation time and Python executable; original held handle had already been closed",
+  "outcome": "passed"
+}

@@ -1,14 +1,19 @@
 # Implementation status
 
-Updated: 2026-09-15. Candidate version: 0.1.0a2 (R1 early preview).
+Updated: 2026-09-15. Version: 0.1.0a2 (R1 early preview).
 
-## Current R1 candidate
+## Current R1 acceptance
 
 The owner approved R1. Passive diagnostics, selected-root propagation, durable
 execution isolation/process identity and over-limit local-delivery routing are
 implemented. The integrated portable suite passed 215 tests, Ruff, 22 schemas,
-real stdio and the public audit. Candidate native/package/CI evidence is pending
-at this checkpoint; see [R1 reliability](R1_RELIABILITY.md). R2/R3 are not implemented.
+real stdio and the public audit. Exact runtime `41f9cf7` passed Windows/Ubuntu CI,
+the bounded native interruption/sentinel case, and final-package six-case native
+acceptance covering all five operations with 43 original-file readbacks.
+The clean 33,054,016-byte package has 3,976 verified manifest entries.
+See [R1 reliability](R1_RELIABILITY.md) for receipts and the retained first-probe
+failure. R2/R3 are not implemented; new model, visible setup, new-device and
+saved cloud-container acceptance remain separate.
 
 ## Historical alpha.1 acceptance
 
@@ -17,8 +22,8 @@ see [installation receipt](../verification/local-installation-2026-09-15.json).
 An installed MCP client completed a separate kinetics case and seven-file local
 readback. A prior probe interruption is preserved separately. The
 [alpha review](ALPHA_REVIEW_2026-09-15.md) identifies reliability and delivery
-gaps; the [next technical route](NEXT_TECHNICAL_ROUTE.md) is a proposal awaiting
-owner approval. No next-stage runtime or scientific code has been changed.
+gaps. At that historical checkpoint, the [technical route](NEXT_TECHNICAL_ROUTE.md)
+was awaiting owner approval and next-stage code had not started.
 
 Final source/runtime checkpoint:
 `c5c73174f3507f5291df5fbcea28a67795ea0763`.

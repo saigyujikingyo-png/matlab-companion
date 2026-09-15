@@ -1,0 +1,9 @@
+{
+  "source_commit": "41f9cf7cb99a00b8531b522fdc20edecc7d6a4a6",
+  "run_url": "https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35015091675",
+  "outcome": "passed",
+  "windows": {"passed": 215, "skipped": 0, "seconds": 14.56},
+  "ubuntu": {"passed": 214, "skipped": 1, "seconds": 8.61},
+  "checks": ["pytest", "ruff", "22 schema registry checks", "real stdio MCP", "public source audit"],
+  "scope": "Exact runtime-source CI; native, package, installed model and saved cloud-container acceptance are separate."
+}

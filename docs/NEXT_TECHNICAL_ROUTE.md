@@ -1,6 +1,6 @@
 # Next technical route
 
-Date: 2026-09-15. **R1 approved and in implementation. R2/R3 and later options remain proposals.**
+Date: 2026-09-15. **R1 implemented with recorded acceptance. R2/R3 and later options remain proposals.**
 Current evidence is in [R1 reliability](R1_RELIABILITY.md).
 
 ## Decision

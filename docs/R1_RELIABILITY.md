@@ -1,6 +1,6 @@
 # R1 reliability implementation
 
-Date: 2026-09-15. Owner approved R1 after the alpha review. Candidate version:
+Date: 2026-09-15. Owner approved R1 after the alpha review. Runtime version:
 **0.1.0a2**. R2/R3 are not part of this increment.
 
 ## Changed behavior
@@ -58,13 +58,30 @@ is guarded for releases without that API; unavailable PID is JSON null.
   audit passed. The diagnostic, resource-limit and isolation defects were
   reproduced before their repairs. These tests use synthetic backend doubles
   where identified and do not claim native science.
-- **Native R1 lifecycle: pending candidate execution.**
-  `acceptance/native_r1_lifecycle.py` runs only with explicit native opt-in and
-  selected installed MATLAB/backend paths. It injects coordinator response loss
-  while retaining the genuine native call; it does not claim upstream RPC
-  cancellation or a general process-kill policy.
-- **Final package/native science: pending candidate build and execution.**
-  Preserve the alpha.1 archive; bind new evidence to exact alpha.2 source and bytes.
+- **Exact runtime CI: READY.** [CI receipt](../verification/ci-v0.1.0-alpha.2.json)
+  binds `41f9cf7` to Windows 215 passed and Ubuntu 214 passed/one Windows-only skip,
+  plus lint, schemas, stdio and source audit.
+- **Native R1 lifecycle: READY for the recorded fault case.**
+  [Receipt](../verification/native-r1-lifecycle.json): normal profile completed;
+  injected coordinator response loss produced unknown/quarantine, blocked a new
+  dispatch and preserved one execution. A genuine late cancellation receipt was
+  reconciled. A separate owned MATLAB sentinel retained identity/state across
+  315 observations; held OS handles confirmed all test sessions eventually
+  exited. This does not claim upstream RPC cancellation or general termination.
+- **First probe failure retained.** The [first probe](../verification/native-r1-first-probe.json)
+  stopped its Python worker after a transient heartbeat read failure; it did not
+  reach the intended interruption case. The harness now performs bounded read
+  retries within the original deadline. [Existing-job recovery](../verification/native-r1-prior-recovery.json)
+  retained that original write as unknown, with zero backend executions and
+  unchanged original bytes. It was not replayed or counted as a scientific pass.
+- **Final package and science: READY for recorded cases.**
+  [Package audit](../verification/package-v0.1.0-alpha.2.json): clean `41f9cf7`,
+  33,054,016-byte archive, 3,976 manifest files, no mismatch or unlisted files,
+  relocated protocol and hidden Tk pass. [Native package receipt](../verification/native-v0.1.0-alpha.2.json)
+  records six cases/all five operations, 43 locally delivered original files,
+  applicable numerical/native reopen/script checks and 136.844 seconds total.
+  SHA-256: `7f34fa35efc5969cf1e2aa6b72e573a05c1ce8c5a5e6ac93a77dfc9f0754f3c4`.
+  The alpha.1 archive remains the rollback artifact.
 - **Model, GUI and cloud-container acceptance:** historical alpha.1 evidence
   keeps its original identity. No new installed model, visible wizard, fresh
   device, additional host or saved cloud-container pass is inferred from R1 tests.

@@ -1,0 +1,87 @@
+{
+  "observed_at": "2026-09-15T20:43:47.00397+01:00",
+  "status": "pass",
+  "archive_size_bytes": 33054016,
+  "archive_sha256": "7f34fa35efc5969cf1e2aa6b72e573a05c1ce8c5a5e6ac93a77dfc9f0754f3c4",
+  "relocated_path_contains_spaces_and_chinese": true,
+  "manifest": {
+    "entries": 3976,
+    "mismatches": [],
+    "unlisted_file_count": 0,
+    "unlisted_examples": [],
+    "source_commit": "41f9cf7cb99a00b8531b522fdc20edecc7d6a4a6",
+    "source_dirty": false,
+    "python": "3.12.14"
+  },
+  "privacy_scan": {
+    "scope": "Exact local builder username and checkout path bytes, UTF-8/UTF-16; not a comprehensive secret audit.",
+    "matched_file_count": 0,
+    "embedded_builder_metadata_files": 0,
+    "non_bytecode_findings": [],
+    "findings": [],
+    "truncated": false
+  },
+  "self_test": {
+    "returncode": 0,
+    "elapsed_seconds": 2.032,
+    "portable_pass_text_present": true,
+    "stderr": ""
+  },
+  "protocol_and_hidden_tk": {
+    "returncode": 0,
+    "elapsed_seconds": 3.968,
+    "result": {
+      "tool_calls": [
+        {
+          "tool": "matlab_status",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_help",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_inspect",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_artifacts",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_run",
+          "is_error": true
+        },
+        {
+          "tool": "matlab_job",
+          "is_error": true
+        }
+      ],
+      "validated_output_schemas": 6,
+      "resource_count": 10,
+      "tk": {
+        "state_during_update": "withdrawn",
+        "version": "8.6.12",
+        "constructed": true,
+        "updated": true,
+        "destroyed": true
+      },
+      "native_dispatch_files": 0,
+      "python_relative": "runtime/python.exe",
+      "module_relative": "runtime/Lib/site-packages/matlab_companion/__init__.py"
+    },
+    "stderr": ""
+  },
+  "boundaries": {
+    "visible_gui_opened": false,
+    "host_configuration_changed": false,
+    "matlab_launched": false,
+    "vendor_downloaded": false,
+    "fresh_device_acceptance": false,
+    "host_model_acceptance": false,
+    "native_artifact_delivery_acceptance": false,
+    "note": "Package runtime/protocol/hidden-window checks only; valid only for the recorded archive SHA-256."
+  },
+  "archive_name": "MATLAB-Companion-0.1.0a2-windows-x64.zip",
+  "audit_correction": "The first audit assumed self-test created its parent directory. R1 diagnostics correctly created no directory; the audit fixture now creates its own parent. Same archive passed after this audit-only correction."
+}
