@@ -61,7 +61,13 @@ uv run python -m matlab_companion setup
 
 This route requires a coding checkout and development terminal. The window identifies it as a development installation and the connection depends on keeping that checkout/environment. It is not described as one-click ordinary-user installation.
 
-Some development Python distributions omit Tk. Use a complete development Python/Tk installation or the tested complete Windows package. Importing the setup module and running its portable tests do not require creating a Tk window. `Run Self Test.cmd` in the Windows package performs portable checks; its result does not establish native MATLAB or model acceptance.
+Some development Python distributions omit Tk. Use a complete development Python/Tk installation or the tested complete Windows package. Importing the setup module and running its portable tests do not require creating a Tk window.
+
+The alpha review found that `Run Self Test.cmd` and CLI `status` construct the
+job coordinator and can resume previously queued work. They are therefore not
+unconditionally passive checks. Use the setup window's **Check setup** for a
+passive configuration check. This confirmed behavior is scheduled for repair;
+it has not been changed in the current runtime. See [alpha review](ALPHA_REVIEW_2026-09-15.md).
 
 ## Verification status
 
@@ -69,4 +75,21 @@ The focused setup suite contains **16 passing Windows tests** using real tempora
 
 A separate read-only probe discovered the installed official CLI with PATH discovery disabled and returned `codex-cli 0.154.0-alpha.6.2`. This establishes CLI discovery on the development device, not an accepted visible connection setup.
 
-These tests do not invoke the user's Codex connection commands, download the vendor binary, launch the GUI, start MATLAB or stop any process. The release coordinator separately records packaged runtime checks, actual GUI launch, real backend acquisition, native workflows, existing-configuration acceptance and each host/model/file-delivery result.
+These tests do not invoke the user's Codex connection commands, download the vendor binary, launch the GUI, start MATLAB or stop any process. Packaged runtime checks, visible GUI use, backend acquisition, native workflows, existing-configuration acceptance and each host/model/file-delivery result require their own evidence; these tests do not establish those outcomes.
+
+On 2026-09-15 the current-device installation separately verified the original
+package files, official backend, actual Codex connection creation/readback and
+repeated connection reuse. Pre-existing MCP and marketplace entries were
+preserved. The personal plugin is enabled with the designed icon; the Start-menu
+entry is **Chembridge / MATLAB Companion**. Start a new Codex task to pick up the
+installed skill and tools. This is a pickup instruction, not a claim that this
+conversation dynamically acquired them.
+
+The installed command completed a synthetic kinetics job and seven-file local
+readback. The earlier installation probe itself had a response-parsing error,
+closed its client and left a dispatched job unknown. That record was preserved
+without replay; recovery checks established process absence before clearing
+quarantine. Both observations are retained in the
+[installation receipt](../verification/local-installation-2026-09-15.json).
+The visible wizard, a fresh device, upgrade/removal and a fresh model invocation
+after this installation remain separate acceptance work.

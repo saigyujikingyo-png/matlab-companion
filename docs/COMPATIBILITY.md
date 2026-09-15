@@ -2,6 +2,14 @@
 
 Updated: 2026-09-15. Product version: **0.1.0a1, development preview**.
 
+Current-device icon and installation results are recorded in the
+[installation receipt](../verification/local-installation-2026-09-15.json).
+The installed registered command completed one kinetics case with seven original
+files read back. Visible setup, a new device and a new installed-host model run
+remain unverified. The [independent alpha review](ALPHA_REVIEW_2026-09-15.md)
+records open reliability/configuration/delivery findings; their proposed repairs
+in [the next route](NEXT_TECHNICAL_ROUTE.md) have not been implemented.
+
 Final source/runtime `c5c73174f3507f5291df5fbcea28a67795ea0763` passed
 Windows/Ubuntu CI, the saved cloud-container checks and final-archive runtime,
 relocation and hidden-Tk checks. Six native cases covering all five operations

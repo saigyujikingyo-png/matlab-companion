@@ -1,0 +1,51 @@
+{
+  "observed_at": "2026-09-15T19:08:09.858662Z",
+  "product": "MATLAB Companion",
+  "runtime_version": "0.1.0a1",
+  "runtime_source_commit": "c5c73174f3507f5291df5fbcea28a67795ea0763",
+  "runtime_archive_sha256": "8b22ed6b715f3f7ec4f474973db63d24612fc1ce27179e9ccdf62e9263a7ae2a",
+  "manifest_files_verified_on_extraction": 3963,
+  "plugin_id": "matlab-companion@personal",
+  "installed_adapter_version": "0.1.0-alpha.1+codex.20260915190618",
+  "icon_png_sha256": "518d940313d055d9cbc579c72d847857ed43e1dc12f011f8f63dca2364af756e",
+  "icon_ico_sha256": "80b94c3ffc9f7e14f238b17cad0eb24dae5a457e7cb609c3da6f23ba32e34f76",
+  "icon_frames": [
+    16,
+    32,
+    48,
+    256
+  ],
+  "cached_icon_readback": true,
+  "start_menu_shortcut_created_and_read_back": true,
+  "named_mcp_connection_created_and_read_back": true,
+  "repeat_connect_reused_existing_entry": true,
+  "preexisting_mcp_connections_preserved": true,
+  "preexisting_personal_marketplace_entries_preserved": true,
+  "concurrent_unrelated_marketplace_addition_observed": true,
+  "passive_setup": {
+    "backend_verified": true,
+    "matlab_installation_found": true,
+    "native_execution": "unverified",
+    "licence": "unverified",
+    "host_delivery": "unverified",
+    "input_folders": 1,
+    "output_folders": 1,
+    "quarantine": {
+      "state": "clear",
+      "job_id": null,
+      "reason": null,
+      "sha256": null
+    }
+  },
+  "independent_kinetics_max_abs_error": 4.2608627737195093e-10,
+  "native_check": "local-installation-native-2026-09-15.json",
+  "probe_interruption": "installation-probe-interruption-2026-09-15.json",
+  "boundaries": {
+    "visible_setup_acceptance": false,
+    "fresh_device_acceptance": false,
+    "new_codex_model_call_after_installation": false,
+    "other_hosts_accepted": false,
+    "next_stage_runtime_code_started": false
+  },
+  "outcome": "installed_current_device"
+}

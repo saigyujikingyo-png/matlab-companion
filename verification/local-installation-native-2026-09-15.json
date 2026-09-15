@@ -1,0 +1,55 @@
+{
+  "observed_at": "2026-09-15T19:05:00.846757Z",
+  "source_runtime_commit": "c5c73174f3507f5291df5fbcea28a67795ea0763",
+  "package_sha256": "8b22ed6b715f3f7ec4f474973db63d24612fc1ce27179e9ccdf62e9263a7ae2a",
+  "scope": "Current-device installation and real MCP client using Codex-registered command; synthetic native first-order kinetics and selected local file readback. Not a new Codex model task, visible wizard, fresh device or other-host acceptance.",
+  "tool_count": 6,
+  "job_id": "e8b71810-f60d-4dc4-b60f-ad794088de16",
+  "operation": "first_order_kinetics",
+  "verification": {
+    "native_reopen": true,
+    "numerical": true,
+    "script_rerun": true
+  },
+  "artifacts": [
+    {
+      "name": "analysis.mat",
+      "size_bytes": 5729,
+      "sha256": "2a576be295c22c7e43739619a756c207e94ace59b3c1d81211263c7019e494c1"
+    },
+    {
+      "name": "results.csv",
+      "size_bytes": 6233,
+      "sha256": "2bd266809bd376e59be4593c97569525c614ad80387e96a20db4709dc5cff4f2"
+    },
+    {
+      "name": "figure.fig",
+      "size_bytes": 13534,
+      "sha256": "d0c25b744559aefddfd2eb2ab334f5fed366ba9d7aee20f256f88588ebe2f6a8"
+    },
+    {
+      "name": "figure.png",
+      "size_bytes": 45283,
+      "sha256": "3d689c6b6eda7cdeb0cac2583692c2c11a10a8df803add4a478eeb167aaf5390"
+    },
+    {
+      "name": "figure.pdf",
+      "size_bytes": 12116,
+      "sha256": "c000a3f90e06e78521a046f3a77313c7283c1b98aa7956ace4895c473ff9e060"
+    },
+    {
+      "name": "reproduce.m",
+      "size_bytes": 21790,
+      "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c"
+    },
+    {
+      "name": "method.json",
+      "size_bytes": 1490,
+      "sha256": "51b3204312cadd5111347565615e5e75ed138e46c4e981f48aa5b6b4d8075f38"
+    }
+  ],
+  "original_input_preserved": null,
+  "original_input_note": "Not applicable: this kinetics operation uses parameters and no input file.",
+  "seconds": 25.453,
+  "outcome": "passed"
+}

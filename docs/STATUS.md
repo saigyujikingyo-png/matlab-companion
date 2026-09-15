@@ -2,6 +2,14 @@
 
 Updated: 2026-09-15. Version: 0.1.0a1 (early preview).
 
+Later same-day update: the icon and current-device installation are complete;
+see [installation receipt](../verification/local-installation-2026-09-15.json).
+An installed MCP client completed a separate kinetics case and seven-file local
+readback. A prior probe interruption is preserved separately. The
+[alpha review](ALPHA_REVIEW_2026-09-15.md) identifies reliability and delivery
+gaps; the [next technical route](NEXT_TECHNICAL_ROUTE.md) is a proposal awaiting
+owner approval. No next-stage runtime or scientific code has been changed.
+
 Final source/runtime checkpoint:
 `c5c73174f3507f5291df5fbcea28a67795ea0763`.
 Its CI, saved cloud container, final archive runtime checks and native
@@ -20,6 +28,7 @@ user/device, upgrades and other-host acceptance remain separate gates.
 | Final archive native execution | READY for recorded cases | [Final native receipt](../verification/native-v0.1.0-alpha.1.json) binds `c5c7317` and the final archive SHA-256 to execution from the relocated Windows release runtime: six cases cover all five operations, with local byte/hash delivery readback; profile has native reopen, and the other operations also pass numerical checks and script rerun |
 | Local file delivery | READY for observed cases | Original bytes, size and SHA-256 readback; host attachments unverified |
 | Windows bundle | READY for final archive runtime scope | [Final package receipt](../verification/package-v0.1.0-alpha.1.json): clean `c5c7317` source, 33,013,051 bytes, 3,963 manifest entries, zero mismatches/unlisted files; relocated bundled-runtime protocol and hidden Tk checks passed. Native acceptance is a separate row |
+| Current-device installation and icon | READY for recorded scope | Original package files verified; named Codex connection and enabled personal plugin read back; PNG/ICO hashes match installed assets; Start-menu shortcut recorded. Installed kinetics, native reopening/rerun and seven-file local readback passed. This is not a new model or visible-wizard acceptance |
 | Visible setup and installation lifecycle | UNVERIFIED | Visible wizard, new user/device, upgrade, repeated installation, recovery and removal need actual acceptance |
 | Codex model workflow | READY for recorded cases after corrections | [Complete workflow](../verification/codex-benchmark.json) at `cf4a705`: 66 calls, 14 rejected calls, calibration and revision passed, all 16 requested local files read back. [Focused revision](../verification/codex-revision-release.json) at `6ac645d`: 8 calls, 1 run request, zero errors and native preservation/reopen/rerun passed |
 | Model efficiency | PARTIAL | Complete workflow was not a first-attempt success and loaded unrelated plugins. The focused revision has a different scope; its lower call count does not establish whole-workflow savings |
@@ -29,6 +38,13 @@ user/device, upgrades and other-host acceptance remain separate gates.
 | Stable release acceptance | PARTIAL | Alpha preview only; clean-device, upgrade, owner review and broader host gates open |
 
 The architecture document is an approved design record, not a list of shipped features. Warm sessions, shared IPC, remote authentication/service and host attachment adapters are not implemented.
+
+The current source review identifies two P1 reliability concerns: CLI diagnostics
+can resume an orphaned queue during core construction, and failure quarantine
+is published after execution-lock release, creating a potential cross-coordinator
+dispatch window. Custom-root propagation and over-limit resource routing also
+need correction. These findings remain open; the installed default-root case
+does not fix or certify them. See the review for evidence and confidence levels.
 
 ## Release checkpoint
 
@@ -85,4 +101,4 @@ the model. Its 14 rejected calls and first-attempt failure remain recorded.
 The focused run validates revision behavior, not a replacement full delivery
 or fresh-device benchmark.
 
-CSV/TSV input limit: 256 MiB. Individual artifact limit: 512 MiB. Inline MCP bytes: 16 MiB; larger files use resource/local delivery. One coordinator accepts at most ten active jobs. Input/output directories must be selected in setup.
+CSV/TSV input limit: 256 MiB. Individual artifact limit: 512 MiB. Inline MCP bytes: 16 MiB; larger files currently require approved local delivery because the resource reader has the same 16 MiB limit. One coordinator accepts at most ten active jobs. Input/output directories must be selected in setup.

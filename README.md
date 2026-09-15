@@ -4,6 +4,10 @@ An independent Chembridge plugin for reproducible MATLAB analysis, editable nati
 
 **0.1.0a1 is an early Windows preview.** Five bounded operations have run on licensed MATLAB R2026a Update 5. Portable, native, installation, model and host-delivery acceptance remain separate. See [current status](docs/STATUS.md) and [compatibility](docs/COMPATIBILITY.md). This project is not affiliated with MathWorks or the University of Edinburgh.
 
+The [current alpha review](docs/ALPHA_REVIEW_2026-09-15.md) records open diagnostic,
+recovery, configuration and large-file delivery issues. The
+[next technical route](docs/NEXT_TECHNICAL_ROUTE.md) is a design awaiting approval.
+
 Read [development principles](DEVELOPMENT_PRINCIPLES.md), [architecture](docs/ARCHITECTURE.md) and [implementation contract](docs/IMPLEMENTATION_CONTRACT.md). Native execution, portable checks, installation, model calls and host file delivery have separate evidence.
 
 ## Install and use

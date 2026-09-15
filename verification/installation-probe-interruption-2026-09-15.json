@@ -1,0 +1,18 @@
+{
+  "observed_at": "2026-09-15T19:04:00.267104Z",
+  "job_id": "59e9c4e1-c743-4a2e-b133-26aec1dc0787",
+  "operation": "linear_calibration",
+  "outcome": "interrupted_probe_preserved",
+  "cause": "Installation probe read job.state as a top-level field, then closed its MCP client after KeyError. This was a probe error, not a reported scientific failure.",
+  "job_state": "unknown",
+  "native_receipt_present": false,
+  "native_outputs_present": false,
+  "replay_performed": false,
+  "matlab_or_backend_processes_observed_before_clear": 0,
+  "former_coordinator_observed": false,
+  "quarantine_clear": {
+    "state": "cleared",
+    "basis": "Coordinator and all MATLAB/backend processes absent; executor/recovery locks free and exact quarantine marker checked by the packaged recovery function."
+  },
+  "scope": "Observed installation-probe interruption and bounded recovery. This does not validate all cancellation, crash or cross-coordinator cases."
+}
