@@ -1,0 +1,472 @@
+{
+  "scope": "Synthetic native execution, numerical/native readback and local copy delivery; not host-model or installer acceptance",
+  "observed_at": "2026-09-15T17:19:39.642652Z",
+  "source_commit": "cf4a705f564a8dc1c0174de4b1ad812838245614",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "backend": "0.13.0"
+  },
+  "native_sources": {
+    "execute.m": "32b83a8e6b2e91fe56932199c879a90e34dafb9c06532d6a540966d09cffd829",
+    "run_recipe.m": "3719cc0814cb1e360e2188b747b4bba1263484058c91b97a504dc70915a53445"
+  },
+  "cases": [
+    {
+      "name": "relative-calibration",
+      "job_id": "265b11a2-8b27-4173-a7c7-255808e141bf",
+      "operation": "linear_calibration",
+      "seconds": 24.031,
+      "verification": {
+        "native_reopen": true,
+        "numerical": true,
+        "script_rerun": true
+      },
+      "result": {
+        "rows": 5,
+        "intercept_mode": "free",
+        "weights_kind": "relative",
+        "weighted": true,
+        "degrees_of_freedom": 3,
+        "slope": 1.9339622641509435,
+        "intercept": 1.1007547169811305,
+        "slope_standard_error": 0.03676099283911716,
+        "intercept_standard_error": 0.10266786565054066,
+        "residual_sum_squares": 0.10889213243147083,
+        "weighted_residual_sum_squares": 0.07162264150943404,
+        "r_squared": 0.9989172473895755,
+        "r_squared_reason": null,
+        "uncertainty_state": "available",
+        "uncertainty_reason": null,
+        "x_unit": "mmol/L",
+        "y_unit": "1"
+      },
+      "artifacts": [
+        {
+          "name": "input.csv",
+          "size_bytes": 79,
+          "sha256": "d799e50d279d5f9d5438dda70b05d266f86c7dc60c4e36515ba591520e66d957",
+          "role": "original_input"
+        },
+        {
+          "name": "analysis.mat",
+          "size_bytes": 2381,
+          "sha256": "31cc87bf3699f6dc9b6f5f963b8d94718d4cbb11cb5cf30d7637fafa7b85d91a",
+          "role": "native_data"
+        },
+        {
+          "name": "results.csv",
+          "size_bytes": 262,
+          "sha256": "74ddc501ffafb3fd30b9d2488b3e29939bab8e2327839369d57c3900aef30bb4",
+          "role": "data_export"
+        },
+        {
+          "name": "figure.fig",
+          "size_bytes": 10928,
+          "sha256": "a051a6c3bf750191ebb07076eaa30cb56023a3ba3d761bd98fd70fb0446df1ea",
+          "role": "native_figure"
+        },
+        {
+          "name": "figure.png",
+          "size_bytes": 28795,
+          "sha256": "6da2bc07dc305f5e9c3db7687dae8b4a235d01204452f9bbdd20f7c7cfdfab84",
+          "role": "preview"
+        },
+        {
+          "name": "figure.pdf",
+          "size_bytes": 13290,
+          "sha256": "ecbc24c963a4b75b9ba64e8429f37c44a14ce8d3de63ba18e9adb633c0734155",
+          "role": "figure_export"
+        },
+        {
+          "name": "reproduce.m",
+          "size_bytes": 21790,
+          "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c",
+          "role": "script"
+        },
+        {
+          "name": "method.json",
+          "size_bytes": 3022,
+          "sha256": "55b28bd1470535275a27e5c085ab65aaf1286ba280e198a9fc9ccba1cd027108",
+          "role": "method"
+        }
+      ],
+      "local_delivery_readback": true
+    },
+    {
+      "name": "known-sigma-calibration",
+      "job_id": "3c07dc85-dadf-43bf-b277-bb4da7f14c49",
+      "operation": "linear_calibration",
+      "seconds": 24.016,
+      "verification": {
+        "native_reopen": true,
+        "numerical": true,
+        "script_rerun": true
+      },
+      "result": {
+        "rows": 5,
+        "intercept_mode": "free",
+        "weights_kind": "known_sigma",
+        "weighted": true,
+        "degrees_of_freedom": 3,
+        "slope": 1.9239750445632802,
+        "intercept": 1.1304812834224582,
+        "slope_standard_error": 0.040933840799980484,
+        "intercept_standard_error": 0.11041971458477856,
+        "residual_sum_squares": 0.1145089936801163,
+        "weighted_residual_sum_squares": 1.8404634581105135,
+        "r_squared": 0.9991676007786747,
+        "r_squared_reason": null,
+        "uncertainty_state": "available",
+        "uncertainty_reason": null,
+        "x_unit": "mmol/L",
+        "y_unit": "1"
+      },
+      "artifacts": [
+        {
+          "name": "input.csv",
+          "size_bytes": 79,
+          "sha256": "d799e50d279d5f9d5438dda70b05d266f86c7dc60c4e36515ba591520e66d957",
+          "role": "original_input"
+        },
+        {
+          "name": "analysis.mat",
+          "size_bytes": 2391,
+          "sha256": "8227e509b7ae74ff762a5fc932b3229e9d50820b006b6c277d773a5793246ca9",
+          "role": "native_data"
+        },
+        {
+          "name": "results.csv",
+          "size_bytes": 282,
+          "sha256": "9df4a276e90b5925b6fa84b956a49174353ad32e7703c27fb119866d92768442",
+          "role": "data_export"
+        },
+        {
+          "name": "figure.fig",
+          "size_bytes": 10923,
+          "sha256": "e13b8ca3c5c4e163d909cf7cb5a0a052cbcbf491e74c05c1e450b19d60d2c25a",
+          "role": "native_figure"
+        },
+        {
+          "name": "figure.png",
+          "size_bytes": 29576,
+          "sha256": "3d78bf54278204116e7ae3a7d3ac187ae7378faf9cf26ccc4e84de09dec7b879",
+          "role": "preview"
+        },
+        {
+          "name": "figure.pdf",
+          "size_bytes": 13294,
+          "sha256": "1b88b32ff004a2033b1d83eace8665c7d77b2d6564fb0a064a6e865da7f94a77",
+          "role": "figure_export"
+        },
+        {
+          "name": "reproduce.m",
+          "size_bytes": 21790,
+          "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c",
+          "role": "script"
+        },
+        {
+          "name": "method.json",
+          "size_bytes": 3045,
+          "sha256": "be81ec1f181e839cb53432ca3b273ec8616ef2f7669549818d1f0fddd5bfe0ac",
+          "role": "method"
+        }
+      ],
+      "local_delivery_readback": true
+    },
+    {
+      "name": "profile",
+      "job_id": "604387e5-8173-41fe-a086-c5409c04b9b5",
+      "operation": "data_profile",
+      "seconds": 12.328,
+      "verification": {
+        "native_reopen": true,
+        "numerical": false,
+        "script_rerun": false
+      },
+      "result": {
+        "rows": 5,
+        "columns": [
+          {
+            "name": "x",
+            "numeric": true,
+            "finite_count": 5,
+            "missing_count": 0,
+            "nonfinite_count": 0,
+            "minimum": 0.0,
+            "maximum": 4.0
+          },
+          {
+            "name": "y",
+            "numeric": true,
+            "finite_count": 5,
+            "missing_count": 0,
+            "nonfinite_count": 0,
+            "minimum": 1.0,
+            "maximum": 8.8
+          },
+          {
+            "name": "relative",
+            "numeric": true,
+            "finite_count": 5,
+            "missing_count": 0,
+            "nonfinite_count": 0,
+            "minimum": 0.5,
+            "maximum": 3.0
+          },
+          {
+            "name": "sigma",
+            "numeric": true,
+            "finite_count": 5,
+            "missing_count": 0,
+            "nonfinite_count": 0,
+            "minimum": 0.1,
+            "maximum": 0.3
+          }
+        ]
+      },
+      "artifacts": [
+        {
+          "name": "input.csv",
+          "size_bytes": 79,
+          "sha256": "d799e50d279d5f9d5438dda70b05d266f86c7dc60c4e36515ba591520e66d957",
+          "role": "original_input"
+        },
+        {
+          "name": "analysis.mat",
+          "size_bytes": 1670,
+          "sha256": "fd2b6b67df8861cc67aece4a6c204f8bfab971fba5d254a7371c939f358d097f",
+          "role": "native_data"
+        },
+        {
+          "name": "results.csv",
+          "size_bytes": 152,
+          "sha256": "bf21837a59c137c8286cbf045aa58f343717fce86776f25ff253658ec4f56f6a",
+          "role": "data_export"
+        },
+        {
+          "name": "method.json",
+          "size_bytes": 1176,
+          "sha256": "e2d9cabf789de00ced52028186d24aa4f8509920727b7cada28ad14c3656b538",
+          "role": "method"
+        }
+      ],
+      "local_delivery_readback": true
+    },
+    {
+      "name": "xy-plot",
+      "job_id": "a2149dc1-8874-478d-96a2-60bcda7c4fe8",
+      "operation": "plot_xy",
+      "seconds": 23.281,
+      "verification": {
+        "native_reopen": true,
+        "numerical": true,
+        "script_rerun": true
+      },
+      "result": {
+        "rows": 5,
+        "x_column": "x",
+        "y_column": "y",
+        "x_unit": "mmol/L",
+        "y_unit": "1"
+      },
+      "artifacts": [
+        {
+          "name": "input.csv",
+          "size_bytes": 79,
+          "sha256": "d799e50d279d5f9d5438dda70b05d266f86c7dc60c4e36515ba591520e66d957",
+          "role": "original_input"
+        },
+        {
+          "name": "analysis.mat",
+          "size_bytes": 1723,
+          "sha256": "e518ecd98076e6e4f5f850f6561e0fdd714d9c46b13974f010e2a3361c0f0524",
+          "role": "native_data"
+        },
+        {
+          "name": "results.csv",
+          "size_bytes": 38,
+          "sha256": "17cf9e23f0ef3f94d826c0286e433ee3bccd1747316e143313b55cc2365c4560",
+          "role": "data_export"
+        },
+        {
+          "name": "figure.fig",
+          "size_bytes": 8319,
+          "sha256": "cd983b0b0f065ff977bdb8db2ce88e3bfdba9eba812c5f8412cfd819da3ac143",
+          "role": "native_figure"
+        },
+        {
+          "name": "figure.png",
+          "size_bytes": 20591,
+          "sha256": "ca9252ca9d11d4ea271a0fcd72ad75f2f3053aab026481cec916169696772ef8",
+          "role": "preview"
+        },
+        {
+          "name": "figure.pdf",
+          "size_bytes": 12613,
+          "sha256": "79edcceb94ac80074e98ef0b421ce17405df2d9cf4c80cb01c11fc12eead90c0",
+          "role": "figure_export"
+        },
+        {
+          "name": "reproduce.m",
+          "size_bytes": 21790,
+          "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c",
+          "role": "script"
+        },
+        {
+          "name": "method.json",
+          "size_bytes": 860,
+          "sha256": "6ae6d9bd49f1b5b15a0f99bc5440c5c5aa2b849ef71bd80d8d1c8057bc3a629a",
+          "role": "method"
+        }
+      ],
+      "local_delivery_readback": true
+    },
+    {
+      "name": "kinetics",
+      "job_id": "49be141d-0e3d-48bd-ab37-50931835fd5a",
+      "operation": "first_order_kinetics",
+      "seconds": 22.469,
+      "verification": {
+        "native_reopen": true,
+        "numerical": true,
+        "script_rerun": true
+      },
+      "result": {
+        "points": 101,
+        "initial_concentration": 2.0,
+        "rate_constant": 0.25,
+        "time_end": 8.0,
+        "final_concentration": 0.2706705665373914,
+        "max_absolute_error": 4.260867214611608e-10,
+        "relative_tolerance": 1e-09,
+        "absolute_tolerance": 2e-12,
+        "concentration_unit": "mmol/L",
+        "time_unit": "s"
+      },
+      "artifacts": [
+        {
+          "name": "analysis.mat",
+          "size_bytes": 5660,
+          "sha256": "c88956291a779dfdfce98f309127826977f59dfe85802fa9bfa3b694edc6a273",
+          "role": "native_data"
+        },
+        {
+          "name": "results.csv",
+          "size_bytes": 6233,
+          "sha256": "2bd266809bd376e59be4593c97569525c614ad80387e96a20db4709dc5cff4f2",
+          "role": "data_export"
+        },
+        {
+          "name": "figure.fig",
+          "size_bytes": 13474,
+          "sha256": "9bc22a2eb5f849143582d198dd2d5b7d0fb1dd0e53ac2546305b92aed4ea3269",
+          "role": "native_figure"
+        },
+        {
+          "name": "figure.png",
+          "size_bytes": 39045,
+          "sha256": "7add9ffa5c72dfa1491af2ff4663dafbd27b81a32b9f7fe7b35acc12cf145c3c",
+          "role": "preview"
+        },
+        {
+          "name": "figure.pdf",
+          "size_bytes": 14060,
+          "sha256": "bb2c6101dac530a34103cffe7617448d0c58cc7cd0f665d38382008e830b1166",
+          "role": "figure_export"
+        },
+        {
+          "name": "reproduce.m",
+          "size_bytes": 21790,
+          "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c",
+          "role": "script"
+        },
+        {
+          "name": "method.json",
+          "size_bytes": 1455,
+          "sha256": "583a62d30de19f81a10ee763cc80292256f0f0bbb6ab8378976abf306401e84d",
+          "role": "method"
+        }
+      ],
+      "local_delivery_readback": true
+    },
+    {
+      "name": "figure-revision",
+      "job_id": "2713ea53-0d41-4c25-9fb3-34535a54672e",
+      "operation": "revise_figure",
+      "seconds": 22.484,
+      "verification": {
+        "native_reopen": true,
+        "numerical": true,
+        "script_rerun": true
+      },
+      "result": {
+        "title": "Revised synthetic calibration",
+        "x_label": null,
+        "y_label": null,
+        "curves_preserved": true
+      },
+      "artifacts": [
+        {
+          "name": "source.fig",
+          "size_bytes": 10928,
+          "sha256": "a051a6c3bf750191ebb07076eaa30cb56023a3ba3d761bd98fd70fb0446df1ea",
+          "role": "original_input"
+        },
+        {
+          "name": "analysis.mat",
+          "size_bytes": 1925,
+          "sha256": "f4d45b4ac431aa58df4e171fc36c63b26c7b24ded91c396cbd81a130dc61d624",
+          "role": "native_data"
+        },
+        {
+          "name": "results.csv",
+          "size_bytes": 232,
+          "sha256": "e83342b04d34ee070ac006b30909ef26f5e61e1f463d6e032eb313cfa2d3442f",
+          "role": "data_export"
+        },
+        {
+          "name": "figure.fig",
+          "size_bytes": 11038,
+          "sha256": "f95d643782e54250945e8876337f5eef3860009a2a06f9fd27337c617b93466e",
+          "role": "native_figure"
+        },
+        {
+          "name": "figure.png",
+          "size_bytes": 28628,
+          "sha256": "2da983e2fa56a3ab79e0fe5cc064fe0af2181b21aa296c0af580f0e4377de419",
+          "role": "preview"
+        },
+        {
+          "name": "figure.pdf",
+          "size_bytes": 13411,
+          "sha256": "0b6a5a5c2734d81d2cc899d0f85bfce98b920bfe76177842f18831f01c84fb3e",
+          "role": "figure_export"
+        },
+        {
+          "name": "reproduce.m",
+          "size_bytes": 21790,
+          "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c",
+          "role": "script"
+        },
+        {
+          "name": "method.json",
+          "size_bytes": 837,
+          "sha256": "dc474629a459cf016fef27f59dbf4245bc5c004e6ee3423a7c5a7fb5ddeca05a",
+          "role": "method"
+        }
+      ],
+      "local_delivery_readback": true
+    }
+  ],
+  "original_input_preserved": true,
+  "matlab": {
+    "name": "mathworks_mcp",
+    "state": "unverified",
+    "matlab_version": "26.1.0.3346908 (R2026a) Update 5",
+    "matlab_release": "2026a",
+    "reason": "Installed backend detected; use a synthetic workflow to verify native capability.",
+    "owned_session": false
+  },
+  "outcome": "passed"
+}

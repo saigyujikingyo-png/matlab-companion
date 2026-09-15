@@ -2,7 +2,7 @@
 
 Date: 2026-09-15.
 
-Status: **READY for cloud-container setup and portable checks at `f3e1e67`; later changes require their own run**.
+Status: **READY for cloud-container setup and portable checks at `cf4a705`; later changes require their own run**.
 
 ## Scope
 
@@ -11,9 +11,9 @@ This receipt covers the matching Codex Web development environment for
 execution, end-user installation, a model benchmark, desktop dispatch or host
 artifact delivery.
 
-The first local native run and the real stdio protocol smoke check passed
-separately. The [native receipt](native-acceptance.json) covers six synthetic
-cases across five operations and local file readback. It is not a cloud
+The local native run and the real stdio protocol smoke check passed
+separately. The [native receipt](native-final.json) covers six synthetic
+cases across five operations at `cf4a705` and local file readback. It is not a cloud
 container result. [Compatibility](../docs/COMPATIBILITY.md) records GUI,
 new-device, host/model and other-host acceptance as unverified.
 
@@ -56,27 +56,36 @@ is configuration evidence, not a test of every permitted route.
 
 ## Actual cloud-container results
 
-The root contributor ran the checks in the saved environment's interactive
-terminal through the official Codex Web interface and read their results.
-The observed `git HEAD` was
-`f3e1e67b44a2e6758c762b98554b460e2744c7f6`, with Python `3.12.13` in the Linux
-universal container.
+The root contributor rebuilt the container and ran the checks in the saved
+environment's interactive terminal through the official Codex Web interface,
+then read their results. The observed `git HEAD` was
+`cf4a705f564a8dc1c0174de4b1ad812838245614`, with Python `3.12.13` in the Linux
+universal container. These are fresh results for the current implementation
+checkpoint, not reuse of the earlier container run.
 
 | Check | Observed result |
 | --- | --- |
 | Setup: `bash scripts/setup_codex_cloud.sh` | Success |
 | Maintenance: `bash scripts/setup_codex_cloud.sh` | Success |
-| Pytest | **157 passed in 5.20 s** |
+| Pytest | **163 passed in 5.66 s** |
 | Ruff | Passed |
 | Contract/schema checker | **22 schemas passed** |
 | Real stdio MCP smoke | Passed |
-| Public-file audit | **33 public files passed** |
+| Public-file audit | **36 public files passed** |
 
 These are actual cloud-container results for that exact commit. Subsequent
 core fixes and later commits are not covered by this run and must receive
 their own applicable checks. No model-based cloud task or desktop-to-cloud
 dispatch was performed, and no MATLAB installation or licence was added to
 the container.
+
+## Earlier cloud-container run
+
+The earlier run at `f3e1e67b44a2e6758c762b98554b460e2744c7f6` also passed in
+the Linux universal container with Python 3.12.13: setup, maintenance,
+**157 tests in 5.20 s**, Ruff, **22 schemas**, real stdio smoke and a
+**33-file public audit**. This remains historical evidence for that commit;
+the current checkpoint is the `cf4a705` run above.
 
 ## Resolved discovery issue
 

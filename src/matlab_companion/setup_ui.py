@@ -221,7 +221,7 @@ def connect_codex(
     command = _codex_command(codex_command)
     expected = {
         "command": str(executable),
-        "args": ["-m", "matlab_companion", "serve", "--root", str(root)],
+        "args": ["-I", "-m", "matlab_companion", "serve", "--root", str(root)],
     }
     record_path = root / "codex-connection.json"
     with file_lock(root / ".setup-codex.lock", timeout=5):

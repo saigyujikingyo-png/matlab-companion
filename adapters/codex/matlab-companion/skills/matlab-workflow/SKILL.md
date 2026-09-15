@@ -15,4 +15,4 @@ Use the `matlab-companion` MCP connection created by the setup wizard. This skil
 6. Deliver originals through `matlab_artifacts` to the selected destination and check size/hash. A local path or embedded resource is not automatically a host attachment.
 7. Report native reopen, calculation, visual review and actual file delivery separately. Check labels/units before claiming visual acceptance. Do not inherit other build, licence, host or model acceptance.
 
-Operations: `data_profile`, `plot_xy`, `linear_calibration`, `first_order_kinetics`, `revise_figure`. Revision only accepts Companion-owned figures and an expected revision. General evaluation, arbitrary MAT/FIG loading and remote sharing are unavailable.
+Operations: `data_profile`, `plot_xy`, `linear_calibration`, `first_order_kinetics`, `revise_figure`. Revision only accepts Companion-owned figures: pass the source figure's `job_id` as both `source_job_id` and `expected_revision`, plus its `artifact_id` as `source_artifact_id`. A hash is not a revision ID. General evaluation, arbitrary MAT/FIG loading and remote sharing are unavailable.

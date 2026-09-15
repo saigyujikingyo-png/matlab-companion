@@ -15,7 +15,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--python", required=True, help="Packaged runtime interpreter")
     parser.add_argument("--output", default="verification/codex-benchmark.json")
+    parser.add_argument(
+        "--summarize-run",
+        type=Path,
+        help="Re-read an existing completed run without calling a model",
+    )
     args = parser.parse_args()
+    if args.summarize_run:
+        previous = json.loads(Path(args.output).read_text())
+        summarize(
+            args.summarize_run, args.python, args.output, previous["exit_code"], previous["seconds"]
+        )
+        return
     run = default_root() / "acceptance" / ("codex-" + str(time.time_ns()))
     inputs, outputs = run / "inputs", run / "delivered"
     inputs.mkdir(parents=True)
@@ -73,13 +84,24 @@ def main():
         result = subprocess.run(
             command, input=prompt, text=True, stdout=out, stderr=err, timeout=900, check=False
         )
+    summarize(
+        run, args.python, args.output, result.returncode, round(time.monotonic() - started, 3)
+    )
+
+
+def summarize(run, runtime_python, output_path, exit_code, elapsed):
+    root, outputs = run / "store", run / "delivered"
     events = [
         json.loads(line)
         for line in (run / "events.jsonl").read_text(encoding="utf-8").splitlines()
         if line.startswith("{")
     ]
     jobs = [json.loads(p.read_text()) for p in (root / "jobs").glob("*/state.json")]
-    completed = [j for j in jobs if j["state"] == "completed"]
+    completed = [
+        j
+        for j in jobs
+        if j["state"] == "completed" and j["operation"] in {"linear_calibration", "revise_figure"}
+    ]
     numerical = False
     for job in completed:
         if job["operation"] == "linear_calibration":
@@ -114,30 +136,31 @@ def main():
         "model_requested": "gpt-5.6-terra",
         "reasoning_requested": "max",
         "host": "Codex CLI ephemeral, existing signed-in account",
-        "exit_code": result.returncode,
-        "seconds": round(time.monotonic() - started, 3),
+        "exit_code": exit_code,
+        "seconds": elapsed,
         "usage": usage or None,
         "completed_jobs": [
             {k: j[k] for k in ("job_id", "operation", "verification")} for j in completed
         ],
         "tool_call_count": len(calls),
+        "extra_profile_jobs": sum(j["operation"] == "data_profile" for j in jobs),
         "delivery_readback": delivery,
         "independent_calibration_check": numerical,
         "source_commit": json.loads(
-            (Path(args.python).resolve().parent.parent / "bundle-manifest.json").read_text()
+            (Path(runtime_python).resolve().parent.parent / "bundle-manifest.json").read_text()
         )["source_commit"],
         "scope": "One synthetic calibration and continued figure edit, local original files; not GUI/new-device/all-host acceptance",
     }
     report["outcome"] = (
         "passed"
-        if result.returncode == 0
+        if exit_code == 0
         and len(completed) == 2
         and numerical
         and delivery
         and all(d["verified"] for d in delivery)
         else "partial"
     )
-    atomic_json(Path(args.output), report)
+    atomic_json(Path(output_path), report)
     print(json.dumps(report, indent=2), flush=True)
 
 

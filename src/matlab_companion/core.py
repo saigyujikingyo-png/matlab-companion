@@ -48,7 +48,7 @@ DESCRIPTIONS = {
     "plot_xy": "Create an editable XY figure with explicit columns and units.",
     "linear_calibration": "Fit a linear calibration with explicit intercept and weighting semantics.",
     "first_order_kinetics": "Simulate first-order decay and check against its analytical solution.",
-    "revise_figure": "Revise labels or limits of an owned figure while preserving its curves.",
+    "revise_figure": "Revise labels or limits of an owned figure, preserving curves. Set expected_revision to exactly source_job_id (the source figure's producing job UUID).",
 }
 
 

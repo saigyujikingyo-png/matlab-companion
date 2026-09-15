@@ -126,7 +126,7 @@ def test_connection_uses_argument_vector_and_preserves_other_servers(tmp_path):
     add = next(command for command in cli.commands if command[2] == "add")
     assert add[:5] == ["codex", "mcp", "add", "matlab-companion", "--"]
     assert add[5] == str(runtime.resolve())
-    assert add[6:9] == ["-m", "matlab_companion", "serve"]
+    assert add[6:10] == ["-I", "-m", "matlab_companion", "serve"]
     assert cli.entries["other-plugin"] == other
     assert read_json(root / "codex-connection.json")["created_by_setup"] is True
     count = sum(command[2] == "add" for command in cli.commands)

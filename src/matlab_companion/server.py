@@ -42,9 +42,16 @@ class RunInput(ContractModel):
     parameters: Annotated[dict, Field(max_length=20)]
     idempotency_key: Annotated[str, Field(min_length=1, max_length=128)]
     input_id: Identifier | None = None
-    source_job_id: JobId | None = None
-    source_artifact_id: Identifier | None = None
-    expected_revision: JobId | None = None
+    source_job_id: JobId | None = Field(
+        default=None, description="Completed job UUID that owns the source figure."
+    )
+    source_artifact_id: Identifier | None = Field(
+        default=None, description="native_figure artifact_id from that job's artifact list."
+    )
+    expected_revision: JobId | None = Field(
+        default=None,
+        description="Set to exactly source_job_id: immutable figure revisions are identified by their producing job UUID. This is not the artifact ID or SHA-256.",
+    )
 
 
 class JobInput(ContractModel):
@@ -73,7 +80,7 @@ TOOL_DESCRIPTIONS = {
     "matlab_status": "Observe setup and native-version evidence without starting MATLAB.",
     "matlab_help": "Discover scientific operations and retrieve their parameter/result schemas on demand.",
     "matlab_inspect": "Register a user-selected CSV/TSV inside setup-approved folders; returns an input ID and original hash.",
-    "matlab_run": "Queue an operation using help's parameter schema. Reuse an idempotency key for retries. For figure revisions provide source_job_id, source_artifact_id and expected_revision, not source_figure paths.",
+    "matlab_run": "Queue an operation using help's parameter schema. Reuse an idempotency key for retries. For figure revisions provide source_job_id, source_artifact_id and expected_revision=source_job_id (the producing job UUID).",
     "matlab_job": "Read status, request cooperative cancellation or reconcile the existing native receipt. Cancellation requested is not stopped. Never replay an unknown write.",
     "matlab_artifacts": "List/read original files, retrieve schemas/results, or copy to an approved local destination with hash readback. MCP file availability does not prove host receipt.",
 }
