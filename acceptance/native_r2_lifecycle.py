@@ -58,6 +58,7 @@ LATE_SECONDS = 60
 DELAY_SECONDS = 90
 WORKER_SECONDS = 900
 FILETIME_UNIX_EPOCH = 116444736000000000
+BOOTSTRAP_CONTEXT_ENV = "MATLAB_COMPANION_R2_PYTHON_CONTEXT"
 SCOPE = (
     "Windows R2 production coordinator, real SDK stdio clients, synthetic native jobs, "
     "explicit cancel, coordinator crash and unrelated owned-sentinel preservation. "
@@ -79,17 +80,48 @@ require = r1.require
 optional_json = r1.optional_json
 
 
-def python_command(code: str, *arguments) -> list[str]:
-    # Avoid the Windows venv redirector: SDK teardown must own the real frontend.
-    # Match the runtime actually imported by the controller, not its Git cwd.
+def bootstrap_context() -> dict:
+    """Keep the first controller's dependency roots across base-interpreter hops."""
     import matlab_companion
 
     runtime_parent = str(Path(matlab_companion.__file__).resolve().parent.parent)
+    inherited = os.environ.get(BOOTSTRAP_CONTEXT_ENV)
+    context = (
+        json.loads(inherited)
+        if inherited
+        else {
+            "runtime_parent": runtime_parent,
+            "site_roots": site.getsitepackages(),
+        }
+    )
+    require(
+        isinstance(context, dict)
+        and set(context) == {"runtime_parent", "site_roots"}
+        and context["runtime_parent"] == runtime_parent
+        and isinstance(context["site_roots"], list)
+        and context["site_roots"]
+        and all(
+            isinstance(path, str) and Path(path).is_absolute() for path in context["site_roots"]
+        ),
+        "Harness bootstrap must preserve the initial controller's actual runtime and dependencies",
+    )
+    return context
+
+
+def python_command(code: str, *arguments) -> list[str]:
+    # Avoid the Windows venv redirector: SDK teardown must own the real frontend.
+    # After a venv -> base hop, site.getsitepackages() describes base Python, so
+    # every further hop must inherit the original controller's locked deps.
+    context = bootstrap_context()
     bootstrap = (
-        "import sys,site; [site.addsitedir(p) for p in "
-        + repr(site.getsitepackages())
+        "import os,sys,site; os.environ["
+        + repr(BOOTSTRAP_CONTEXT_ENV)
+        + "] = "
+        + repr(json.dumps(context))
+        + "; [site.addsitedir(p) for p in "
+        + repr(context["site_roots"])
         + "]; sys.path.insert(0, "
-        + repr(runtime_parent)
+        + repr(context["runtime_parent"])
         + "); "
     )
     return [sys._base_executable, "-I", "-B", "-c", bootstrap + code, *map(str, arguments)]
@@ -741,6 +773,7 @@ def main() -> int:
             "matlab_root": str(installation),
             "backend_binary": str(binary),
             "controller_pid": os.getpid(),
+            "python_bootstrap": bootstrap_context(),
         },
     )
     helpers = delayed_helpers(root)

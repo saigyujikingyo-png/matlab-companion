@@ -1,0 +1,72 @@
+{
+  "scope": "Windows R2 production coordinator, real SDK stdio clients, synthetic native jobs, explicit cancel, coordinator crash and unrelated owned-sentinel preservation. Acceptance-only bounded native-entry delay; not a host-model or package-release gate.",
+  "observed_at": "2026-09-16T09:47:45.849479Z",
+  "outcome": "failed",
+  "source_commit": "e99a5cd44c972dcaa5d13c386db23dcd0483fe5d",
+  "source_dirty": false,
+  "runtime_version": "0.1.0a3",
+  "runtime_sources": {
+    "backend": "9cf04a1bffafa92aa30d41984005b1b2de831971d236fcd40bef5d9f8b7cd0e8",
+    "native_session": "30526de4c3e90d54e66510e47ffc06dced5f884e374f217858a866932e0cedf4",
+    "coordinator": "ce8f8bd8d31ccd7fb432440d6f284ecff31c0ab82172347384005e8406b16bc5",
+    "client": "5ef97654c82df8453aaaef32b7782161934d0f6e3f505facffb7c523f73d16ec",
+    "core": "420b7307af04d8d429ce7d2e8627841600aedb54ee115cfbf4e8c783f980c154",
+    "storage": "e5ce28bfd8330dc2da810e3f5bee1218ef360f91e58125e69f2ebdd4926f206f",
+    "contracts": "d34d1f5c280dae16590043d51b0e61dcb9d0a7a16f992fe2e68ab3d093b9486b",
+    "server": "a3a8885100bae0adcf4f09bc4493be6a0ddb4ffec9e875fb50a02ca77ed7b724"
+  },
+  "native_sources": {
+    "execute.m": "32b83a8e6b2e91fe56932199c879a90e34dafb9c06532d6a540966d09cffd829",
+    "run_recipe.m": "3719cc0814cb1e360e2188b747b4bba1263484058c91b97a504dc70915a53445"
+  },
+  "harness_sha256": "97a2172f1bea577008220ec86b56c096826bc9cdb51a9dc5bf0e15df906bc41a",
+  "r1_oracle_sha256": "aa765be0b39ef128474661c92ce8ec6e018b926c59c631edbf0a1f0bf2c13c61",
+  "instrumentation_sha256": {
+    "execute.m": "d43299b9ae4dbbcf3abc6fc8d1accfd498d5bd247036cf0de1a671344c29a671",
+    "execute_native.m": "7dd3a0ae2a6e9bf29dc824d265fa250472a4b6470971a71b19d7f7955899b8c1"
+  },
+  "error_type": "AssertionError",
+  "source_commit_scope": "Working-directory checkout; runtime source hashes bind imported code separately",
+  "platform": "Windows",
+  "backend_version": "0.13.0",
+  "injection": {
+    "native_entry_delay_max_seconds": 90,
+    "scientific_helpers_unchanged": true,
+    "coordinator_start": "Explicit BREAKAWAY_FROM_JOB plus NO_WINDOW, no fallback"
+  },
+  "cases": [
+    {
+      "case": "disconnect",
+      "operation": "data_profile",
+      "outcome": "failed",
+      "outer_job": {
+        "member": null,
+        "limit_flags": null
+      },
+      "lifetime_scope": "Individual frontend disconnect; entire host/outer Job close is not covered",
+      "idle_reason": null,
+      "native_handle_state": null,
+      "native_stop_observed": null,
+      "production_native_exited": null,
+      "production_rpc_response_observed": null
+    }
+  ],
+  "sentinel": {
+    "identity_observed": true,
+    "state_preserved": true,
+    "heartbeat_advanced": true,
+    "samples": 25,
+    "heartbeat_read_retries": 0,
+    "matlab_release": "2026a",
+    "matlab_version": "26.1.0.3346908 (R2026a) Update 5",
+    "cooperative_stop_acknowledged": true,
+    "native_stop_observed": true
+  },
+  "limitations": [
+    "Synthetic owned sentinel, not a user's existing session.",
+    "Prestarted coordinator path; strict SDK automatic-start refusal has separate portable evidence.",
+    "Cancel intent, terminal receipt, backend response and held-handle exit are separate observations.",
+    "Unknown crash work and quarantine remain preserved even if a held handle later proves exit.",
+    "No native result is replayed to repair this acceptance, and no default user settings are edited."
+  ]
+}

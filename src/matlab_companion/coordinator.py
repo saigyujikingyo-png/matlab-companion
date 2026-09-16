@@ -163,7 +163,7 @@ def spawn_coordinator(root, allowed_roots=(), output_roots=(), *, idle_seconds=I
         }
     )
     # Failure to break away is deliberately not retried as an ordinary child.
-    return subprocess.Popen(
+    process = subprocess.Popen(
         command,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
@@ -172,6 +172,12 @@ def spawn_coordinator(root, allowed_roots=(), output_roots=(), *, idle_seconds=I
         env=environment,
         **kwargs,
     )
+    # The frontend may stay alive after the service's idle exit. Reap that
+    # exact child without owning its lifetime; a daemon waiter neither signals
+    # the service nor keeps a disconnecting frontend alive. This also avoids a
+    # Linux zombie being mistaken for a live coordinator by process probes.
+    threading.Thread(target=process.wait, name="companion-owner-reaper", daemon=True).start()
+    return process
 
 
 class Coordinator:

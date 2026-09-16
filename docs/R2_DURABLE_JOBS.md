@@ -60,6 +60,23 @@ exit must not delete jobs or equate a backend return with native process exit.
 Storage observations describe the measured scope and any scan limit; they are
 not promises of disk quota enforcement or complete cleanup.
 
+## Preserved first-candidate findings
+
+Candidate `e99a5cd` passed its local Windows suite. Its first Linux CI run
+identified a service child that had exited but was not reaped by a still-running
+frontend. A daemon waiter now reaps only that exact child after exit; it never
+signals the service or keeps a disconnected frontend alive. CI platform jobs
+now finish independently so a Linux failure does not cancel Windows evidence.
+
+The [first native probe](../verification/native-r2-first-probe.json) stopped
+before any Companion job was submitted: a second-generation base-Python harness
+child lost its controller's dependency roots and could not import MCP. Zero
+Companion jobs or dispatches were observed. The synthetic sentinel retained its
+state, acknowledged cooperative shutdown and independently exited. The corrected
+harness propagates the original runtime/dependency binding and checks two real
+Python child generations without MATLAB. This failed probe is not native R2
+acceptance and no unknown scientific write was replayed.
+
 The default idle window is 30 seconds; an explicit Setup **Start job service**
 uses 300 seconds to allow the user to return to their host. Individual client
 disconnect never cancels accepted work. Closing the entire host or outer Windows
