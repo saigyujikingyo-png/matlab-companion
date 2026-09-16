@@ -1,7 +1,8 @@
 # Next technical route
 
-Date: 2026-09-15. **R1 implemented with recorded acceptance. R2/R3 and later options remain proposals.**
-Current evidence is in [R1 reliability](R1_RELIABILITY.md).
+Updated: 2026-09-16. **R1 has recorded acceptance. R2 is approved and in progress as the alpha.3 candidate; R3 has not started.**
+Recorded R1 evidence is in [R1 reliability](R1_RELIABILITY.md); the current
+implementation and acceptance ledger is [R2 durable jobs](R2_DURABLE_JOBS.md).
 
 ## Decision
 
@@ -10,7 +11,8 @@ installed use. Keep one host-neutral core, six public tools, the locked Python
 environment and the accepted MathWorks backend. Reliability, recoverable jobs
 and usable original-file delivery take priority over additional recipes or hosts.
 
-The owner approved **R1 below**. That approval is not acceptance of every later host, a shared
+The owner's latest approval authorizes **R2 implementation and verification**.
+It does not authorize starting R3 or establish acceptance of another host, a shared
 MATLAB service, an automatic dependency upgrade or a warm-session implementation.
 
 ## Baseline alpha before R1: what the evidence supported
@@ -43,7 +45,7 @@ flowchart LR
     A --> J[Durable job commands and artifact service]
     C --> D
     C --> J
-    J --> S[Per-user coordinator: later R2]
+    J --> S[Per-user and root coordinator: R2 candidate]
     S --> W[Owned worker: fresh MATLAB session]
     W --> B[Official MathWorks MCP backend]
     B --> M[Licensed local MATLAB]
@@ -52,14 +54,15 @@ flowchart LR
     J --> L[Approved local delivery and readback]
 ```
 
-This is the target design, not the current process topology. R1 fixes the
-existing topology first. R2 separates the coordinator's lifetime from an
-individual MCP client only after the R1 state transitions are proven. A public
-network listener and a database are not prerequisites for that local change.
+R1 established the recorded execution and diagnostic boundary. The R2 candidate
+now implements this local coordinator topology; independent acceptance is still
+in progress. It separates job ownership from an individual MCP client, without
+a public network listener or database. Outer-host or operating-system termination
+remains outside the client-disconnect guarantee.
 
 ## R1 — Repair the current execution and diagnostic boundaries
 
-Proposed scope: CLI/setup entrypoints, configuration propagation, core execution
+Implemented R1 scope: CLI/setup entrypoints, configuration propagation, core execution
 transitions, backend identity and the existing resource response. Preserve the
 scientific recipes and the public tool names.
 
@@ -93,26 +96,51 @@ cannot close this native gate.
 
 ## R2 — Make installed jobs survive ordinary client behavior
 
-Use one on-demand coordinator per user and resolved installation root, with thin
-stdio front ends. On Windows, evaluate a user-scoped named pipe and explicit
-access control. Retain the small file-based job store unless measurement shows
-it cannot meet the required atomicity or concurrency contract. Do not introduce
-an always-on service by default.
+**Approved on 2026-09-16; implementation and acceptance in progress.** Candidate
+version: `0.1.0a3` / `0.1.0-alpha.3`. Publication and exact-package native,
+installed-host, model and cloud results remain separate pending gates.
+
+The candidate uses one on-demand coordinator per user and resolved installation
+root, with thin stdio front ends and the existing file-based store. Windows uses
+a current-user named-pipe ACL with remote clients rejected; Linux uses a private
+Unix socket. Private bounded JSON RPC carries approved commands. A lifetime lock,
+process creation identity, runtime version and configuration fingerprint prevent
+silent takeover of a live owner by another runtime or configuration. Lost
+responses do not automatically resend commands.
 
 - A client disconnect abandons its wait, not ownership of the scientific job.
   A separate explicit cancel request changes the job's intent. Coordinator loss
-  still produces an unknown outcome until a native receipt or stop evidence is
-  reconciled.
-- Specify and verify the official backend's owned process/session boundary
-  before adding termination behavior. A backend exit or absent response is not
-  itself proof MATLAB stopped. Never use process-name-wide termination.
-- Define idle exit, maximum queued work, storage accounting and explicit
-  retention. Retain scientific originals and unknown-job evidence until an
-  authorized removal action; ordinary cache expiry must not delete them.
-- Add compact factual phases and a monotonic event sequence. Use an optional
-  bounded wait on `matlab_job` that returns at a meaningful change, completion or
-  time limit. Start with a short limit within the host's measured timeout.
-  Unknown progress totals stay unknown; do not manufacture percentages.
+  retains the R1 unknown/quarantine boundary for dispatched work. Reconnect with
+  the same job ID and original idempotency key; never create a new write to
+  repair a lost response.
+- On Windows, supported process breakaway is required for automatic startup.
+  If the host rejects it, report that failure without an ordinary-child fallback.
+  The user can open the installed Setup normally and explicitly choose **Start
+  job service**. That action may resume accepted, undispatched work; status and
+  setup checks remain passive. Neither route promises survival after the outer
+  host, its Job Object or the operating system terminates.
+- Native session identity and exit are separate evidence. A backend return,
+  absent response, terminal job label or idle service exit does not by itself
+  prove MATLAB stopped. No new process-name-wide termination is introduced.
+- Normal idle exit requires no in-flight handlers, worker futures or accepted
+  active jobs. Scientific originals and unknown/quarantine evidence remain.
+  Queue admission is bounded to ten active jobs. Passive status scans report
+  logical bytes under the job store; if incomplete, retained job/byte counts are
+  lower bounds and the active-job count is unknown. These observations are not
+  quotas, an atomic filesystem snapshot or authority to delete files. Retention
+  is `explicit_removal_only`, with no automatic cleanup and no job-removal action
+  added by this increment.
+- Use factual `job.phase` and durable monotonic `job.event_seq`. The phase
+  `executing` includes backend/session startup; `validating` means receipt and
+  artifact checking, not completed native verification. Older stored jobs may
+  expose null phase and sequence zero without read-time migration writes.
+- `matlab_job` action `wait` accepts `after_event_seq` from the same job and
+  `timeout_seconds` from 0 to 10, default 5. A changed sequence, non-active state
+  or deadline returns the current nested snapshot; a deadline is successful
+  observation. This limit bounds core waiting after receipt, not startup or
+  end-to-end host latency. At most four handlers wait concurrently; `WAIT_BUSY`
+  permits status or a later wait. Waiting never cancels, reconciles or replays.
+  Unknown totals stay unknown; no estimated percentages are reported.
 - Keep result nesting and identifiers consistent across help, schemas, examples
   and installed smoke clients. The installation probe's parsing error is a
   concrete reason to validate consumers against the public envelope.
@@ -124,7 +152,7 @@ and idle shutdown leaves no unaccounted owned session.
 
 ## R3 — Complete the ordinary-user analysis and delivery workflow
 
-Keep native execution and delivery independently recoverable.
+**Not started; remains a proposal.** Keep native execution and delivery independently recoverable.
 
 - Represent approved output folders by stable setup-selected identifiers for a
   proposed multi-file delivery action. Internally resolve full filenames from
@@ -205,6 +233,7 @@ cloud development and release integrity. Publish an alpha only for the scopes
 that passed; do not turn a repaired diagnostic or schema check into a stable
 release claim. Retain the current package as the explicit rollback artifact.
 
-**Current boundary:** the owner authorized R1 implementation and verification.
-R2/R3 and later options remain designs. Finish the R1 gates and report their
-actual evidence before beginning a later increment.
+**Current boundary:** the owner authorized R2 implementation and verification on
+2026-09-16. Complete and report its exact candidate gates without inheriting
+alpha.2 native, package, model or host results. R3 and later options remain
+proposals and have not started.

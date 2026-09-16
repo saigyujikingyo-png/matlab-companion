@@ -20,14 +20,50 @@ Models materialise their documented defaults during validation. Required scienti
 
 | Tool | Additional typed response |
 | --- | --- |
-| `matlab_status` | Backend observation and up to 50 capability observations. `unavailable`, `unsupported` and `unverified` states require reasons; passive discovery is not licensed MATLAB execution. |
+| `matlab_status` | Backend observation, up to 50 capability observations and an optional typed `runtime` accounting snapshot. `unavailable`, `unsupported` and `unverified` states require reasons; passive discovery is not licensed MATLAB execution. |
 | `matlab_help` | Up to five operation descriptions, input requirement and parameter/result schema references; optional pagination cursor. |
 | `matlab_inspect` | Input identity, filename, media type, byte count, SHA-256, trust classification and optional typed CSV profile. |
 | `matlab_run` | Stable accepted job identity, state and bounded summary. Accepted scientific work is asynchronous. |
-| `matlab_job` | Job state, metrics, verification flags, artifact count and error, plus a result reference only for the matching completed operation. |
+| `matlab_job` | Nested job state, factual phase, event sequence, metrics, verification flags, artifact count and error, plus a result reference only for the matching completed operation. Status and bounded wait use this same envelope. |
 | `matlab_artifacts` | Up to 100 original artifact metadata records, optional independent delivery receipt and pagination cursor. File bytes and large JSON results remain content/resource blocks. |
 
 Job states are `queued`, `running`, `cancel_requested`, `completed`, `cancelled`, `failed`, `interrupted` and `unknown`. Failed, interrupted and unknown jobs require explanatory errors. A cancel request can observe a job that has already completed; it must preserve that observed result rather than invent cancellation.
+
+### Factual phase and event sequence
+
+`job.phase` is nullable, with default null for older saved jobs whose phase was not recorded. Known phases are `queued`, `executing`, `validating`, `cancel_requested`, `completed`, `cancelled`, `failed`, `interrupted` and `unknown`. `executing` includes backend/session startup and the owned call; it does not claim that MATLAB has already started computing. `validating` records receipt/artifact validation, not successful native completion. It may accompany `running`, `cancel_requested`, `interrupted` or `unknown`. Other known phases match the state, with `running` represented by `executing`. No phase or state establishes that a native process has stopped. There are no estimated percentages or invented work totals.
+
+`job.event_seq` is a strict integer from 0 through `9007199254740991`, the largest exactly representable JSON integer across common host runtimes. Missing values in older jobs default to 0; passive reads do not rewrite those saved jobs. Newly accepted jobs start at 1. The producer must increment the persisted value under the job-state lock only when the public job summary actually changes. Reads, repeated no-op cancellation, rejected state transitions and unchanged reconciliation do not increment it. A cursor belongs to one immutable job ID, remains monotonic across coordinator restarts and must never wrap or reset. A single response validator checks the cursor's shape; producer/consumer tests must establish this ordering across responses.
+
+### Bounded observation through `matlab_job`
+
+`action="wait"` adds observation to the existing job dispatcher. It accepts:
+
+| Parameter | Meaning |
+| --- | --- |
+| `after_event_seq` | Optional nullable strict integer with the same bounds as `job.event_seq`. Null or omitted takes the first observed sequence as the baseline. |
+| `timeout_seconds` | Finite JSON number from 0 through 10, default 5. Integers are accepted; strings, booleans and nonfinite numbers are rejected. |
+
+These parameters are meaningful only for `wait`; explicitly supplying them to another action is rejected. An already newer sequence returns immediately. An ahead-of-store cursor is an `INPUT_INVALID` invocation error retaining the known job ID. States outside `queued`, `running` and `cancel_requested` return immediately, including `unknown` and `interrupted` requiring recovery. Otherwise, the call returns the current snapshot when the sequence changes or the deadline expires. A deadline is a successful observation, not a failed or cancelled scientific job. Timeout zero is an immediate snapshot.
+
+The response keeps `job_id`, the nested `job`, and the existing optional `result`; there is no new result wrapper. Consumers compare the returned sequence and state, then use a later bounded wait if needed. Waiting does not reconcile, replay, cancel or take execution ownership. A client disconnect abandons its wait and leaves the scientific job alone. Installed multi-client and lifecycle tests are separate from the typed response checks.
+
+### Queue and retained-storage accounting
+
+`matlab_status.runtime` defaults to null when no accounting observation was supplied. A supplied snapshot has these fields:
+
+| Field | Meaning |
+| --- | --- |
+| `max_active_jobs` | Integer literal 10: the admission limit includes queued, running and cancel-requested jobs. It is not ten queued jobs plus a running job. |
+| `active_jobs` | Nonnegative integer or null. A complete snapshot requires a count no greater than `retained_jobs`; an incomplete snapshot requires null. Unknown jobs remain subject to the independent quarantine barrier. |
+| `retained_jobs` | Nonnegative integer count of observed retained job directories. Incomplete accounting reports only the observed lower bound. |
+| `storage_bytes` | Integer from 0 through `9007199254740991`: observed logical regular-file bytes under the resolved installation root's `jobs` directory. Incomplete accounting reports a lower bound, not a complete total. |
+| `storage_complete` | Whether the bounded traversal and job-state observations completed without omissions. It does not promise an atomic filesystem snapshot. |
+| `retention` | Literal `explicit_removal_only`. Scientific originals and unknown-job evidence do not expire automatically. This policy is not an implemented removal action. |
+| `automatic_cleanup` | Boolean literal false. No retention timer deletes jobs or artifacts. |
+| `observed_at` | Valid UTC observation timestamp for this accounting snapshot. |
+
+Accounting reads bounded, small job-state JSON to classify jobs; scientific file contents are not read. Other retained files are counted by size, including staged inputs, outputs, receipts and recovery evidence. Symlinks are not followed. The traversal has a time budget and a 10,000-entry bound; reaching either bound, encountering an unreadable entry or failing to classify a job makes it incomplete. Installed runtimes/backends, approved input source folders and copies delivered outside the job store are outside this scope. Logical bytes are not allocated disk space, free disk space, a storage quota or authority to delete anything. The queue limit and executor quarantine remain enforced by the producer, not by this observational snapshot.
 
 ## Scientific operation registry
 
@@ -51,7 +87,7 @@ Metric values are finite numbers or null. `available` requires a value, includin
 
 | Route | Response requirements |
 | --- | --- |
-| `matlab_job.status`, `.cancel`, `.reconcile` | Shared job lifecycle model. The action determines core behavior; the response preserves the actual observed state, including terminal-state races. |
+| `matlab_job.status`, `.cancel`, `.reconcile`, `.wait` | Shared job lifecycle model. The action determines core behavior; the response preserves the actual observed state, including terminal-state races and successful wait deadlines. |
 | `matlab_artifacts.list` | Bounded artifact metadata. |
 | `matlab_artifacts.read` | Identifies exactly one original artifact. At or below 16 MiB the original bytes can accompany the response; above that limit `delivery` must be `not_delivered` / `local_copy`, with matching size/hash and an actionable reason. No unreadable ResourceLink is emitted. |
 | `matlab_artifacts.deliver` | Successful delivery identifies one artifact and has a delivered/verified receipt; resource availability alone cannot pass. |
@@ -76,16 +112,19 @@ Images, native files and large arrays remain original MCP content/resource block
 
 The generated schemas use JSON Schema constructs supported by the current locked MCP SDK. The portable tests validate them with Draft 2020-12 and preserve equal JSON text fallback/structured values. Cross-field scientific/lifecycle invariants are also enforced by Pydantic model validators; schema consumers should not assume a generic JSON Schema validator performs those additional checks. No real host or model compatibility is implied by portable schema validation.
 
+The R2 additions retain contract version 1.0, six tool names, existing field meanings and the nested job/result envelope. Older saved jobs and responses remain readable by the updated models through documented defaults. Consumers that pin an older schema with `additionalProperties: false` must refresh discovery before accepting the new optional fields; backward readability does not mean every frozen old schema accepts a newer response.
+
 ## Coverage ledger
 
-Current contributor verification: `uv run pytest -q tests/test_contracts.py` — **122 passed**; `uv run ruff check src/matlab_companion/contracts.py tests/test_contracts.py` — passed. These are portable fixtures, not licensed MATLAB execution or host acceptance. The root integration suite owns real server invocation, adapter integration and current full-checkout evidence.
+Contributor verification commands are `uv run pytest -q tests/test_contracts.py` and `uv run ruff check src/matlab_companion/contracts.py tests/test_contracts.py`. These are portable fixtures, not licensed MATLAB execution or host acceptance. The root integration suite owns real server invocation, adapter integration and current full-checkout evidence.
 
 | Area | Implemented and verified here | Separate/pending evidence |
 | --- | --- | --- |
 | Six public tool models | Per-tool success/error, schema validity, strict shape, canonical text fallback and known job-ID retention | Actual MCP invocation and each host's discovery/rendering |
 | Five scientific operations | Per-operation parameter/result/native receipt fixtures; wrong operation dispatch rejected | Native numbers, native reopening, standalone script rerun and figure quality |
-| Eight dispatcher routes | Per-route success/error schema checks; missing read identity/delivery evidence rejected | Server dispatch and original content transfer |
-| Lifecycle/errors | Public queued/running/cancel-requested/completed/cancelled/failed/interrupted/unknown; native terminal states and malformed combinations | Real cancellation, process loss and late-receipt recovery |
+| Nine dispatcher routes | Per-route success/error schema checks; missing read identity/delivery evidence rejected; wait preserves the nested job/result envelope | Server dispatch, actual bounded waiting and original content transfer |
+| Lifecycle/errors | Public queued/running/cancel-requested/completed/cancelled/failed/interrupted/unknown; factual phase consistency; legacy defaults and strict event cursors | Monotonic persistence across restarts, actual cancellation, client loss and late-receipt recovery |
+| Runtime accounting | Complete versus incomplete counts, retained-byte bounds, literal retention policy and null legacy observations | Bounded filesystem traversal, simultaneous clients, queue admission and evidence retention |
 | Scientific nulls and units | Nonfinite/type coercion rejection, disjoint missing counts, uncertainty/R-squared nulls, composite unit preservation | Numerical correctness across additional methods/data/toolboxes |
 | Artifacts/delivery | Filename/hash/size/media constraints, same-job binding, resource-versus-delivery distinction | Actual size/hash readback and host attachment acceptance |
 | Compatibility/efficiency | Compact separate registries and bounded defaults; individual default output schemas below the portable 12 KB ceiling | Terra max benchmark, measured tokens/cost, real host schema dialects and end-to-end latency |

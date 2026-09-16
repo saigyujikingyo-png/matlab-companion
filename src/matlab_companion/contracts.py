@@ -20,6 +20,8 @@ from pydantic import (
 
 CONTRACT_VERSION = "1.0"
 MAX_INLINE_BYTES = 16 * 1024 * 1024
+MAX_ACTIVE_JOBS = 10
+MAX_EVENT_SEQ = 2**53 - 1
 Identifier = Annotated[
     str, StringConstraints(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9_.-]+$")
 ]
@@ -39,6 +41,8 @@ FiniteNumber = Annotated[float, Field(allow_inf_nan=False)]
 NonnegativeNumber = Annotated[FiniteNumber, Field(ge=0)]
 PositiveNumber = Annotated[FiniteNumber, Field(gt=0)]
 Count = Annotated[int, Field(ge=0, le=1_000_000_000)]
+EventSequence = Annotated[int, Field(strict=True, ge=0, le=MAX_EVENT_SEQ)]
+WaitSeconds = Annotated[float, Field(strict=True, ge=0, le=10, allow_inf_nan=False)]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
 Filename = Annotated[
     str, StringConstraints(min_length=1, max_length=255, pattern=r"^[^/\\\x00-\x1f]+$")
@@ -66,6 +70,17 @@ Operation = Literal[
 JobState = Literal[
     "queued",
     "running",
+    "cancel_requested",
+    "completed",
+    "cancelled",
+    "failed",
+    "interrupted",
+    "unknown",
+]
+JobPhase = Literal[
+    "queued",
+    "executing",
+    "validating",
     "cancel_requested",
     "completed",
     "cancelled",
@@ -450,6 +465,8 @@ class JobSummary(ContractModel):
     job_id: JobId
     operation: Operation
     state: JobState
+    phase: JobPhase | None = None
+    event_seq: EventSequence = 0
     summary: Summary
     metrics: Annotated[list[Metric], Field(max_length=100)] = Field(default_factory=list)
     verification: Verification | None = None
@@ -462,6 +479,16 @@ class JobSummary(ContractModel):
             raise ValueError("a completed job cannot contain an error")
         if self.state in ("failed", "interrupted", "unknown") and self.error is None:
             raise ValueError("failed/interrupted/unknown jobs require an explanatory error")
+        if self.phase is not None:
+            expected = "executing" if self.state == "running" else self.state
+            validating = self.phase == "validating" and self.state in {
+                "running",
+                "cancel_requested",
+                "interrupted",
+                "unknown",
+            }
+            if self.phase != expected and not validating:
+                raise ValueError("job phase must match the observed lifecycle state")
         return self
 
 
@@ -531,10 +558,46 @@ class ToolOutput(ContractModel):
         return self
 
 
+class RuntimeStatistics(ContractModel):
+    max_active_jobs: Literal[10] = MAX_ACTIVE_JOBS
+    active_jobs: Count | None
+    retained_jobs: Count
+    storage_bytes: Annotated[int, Field(ge=0, le=2**53 - 1)]
+    storage_complete: bool
+    retention: Literal["explicit_removal_only"] = "explicit_removal_only"
+    automatic_cleanup: Literal[False] = False
+    observed_at: Timestamp
+
+    @field_validator("max_active_jobs", mode="before")
+    @classmethod
+    def active_limit_is_an_integer(cls, value):
+        if type(value) is not int:
+            raise ValueError("max_active_jobs must be an integer")
+        return value
+
+    @field_validator("automatic_cleanup", mode="before")
+    @classmethod
+    def cleanup_is_a_boolean(cls, value):
+        if value is not False:
+            raise ValueError("automatic_cleanup must be the boolean false")
+        return value
+
+    @model_validator(mode="after")
+    def accounting_is_coherent(self) -> Self:
+        _check_timestamp(self.observed_at)
+        if self.storage_complete:
+            if self.active_jobs is None or self.active_jobs > self.retained_jobs:
+                raise ValueError("complete accounting requires a coherent active job count")
+        elif self.active_jobs is not None:
+            raise ValueError("incomplete accounting cannot claim a complete active job count")
+        return self
+
+
 class StatusOutput(ToolOutput):
     operation: Literal["matlab_status"] = "matlab_status"
     backend: BackendStatus | None = None
     capabilities: Annotated[list[Capability], Field(max_length=50)] = Field(default_factory=list)
+    runtime: RuntimeStatistics | None = None
 
     @model_validator(mode="after")
     def success_has_backend(self) -> Self:
@@ -675,6 +738,7 @@ DISPATCH_OUTPUT_MODELS: dict[str, type[ToolOutput]] = {
     "matlab_job.status": JobOutput,
     "matlab_job.cancel": JobOutput,
     "matlab_job.reconcile": JobOutput,
+    "matlab_job.wait": JobOutput,
     "matlab_artifacts.list": ArtifactsOutput,
     "matlab_artifacts.read": ArtifactReadOutput,
     "matlab_artifacts.deliver": ArtifactDeliverOutput,

@@ -43,6 +43,7 @@ from .storage import (
 )
 
 MAX_INPUT_BYTES = 256 * 1024 * 1024
+MAX_ACTIVE_JOBS = 10
 ACTIVE = {"queued", "running", "cancel_requested"}
 UUID_PATTERN = re.compile(r"^[0-9a-fA-F-]{36}$")
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
@@ -76,12 +77,20 @@ class Core:
         self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="matlab-companion")
         self.futures = {}
         self.mutex = threading.RLock()
-        self._recover_jobs()
+        self.events = threading.Condition()
+        try:
+            self._recover_jobs()
+        except BaseException:
+            # Retain ownership until any already-started recovery worker finishes.
+            # Undispatched cancelled futures keep their durable queued intent.
+            self.pool.shutdown(wait=True, cancel_futures=True)
+            raise
 
     def close(self):
         self.pool.shutdown(wait=True)
 
-    def _base(self, tool, ok=True):
+    @staticmethod
+    def _base(tool, ok=True):
         return {
             "request_id": str(uuid.uuid4()),
             "observed_at": utc_now(),
@@ -111,10 +120,50 @@ class Core:
             state = self._state(job_id)
             if expected_states is not None and state["state"] not in expected_states:
                 return state
-            state.update(changes)
-            state = JobSummary.model_validate(state).model_dump(mode="json")
-            atomic_json(self._job_path(job_id) / "state.json", state)
-            return state
+            if "state" in changes and "phase" not in changes:
+                changes["phase"] = {"running": "executing"}.get(changes["state"], changes["state"])
+            updated = JobSummary.model_validate(state | changes).model_dump(mode="json")
+            if updated == state:
+                return state
+            updated["event_seq"] = state["event_seq"] + 1
+            updated = JobSummary.model_validate(updated).model_dump(mode="json")
+            atomic_json(self._job_path(job_id) / "state.json", updated)
+        with self.events:
+            self.events.notify_all()
+        return updated
+
+    def has_active_work(self):
+        """An idle service must account for its workers and durable accepted work."""
+        with self.mutex:
+            observed = list(self.futures.items())
+        for job_id, future in observed:
+            if not future.done():
+                continue
+            error = (
+                RuntimeError("Worker was cancelled before its outcome was settled")
+                if future.cancelled()
+                else future.exception()
+            )
+            if error is not None:
+                try:
+                    # Never wait for execution ownership while holding the queue mutex.
+                    # An unresolved persistence failure retains its future and barrier.
+                    with file_lock(self.root / ".execution.lock"):
+                        self._execution_failed(job_id, self._job_path(job_id), error)
+                        if self._state(job_id)["state"] in ACTIVE:
+                            continue
+                except (OSError, ValueError, TypeError, KeyError, WorkflowError):
+                    continue
+            with self.mutex:
+                if self.futures.get(job_id) is future:
+                    del self.futures[job_id]
+        with self.mutex:
+            if self.futures:
+                return True
+            return any(
+                read_json(path).get("state") in ACTIVE
+                for path in (self.root / "jobs").glob("*/state.json")
+            )
 
     def _recover_jobs(self):
         """Do not replay a native dispatch whose coordinator disappeared."""
@@ -222,6 +271,18 @@ class Core:
     def call(self, tool: str, arguments: dict) -> dict:
         if tool not in TOOL_OUTPUT_MODELS:
             raise ValueError("Unknown tool")
+
+        def valid_job_id(value):
+            if not isinstance(value, str) or not UUID_PATTERN.fullmatch(value):
+                return None
+            try:
+                return value if str(uuid.UUID(value)) == value.lower() else None
+            except ValueError:
+                return None
+
+        known_job_id = (
+            valid_job_id(arguments.get("job_id")) if isinstance(arguments, dict) else None
+        )
         try:
             if not isinstance(arguments, dict):
                 raise WorkflowError("INPUT_INVALID", "Arguments must be an object")
@@ -230,7 +291,7 @@ class Core:
             result.update(handler(**arguments))
         except WorkflowError as error:
             result = self._base(tool, False) | {
-                "job_id": error.job_id,
+                "job_id": valid_job_id(error.job_id) or known_job_id,
                 "error": {"code": error.code, "message": error.message[:2000]},
             }
         except (ValidationError, ValueError, TypeError, FileNotFoundError, KeyError) as error:
@@ -245,21 +306,23 @@ class Core:
                     )[:4]
                 )
             result = self._base(tool, False) | {
-                "error": {"code": "INPUT_INVALID", "message": message[:2000]}
+                "job_id": known_job_id,
+                "error": {"code": "INPUT_INVALID", "message": message[:2000]},
             }
         except OSError:
             result = self._base(tool, False) | {
+                "job_id": known_job_id,
                 "error": {
                     "code": "FILE_ACCESS_FAILED",
                     "message": "The selected file or output directory could not be accessed.",
-                }
+                },
             }
         # A malformed result never goes to a host as success. Preserve known job identity.
         try:
             return TOOL_OUTPUT_MODELS[tool].model_validate(result).model_dump(mode="json")
         except ValidationError:
             failure = self._base(tool, False) | {
-                "job_id": result.get("job_id"),
+                "job_id": valid_job_id(result.get("job_id")) or known_job_id,
                 "error": {
                     "code": "OUTPUT_CONTRACT_INVALID",
                     "message": "Result validation failed; inspect the existing job before retrying.",
@@ -270,7 +333,8 @@ class Core:
     def _status(self):
         return status_fields(self.root, backend=self.backend)
 
-    def _help(self, operation=None):
+    @staticmethod
+    def _help(operation=None):
         names = [operation] if operation is not None else list(PARAMETER_MODELS)
         if any(name not in PARAMETER_MODELS for name in names):
             raise WorkflowError("CAPABILITY_UNSUPPORTED", "Operation is not implemented")
@@ -407,6 +471,14 @@ class Core:
                     "MATLAB_NOT_FOUND",
                     "Set up the official backend and a licensed MATLAB installation first",
                 )
+            if (
+                isinstance(self.backend, OfficialBackend)
+                and not self.backend.supports_native_exit()
+            ):
+                raise WorkflowError(
+                    "CAPABILITY_UNSUPPORTED",
+                    "This preview requires Windows native-process exit observation. No job was registered or dispatched on this platform.",
+                )
             if (self.root / "executor-quarantine.json").exists():
                 raise WorkflowError(
                     "EXECUTOR_RECOVERY_REQUIRED",
@@ -416,7 +488,7 @@ class Core:
                 read_json(p).get("state") in ACTIVE
                 for p in (self.root / "jobs").glob("*/state.json")
             )
-            if active >= 10:
+            if active >= MAX_ACTIVE_JOBS:
                 raise WorkflowError(
                     "QUEUE_FULL", "The queue contains ten active jobs; wait for an existing job"
                 )
@@ -467,6 +539,8 @@ class Core:
                 operation=operation,
                 state="queued",
                 summary="Accepted; waiting for the owned executor",
+                phase="queued",
+                event_seq=1,
             ).model_dump(mode="json")
             atomic_json(
                 job / "scheduler.json",
@@ -557,7 +631,12 @@ class Core:
         # later persistence operation fails; a new owner cannot skip it.
         atomic_json(active, ownership)
         atomic_json(job / "dispatch.json", ownership)
-        self._save_state(job_id, state="running", summary="Running in an owned MATLAB session")
+        self._save_state(
+            job_id,
+            expected_states={"queued"},
+            state="running",
+            summary="Running in an owned MATLAB session",
+        )
         asyncio.run(self.backend.execute(job))
         if not (job / "receipt.json").is_file():
             raise RuntimeError("Native backend returned without a completion receipt")
@@ -649,6 +728,8 @@ class Core:
             request = read_json(job / "request.json")
             if receipt.job_id != job_id or receipt.operation != request["operation"]:
                 raise ValueError("Receipt identity mismatch")
+            if receipt.state == "completed":
+                self._save_state(job_id, expected_states={"running"}, phase="validating")
             if receipt.state != "completed":
                 return self._save_state(
                     job_id,
@@ -743,10 +824,43 @@ class Core:
                 },
             )
 
-    def _job(self, job_id, action="status"):
-        if action not in {"status", "cancel", "reconcile"}:
+    def _job(self, job_id, action="status", after_event_seq=None, timeout_seconds=None):
+        if action not in {"status", "cancel", "reconcile", "wait"}:
             raise WorkflowError("INPUT_INVALID", "Unknown job action", job_id)
+        if action != "wait" and (after_event_seq is not None or timeout_seconds is not None):
+            raise WorkflowError("INPUT_INVALID", "Wait options require action=wait", job_id)
         state = self._state(job_id)
+        if action == "wait":
+            duration = 5 if timeout_seconds is None else timeout_seconds
+            if (
+                isinstance(duration, bool)
+                or not isinstance(duration, (int, float))
+                or not 0 <= duration <= 10
+                or (
+                    after_event_seq is not None
+                    and (type(after_event_seq) is not int or not 0 <= after_event_seq <= 2**53 - 1)
+                )
+            ):
+                raise WorkflowError(
+                    "INPUT_INVALID",
+                    "Wait duration must be 0..10 seconds and event cursor a nonnegative integer",
+                    job_id,
+                )
+            cursor = state["event_seq"] if after_event_seq is None else after_event_seq
+            if cursor > state["event_seq"]:
+                raise WorkflowError(
+                    "INPUT_INVALID",
+                    "Event cursor is ahead of this job; use the returned job snapshot",
+                    job_id,
+                )
+            deadline = time.monotonic() + duration
+            while state["state"] in ACTIVE and state["event_seq"] == cursor:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                with self.events:
+                    self.events.wait(min(remaining, 0.1))
+                state = self._state(job_id)
         if action == "cancel" and state["state"] in ACTIVE:
             (self._job_path(job_id) / "cancel.flag").write_text(
                 "cancel requested\n", encoding="utf-8"
@@ -856,7 +970,8 @@ class Core:
             atomic_json(self._job_path(job_id) / f"delivery-{artifact_id}.json", delivery)
         return {"job_id": job_id, "artifacts": [record], "delivery": delivery}
 
-    def schema(self, operation, kind="parameters"):
+    @staticmethod
+    def schema(operation, kind="parameters"):
         if operation not in PARAMETER_MODELS or kind not in {"parameters", "result"}:
             raise WorkflowError("INPUT_INVALID", "Unknown schema")
         schema = operation_schemas()[operation][kind]

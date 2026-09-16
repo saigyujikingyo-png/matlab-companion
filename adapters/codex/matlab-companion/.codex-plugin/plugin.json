@@ -1,6 +1,6 @@
 {
   "name": "matlab-companion",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Bounded MATLAB analysis and editable native artifacts",
   "author": {
     "name": "MATLAB Companion contributors"

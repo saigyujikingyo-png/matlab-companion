@@ -15,6 +15,8 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+from . import native_session
+from .native_session import NativeSessionUnconfirmed, NativeSessionWatcher
 from .storage import atomic_json, default_root, digest, read_json, utc_now
 
 BACKEND_VERSION = "0.13.0"
@@ -131,7 +133,33 @@ class OfficialBackend:
         except KeyError:  # No official asset for this platform; observation never installs it.
             return False
 
+    def supports_native_exit(self) -> bool:
+        return native_session.observation_supported()
+
     async def execute(self, job: Path) -> None:
+        session_id = str(uuid.uuid4())
+        watcher = NativeSessionWatcher(job, session_id)
+        watcher.begin()
+        try:
+            if not self.supports_native_exit():
+                watcher._write(reason_code="NATIVE_OBSERVATION_UNSUPPORTED")
+                raise NativeSessionUnconfirmed("Native process exit observation is unsupported")
+            await self._execute(job, session_id, watcher)
+        except BaseException as error:
+            # Preserve the actual native/transport failure even if observation or
+            # its private diagnostic write also fails. Never turn it into success.
+            with contextlib.suppress(Exception, asyncio.CancelledError):
+                await asyncio.shield(
+                    watcher.finish(backend_returned=False, backend_error_type=type(error).__name__)
+                )
+            raise
+        observation = await watcher.finish(backend_returned=True)
+        if observation["native_exited"] is not True:
+            raise NativeSessionUnconfirmed(
+                "Backend returned without verified owned MATLAB exit; preserve executor quarantine"
+            )
+
+    async def _execute(self, job: Path, session_id: str, watcher: NativeSessionWatcher) -> None:
         binary = backend_path(self.root)
         installation = matlab_root(self.root)
         if not binary.is_file():
@@ -141,7 +169,6 @@ class OfficialBackend:
             raise ValueError("Backend checksum mismatch; run setup to repair")
         if installation is None:
             raise FileNotFoundError("MATLAB was not found; select an installation in setup")
-        session_id = str(uuid.uuid4())
         job_id = str(uuid.UUID(job.name))
         session_temporary = job / f"native-session-{session_id}.tmp"
         session_record = job / "native-session.json"
@@ -227,10 +254,12 @@ class OfficialBackend:
                     ClientSession(read, write, read_timeout_seconds=self.timeout) as session,
                 ):
                     await session.initialize()
+                    watcher.start(installation)
                     result = await asyncio.wait_for(
                         session.call_tool("run_matlab_file", {"script_path": str(launcher)}),
                         timeout=self.timeout,
                     )
+                    watcher.rpc_response_observed()
                     atomic_json(
                         job / "backend-result.json", result.model_dump(mode="json", by_alias=True)
                     )

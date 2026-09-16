@@ -1,9 +1,68 @@
 """Concurrent receipt writers must not share a temporary filename."""
 
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
+
 from matlab_companion import storage
+
+
+@pytest.mark.skipif(storage.os.name != "nt", reason="Windows bounded sharing retries")
+def test_persistent_access_denial_preserves_original_and_ends_retry(tmp_path, monkeypatch):
+    target = tmp_path / "state.json"
+    storage.atomic_json(target, {"state": "queued"})
+    original = target.read_bytes()
+    attempts = []
+
+    def denied(source, destination):
+        attempts.append(destination)
+        error = PermissionError("Persistent read-only target")
+        error.winerror = 5
+        raise error
+
+    monkeypatch.setattr(storage.os, "replace", denied)
+    started = time.monotonic()
+    with pytest.raises(PermissionError, match="Persistent read-only target"):
+        storage.atomic_json(target, {"state": "running"})
+    assert 0.2 <= time.monotonic() - started < 2
+    assert len(attempts) > 1
+    assert target.read_bytes() == original
+    assert list(tmp_path.iterdir()) == [target]
+
+
+def test_atomic_replacement_waits_for_a_short_lived_reader_without_corruption(
+    tmp_path, monkeypatch
+):
+    target = tmp_path / "state.json"
+    storage.atomic_json(target, {"state": "queued"})
+    opened, attempted = threading.Event(), threading.Event()
+    real_load = storage.json.load
+    real_replace = storage.os.replace
+
+    def held_reader(stream):
+        opened.set()
+        assert attempted.wait(3), "Replacement did not reach the open reader"
+        return real_load(stream)
+
+    def replacing(source, destination):
+        try:
+            return real_replace(source, destination)
+        finally:
+            attempted.set()
+
+    monkeypatch.setattr(storage.json, "load", held_reader)
+    monkeypatch.setattr(storage.os, "replace", replacing)
+    with ThreadPoolExecutor(max_workers=1) as readers:
+        reader = readers.submit(storage.read_json, target)
+        assert opened.wait(3)
+        try:
+            storage.atomic_json(target, {"state": "running"})
+        finally:
+            attempted.set()
+        assert reader.result(timeout=3) == {"state": "queued"}
+    assert storage.read_json(target) == {"state": "running"}
 
 
 def test_simultaneous_same_process_writers_publish_complete_independent_documents(

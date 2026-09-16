@@ -2,11 +2,14 @@
 
 An independent Chembridge plugin for reproducible MATLAB analysis, editable native artifacts and natural-language agent workflows. Ask an agent to inspect CSV/TSV data, plot XY data, fit a linear calibration, simulate first-order decay or revise a Companion-owned figure.
 
-**0.1.0a2 is the R1 Windows alpha.** It repairs passive diagnostics, selected-root propagation, execution ownership and over-limit artifact routing. Its final package passed six native cases covering all five operations on MATLAB R2026a Update 5. Portable, native, installation, model and host-delivery evidence remains separate. See [current status](docs/STATUS.md) and [compatibility](docs/COMPATIBILITY.md). This project is not affiliated with MathWorks or the University of Edinburgh.
+**0.1.0a3 / alpha.3 is the R2 development candidate.** The owner approved R2 on 2026-09-16; implementation and acceptance are in progress. It separates accepted jobs from individual agent clients and adds bounded waiting and factual progress. Exact-package native, installed-host, model, cloud and release acceptance remain pending for this candidate. R3 has not started.
+
+**0.1.0a2 remains the recorded R1 Windows release.** Its final package passed six native cases covering all five operations on MATLAB R2026a Update 5. Those results do not establish alpha.3 acceptance. See [current status](docs/STATUS.md) and [compatibility](docs/COMPATIBILITY.md). This project is not affiliated with MathWorks or the University of Edinburgh.
 
 The [alpha review](docs/ALPHA_REVIEW_2026-09-15.md) records the original findings.
 [R1 implementation and acceptance](docs/R1_RELIABILITY.md) tracks their repairs.
-The [technical route](docs/NEXT_TECHNICAL_ROUTE.md) keeps later R2/R3 work separate.
+[R2 durable jobs](docs/R2_DURABLE_JOBS.md) tracks the current increment; the
+[technical route](docs/NEXT_TECHNICAL_ROUTE.md) keeps R3 and later proposals separate.
 
 Read [development principles](DEVELOPMENT_PRINCIPLES.md), [architecture](docs/ARCHITECTURE.md) and [implementation contract](docs/IMPLEMENTATION_CONTRACT.md). Native execution, portable checks, installation, model calls and host file delivery have separate evidence.
 
@@ -30,7 +33,19 @@ Original input bytes are retained. Non-profile workflows produce a standalone `.
 
 One core exposes six tools: `matlab_status`, `matlab_help`, `matlab_inspect`, `matlab_run`, `matlab_job` and `matlab_artifacts`. Every tool has a validated output schema, compact structured results and consistent JSON metadata fallback. Operation schemas are discovered on demand. Media stays in content/resource blocks. See [contracts](docs/CONTRACTS.md).
 
-The preview uses local stdio and one owned MATLAB session per job. General MATLAB evaluation, third-party MAT/FIG loading, public remote service and host attachment adapters are outside this version. A resource URI does not establish host delivery; verified local delivery requires destination size/hash readback. Unknown outcomes are reconciled without automatic replay.
+The alpha.3 candidate uses local stdio front ends and one on-demand coordinator per user and resolved installation root. The coordinator owns the durable queue and one fresh, owned MATLAB session per job. General MATLAB evaluation, third-party MAT/FIG loading, public remote service and host attachment adapters are outside this version. A resource URI does not establish host delivery; verified local delivery requires destination size/hash readback. Unknown outcomes are reconciled without automatic replay.
+
+### Observe and recover jobs in alpha.3
+
+Read state from `result.job.state`. `job.phase` reports observed work such as `queued`, `executing` or `validating`; it is not a percentage or proof that MATLAB stopped. `job.event_seq` increases when the persisted job summary changes. Older jobs may have a null phase and sequence zero without any diagnostic rewrite.
+
+Use `matlab_job` with `action="wait"`, the same `job_id`, and `after_event_seq` set to the last observed sequence. `timeout_seconds` is 0–10 seconds, default 5. This bounds waiting inside the core after the request is received; service startup, IPC and host transport can add time. A deadline returns the current snapshot successfully. It does not cancel or fail the job.
+
+Closing an agent client abandons its response or wait. It does not cancel accepted work. Reconnect to the same installation root and retain the job ID and original idempotency key; a lost response never triggers an automatic write retry. Cancellation requires an explicit `matlab_job` action, and `cancel_requested` does not mean the native session has stopped.
+
+If a Windows host refuses independent process startup, open **Start Setup.vbs** from the installed bundle and explicitly choose **Start job service**, then return to the agent. The launcher reports the failure and does not fall back to a client-owned child. Starting this service can resume accepted, undispatched work; setup checks themselves remain passive. This design covers an individual client disconnect, not closure of the outer host, its Windows Job Object, or the operating system. Coordinator loss retains the R1 unknown/quarantine recovery boundary. Native process exit needs its own lifecycle evidence, separate from a backend return or idle service exit.
+
+`matlab_status` observes retained job storage without starting workers or deleting files. When `storage_complete` is false, `retained_jobs` and `storage_bytes` are observed lower bounds and `active_jobs` is unknown (`null`). Counts cover logical files in the job store, not all installed/runtime or delivered files, available disk space or a quota. Originals and unknown-job evidence have no automatic expiry. The `explicit_removal_only` policy requires a separate authorized deletion; this candidate provides no job-removal action.
 
 ## Develop
 
@@ -45,6 +60,6 @@ uv run python scripts/smoke_mcp.py
 uv run python scripts/check_release.py
 ```
 
-`uv run python scripts/native_acceptance.py` explicitly starts licensed local MATLAB. `uv run python scripts/build_windows_bundle.py` builds the preview with a clean CPython 3.12 runtime and locked production dependencies. Package version is `0.1.0a2`; the optional Codex guidance adapter uses semantic version `0.1.0-alpha.2`. It uses the MCP connection created by setup and is not another execution core.
+`uv run python scripts/native_acceptance.py` explicitly starts licensed local MATLAB. `uv run python scripts/build_windows_bundle.py` builds the preview with a clean CPython 3.12 runtime and locked production dependencies. The candidate package version is `0.1.0a3` (`0.1.0-alpha.3` for release/adapter versioning); this is not a claim that the candidate has been published. The optional Codex guidance adapter uses the MCP connection created by setup and is not another execution core.
 
 [Cloud environment receipt](verification/cloud-environment.md) · [MIT source licence](LICENSE)

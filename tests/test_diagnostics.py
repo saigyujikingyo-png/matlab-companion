@@ -21,9 +21,7 @@ from matlab_companion.storage import atomic_json
 
 def snapshot(root: Path) -> dict:
     return {
-        str(path.relative_to(root)): path.read_bytes()
-        for path in root.rglob("*")
-        if path.is_file()
+        str(path.relative_to(root)): path.read_bytes() for path in root.rglob("*") if path.is_file()
     }
 
 
@@ -33,7 +31,9 @@ def test_cli_diagnostics_leave_queued_and_dispatched_jobs_untouched(
 ):
     root = tmp_path / "selected runtime"
     dispatched = []
-    monkeypatch.setattr(core_module.Core, "_execute", lambda self, job_id: dispatched.append(job_id))
+    monkeypatch.setattr(
+        core_module.Core, "_execute", lambda self, job_id: dispatched.append(job_id)
+    )
     for state in ("queued", "running"):
         job_id = str(uuid.uuid4())
         job = root / "jobs" / job_id
@@ -113,6 +113,7 @@ def test_diagnostic_entrypoints_never_construct_core_or_start_threads(
 
 @pytest.fixture
 def separate_installations(tmp_path, monkeypatch):
+    monkeypatch.setattr(backend_module.OfficialBackend, "supports_native_exit", lambda self: True)
     default = tmp_path / "unconfigured default"
     monkeypatch.setenv("LOCALAPPDATA", str(default))
     monkeypatch.delenv("MATLAB_COMPANION_MATLAB_ROOT", raising=False)
@@ -238,6 +239,12 @@ def test_backend_launcher_records_identity_before_science_and_uses_selected_root
     assert "matlabProcessID" in launcher and "feature(" not in launcher
     assert "'ConvertInfAndNaN', true" in launcher
     assert backend_module.matlab_quote(job / "native-session.json") in launcher
-    assert launcher.index("fclose(") < launcher.index("movefile(") < launcher.index("companion.execute(")
-    assert not (job / "native-session.json").exists()  # Generation is not native execution evidence.
+    assert (
+        launcher.index("fclose(")
+        < launcher.index("movefile(")
+        < launcher.index("companion.execute(")
+    )
+    assert not (
+        job / "native-session.json"
+    ).exists()  # Generation is not native execution evidence.
     assert not default.exists()

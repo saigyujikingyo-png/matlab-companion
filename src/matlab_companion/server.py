@@ -11,16 +11,18 @@ from urllib.parse import urlparse
 from mcp import types
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, model_validator
 
 from . import __version__
 from .contracts import (
     MAX_INLINE_BYTES,
     TOOL_OUTPUT_MODELS,
     ContractModel,
+    EventSequence,
     Identifier,
     JobId,
     Operation,
+    WaitSeconds,
     validate_dispatch_output,
 )
 from .core import Core, WorkflowError
@@ -57,7 +59,23 @@ class RunInput(ContractModel):
 
 class JobInput(ContractModel):
     job_id: JobId
-    action: Literal["status", "cancel", "reconcile"] = "status"
+    action: Literal["status", "cancel", "reconcile", "wait"] = "status"
+    after_event_seq: EventSequence | None = Field(
+        default=None,
+        description="For wait: last observed job.event_seq; omitted means wait after the first snapshot.",
+    )
+    timeout_seconds: WaitSeconds | None = Field(
+        default=None,
+        description="For wait: 0..10 seconds, default 5; a deadline returns the current job successfully.",
+    )
+
+    @model_validator(mode="after")
+    def wait_options_require_wait(self):
+        if self.action != "wait" and (
+            self.after_event_seq is not None or self.timeout_seconds is not None
+        ):
+            raise ValueError("Wait options require action=wait")
+        return self
 
 
 class ArtifactsInput(ContractModel):
@@ -92,7 +110,7 @@ TOOL_DESCRIPTIONS = {
     "matlab_help": "Discover scientific operations and retrieve their parameter/result schemas on demand.",
     "matlab_inspect": "Register a user-selected CSV/TSV inside setup-approved folders; returns an input ID and original hash.",
     "matlab_run": "Queue an operation using help's parameter schema. Reuse an idempotency key for retries. For figure revisions provide source_job_id, source_artifact_id and expected_revision=source_job_id (the producing job UUID).",
-    "matlab_job": "Read status, request cooperative cancellation or reconcile the existing native receipt. Cancellation requested is not stopped. Never replay an unknown write.",
+    "matlab_job": "Read nested job status, wait up to 10 seconds (default 5) after job.event_seq changes, request cancellation or reconcile. Client disconnect only abandons waiting. Cancellation requested is not stopped; unknown requires recovery, never replay.",
     "matlab_artifacts": "List/read original files, retrieve schemas/results, or deliver with hash readback. Files above 16 MiB require action=deliver; their artifact URI identifies the original but cannot transfer its bytes. For deliver, destination is the full file path INCLUDING filename, not just a folder. MCP availability does not prove host receipt.",
 }
 
@@ -172,7 +190,7 @@ def create_server(core: Core) -> Server:
                 elif action == "read_schema":
                     uri = f"matlab-companion://schemas/{args['operation']}/{args['schema_kind']}"
                 if uri:
-                    resource = resource_content(core, uri)
+                    resource = await asyncio.to_thread(resource_content, core, uri)
                     if (
                         isinstance(resource, types.BlobResourceContents)
                         and resource.mime_type == "image/png"
@@ -186,7 +204,7 @@ def create_server(core: Core) -> Server:
             # Retain a valid known job even when payload or attachment construction fails.
             if job_id:
                 try:
-                    core._state(job_id)
+                    await asyncio.to_thread(core._state, job_id)
                     base["job_id"] = job_id
                 except (ValueError, WorkflowError):
                     pass
@@ -219,12 +237,13 @@ def create_server(core: Core) -> Server:
         return types.ListResourcesResult(resources=resources)
 
     async def read_resource(ctx, params):
-        return types.ReadResourceResult(contents=[resource_content(core, str(params.uri))])
+        resource = await asyncio.to_thread(resource_content, core, str(params.uri))
+        return types.ReadResourceResult(contents=[resource])
 
     return Server(
         "MATLAB Companion",
         version=__version__,
-        instructions="Use matlab_help and read_schema to discover operation parameters. Inspect selected inputs, run with explicit units and idempotency keys, poll the returned job, then deliver original files. No arbitrary MATLAB evaluator is exposed. Native execution and received files are separate evidence.",
+        instructions="Use matlab_help and read_schema to discover parameters. Inspect selected inputs, run with explicit units and idempotency keys, then matlab_job action=wait with after_event_seq=job.event_seq (max 10 seconds). Read state from result.job.state. Client disconnect does not cancel a job. Deliver original files separately; native execution is not proof of host receipt.",
         on_list_tools=list_tools,
         on_call_tool=call_tool,
         on_list_resources=list_resources,

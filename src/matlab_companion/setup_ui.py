@@ -429,6 +429,21 @@ def clear_quarantine(root: Path, *, confirmed_stopped: bool, expected_sha256: st
         ) from error
 
 
+def start_job_service(root: Path) -> dict:
+    """Explicit user action for hosts that cannot launch an independent child."""
+    from .client import CoordinatorClient
+    from .core import WorkflowError
+
+    try:
+        record = CoordinatorClient(root, idle_seconds=300)._ensure()
+    except WorkflowError as error:
+        raise SetupError(error.message) from error
+    return {
+        "state": "ready",
+        "message": f"Job service is ready. Return to your agent and use the original job or idempotency key. The service exits after {record['idle_seconds']:g} idle seconds. Accepted queued work may resume; dispatched work is never replayed.",
+    }
+
+
 def setup_status(root: Path) -> dict:
     """Passive checks only: do not construct Core, which can resume queued jobs."""
     settings = load_settings(root)
@@ -526,8 +541,11 @@ class SetupWindow:
         ttk.Label(
             frame,
             text="Check setup is passive: it does not launch MATLAB or verify a licence, native result or agent delivery.",
-            wraplength=760,
-        ).grid(row=7, column=0, columnspan=3, sticky="w", pady=(5, 12))
+            wraplength=560,
+        ).grid(row=7, column=0, columnspan=2, sticky="w", pady=(5, 12))
+        service_button = ttk.Button(frame, text="Start job service", command=self._service)
+        service_button.grid(row=7, column=2, sticky="e", pady=(5, 12))
+        self.buttons.append(service_button)
         recovery = ttk.LabelFrame(frame, text="Executor recovery", padding=10)
         recovery.grid(row=8, column=0, columnspan=3, sticky="ew")
         self.recovery_label = ttk.Label(
@@ -668,6 +686,12 @@ class SetupWindow:
             return connect_codex(self.root)
 
         self._start("Saving folders and connecting Codex through its official CLI…", connect)
+
+    def _service(self):
+        self._start(
+            "Starting the independent job service; previously accepted queued work may resume…",
+            lambda: start_job_service(self.root),
+        )
 
     def _undo(self):
         self._start(

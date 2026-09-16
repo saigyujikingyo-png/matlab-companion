@@ -26,6 +26,22 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def _sharing_retry(action):
+    """Only retry Windows sharing/access races; never retries a scientific operation."""
+    deadline = time.monotonic() + 0.25
+    while True:
+        try:
+            return action()
+        except OSError as error:
+            if (
+                os.name != "nt"
+                or getattr(error, "winerror", None) not in {5, 32, 33}
+                or time.monotonic() >= deadline
+            ):
+                raise
+            time.sleep(0.01)
+
+
 def atomic_json(path: Path, value: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + f".{os.getpid()}.{uuid.uuid4().hex}.tmp")
@@ -35,15 +51,18 @@ def atomic_json(path: Path, value: dict) -> None:
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
+        _sharing_retry(lambda: os.replace(temporary, path))
     finally:
         with contextlib.suppress(OSError):
             temporary.unlink()
 
 
 def read_json(path: Path) -> dict:
-    with path.open(encoding="utf-8-sig") as stream:
-        return json.load(stream)
+    def read():
+        with path.open(encoding="utf-8-sig") as stream:
+            return json.load(stream)
+
+    return _sharing_retry(read)
 
 
 def contained(path: Path, root: Path) -> Path:

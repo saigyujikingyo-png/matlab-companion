@@ -41,6 +41,22 @@ The preview requires the official Codex executable. Setup checks PATH, then the 
 
 ## Executor recovery
 
+In alpha.3, accepted jobs belong to one local coordinator for the resolved
+installation root. The usual idle lifetime is 30 seconds. Disconnecting an agent
+does not request cancellation. Reconnect with the same job ID and idempotency
+key; explicitly request cancellation only when intended.
+
+If a Windows host blocks independent process startup, open setup and select
+**Start job service**, then return to the agent within five minutes. This explicit
+action can resume accepted, undispatched work. A setup status check remains
+passive. The launcher never substitutes a client-owned child after a rejected
+breakaway request. Closing the whole host, outer Windows Job or operating system
+is outside the individual-client lifetime guarantee.
+
+An idle service preserves all jobs and scientific files. Storage observations
+are bounded, passive counts; an incomplete scan reports lower bounds and unknown
+active count. There is no automatic expiry or new job-deletion action.
+
 An interrupted or unconfirmed native execution can place the executor in quarantine. This blocks another calculation while the original session's outcome remains uncertain.
 
 1. Read the job ID and reason shown in **Executor recovery**.
@@ -55,6 +71,11 @@ from `native-session.json`, which observes the owned MATLAB session and its PID
 when the documented API is available. Neither a PID nor a session record proves
 native exit. Legacy or inaccessible coordinator identities are treated
 conservatively while their process may still exist.
+
+R2 additionally records `native-lifecycle.json`: launcher nonce and process birth
+identity are verified before holding a query-only process handle until its exit.
+`native_exited`, RPC response, backend return and a scientific receipt remain
+separate observations. An idle coordinator exit never asserts a native stop.
 
 ## Development installation
 

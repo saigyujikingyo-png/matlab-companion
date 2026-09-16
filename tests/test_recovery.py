@@ -215,6 +215,7 @@ def test_cancel_cannot_overwrite_a_concurrently_completed_job(core_factory, monk
         | {
             "state": "running",
             "summary": "Paused immediately before completion",
+            "phase": "executing",
         },
     )
     initial_read = threading.Event()
@@ -374,6 +375,7 @@ def test_recovery_finishes_commit_after_manifest_was_saved(core_factory, monkeyp
         | {
             "state": "running",
             "summary": "Coordinator stopped between manifest and final state commits",
+            "phase": "validating",
         },
     )
     atomic_json(

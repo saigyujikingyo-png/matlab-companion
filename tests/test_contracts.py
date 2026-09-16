@@ -7,7 +7,7 @@ import json
 
 import pytest
 from jsonschema import Draft202012Validator
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from matlab_companion.contracts import (
     DISPATCH_OUTPUT_MODELS,
@@ -16,8 +16,10 @@ from matlab_companion.contracts import (
     Artifact,
     ColumnProfile,
     DeliveryReceipt,
+    JobSummary,
     Metric,
     NativeReceipt,
+    WaitSeconds,
     dispatch_schemas,
     operation_schemas,
     tool_output_model,
@@ -32,6 +34,147 @@ REQUEST_ID = "1e8398e0-9de3-4a6a-8494-cd7876a2e9b2"
 OTHER_JOB = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 OBSERVED = "2026-09-15T15:00:00Z"
 SHA = "a" * 64
+
+
+def test_legacy_jobs_have_unknown_phase_and_zero_event_cursor_without_mutation():
+    source = public_examples()["matlab_run"]
+    original = copy.deepcopy(source)
+    accepted = tool_output_model("matlab_run").model_validate(source)
+    job = accepted.model_dump(mode="json")["job"]
+    assert job["phase"] is None
+    assert job["event_seq"] == 0
+    assert source == original
+
+
+def test_legacy_status_omits_no_observation_as_zero_storage():
+    accepted = tool_output_model("matlab_status").model_validate(public_examples()["matlab_status"])
+    assert accepted.model_dump(mode="json")["runtime"] is None
+
+
+@pytest.mark.parametrize("timeout", [0, 0.0, 5, 10, 10.0])
+def test_wait_seconds_accepts_host_numeric_deadline_boundaries(timeout):
+    assert TypeAdapter(WaitSeconds).validate_python(timeout) == timeout
+
+
+@pytest.mark.parametrize("timeout", [-0.001, 10.001, True, "5", None, float("nan"), float("inf")])
+def test_wait_seconds_rejects_unbounded_or_coerced_deadlines(timeout):
+    with pytest.raises(ValidationError):
+        TypeAdapter(WaitSeconds).validate_python(timeout)
+
+
+def test_wait_route_preserves_the_existing_job_envelope_and_completed_result():
+    source = public_examples()["matlab_job"]
+    source["job"].update(event_seq=7, phase="completed")
+    accepted = validate_dispatch_output("matlab_job", "wait", source)
+    payload = accepted.model_dump(mode="json")
+    assert payload["job_id"] == payload["job"]["job_id"] == JOB_ID
+    assert payload["job"]["event_seq"] == 7
+    assert payload["result"]["operation"] == payload["job"]["operation"]
+    assert set(payload) == {
+        "contract_version",
+        "request_id",
+        "observed_at",
+        "ok",
+        "job_id",
+        "error",
+        "operation",
+        "job",
+        "result",
+    }
+    assert json.loads(accepted.model_dump_json()) == payload
+    Draft202012Validator(dispatch_schemas()["matlab_job.wait"]["result"]).validate(payload)
+
+
+@pytest.mark.parametrize("cursor", [-1, 2**53, True, 1.0, "1", None])
+def test_job_event_cursor_rejects_coercion_and_unsafe_json_integers(cursor):
+    raw = public_examples()["matlab_run"]["job"]
+    raw.update(event_seq=cursor, phase="queued")
+    with pytest.raises(ValidationError):
+        JobSummary.model_validate(raw)
+
+
+@pytest.mark.parametrize(
+    "state,phase,error",
+    [
+        ("queued", "executing", None),
+        ("running", "completed", None),
+        ("completed", "validating", None),
+        ("cancelled", "cancel_requested", None),
+        ("unknown", "completed", {"code": "OUTCOME_UNKNOWN", "message": "No native receipt."}),
+        ("running", "90_percent", None),
+    ],
+)
+def test_job_phase_cannot_claim_a_different_execution_state(state, phase, error):
+    raw = public_examples()["matlab_run"]["job"]
+    raw.update(state=state, phase=phase, error=error)
+    with pytest.raises(ValidationError):
+        JobSummary.model_validate(raw)
+
+
+@pytest.mark.parametrize("state", ["running", "cancel_requested", "unknown", "interrupted"])
+def test_receipt_validation_does_not_claim_a_confirmed_native_outcome(state):
+    raw = public_examples()["matlab_run"]["job"]
+    raw.update(state=state, phase="validating", event_seq=2**53 - 1)
+    if state in {"unknown", "interrupted"}:
+        raw["error"] = {"code": "OUTCOME_UNKNOWN", "message": "Receipt needs validation."}
+    accepted = JobSummary.model_validate(raw)
+    assert accepted.state == state
+    assert accepted.phase == "validating"
+    assert accepted.event_seq == 2**53 - 1
+
+
+def runtime_snapshot(*, complete=True):
+    return {
+        "active_jobs": 2 if complete else None,
+        "retained_jobs": 3,
+        "storage_bytes": 1234,
+        "storage_complete": complete,
+        "observed_at": OBSERVED,
+    }
+
+
+@pytest.mark.parametrize("complete", [False, True])
+def test_status_storage_snapshot_distinguishes_partial_accounting_from_zero(complete):
+    raw = public_examples()["matlab_status"]
+    raw["runtime"] = runtime_snapshot(complete=complete)
+    accepted = tool_output_model("matlab_status").model_validate(raw)
+    payload = accepted.model_dump(mode="json")
+    runtime = payload["runtime"]
+    assert runtime["max_active_jobs"] == 10
+    assert runtime["retention"] == "explicit_removal_only"
+    assert runtime["automatic_cleanup"] is False
+    assert runtime["active_jobs"] == (2 if complete else None)
+    assert runtime["storage_bytes"] == 1234
+    Draft202012Validator(accepted.model_json_schema()).validate(payload)
+    assert json.loads(accepted.model_dump_json()) == payload
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        {"storage_complete": False},
+        {"active_jobs": None},
+        {"active_jobs": 4},
+        {"active_jobs": True},
+        {"retained_jobs": -1},
+        {"storage_bytes": -1},
+        {"storage_bytes": 2**53},
+        {"storage_bytes": "1234"},
+        {"storage_bytes": True},
+        {"max_active_jobs": 11},
+        {"max_active_jobs": 10.0},
+        {"automatic_cleanup": True},
+        {"automatic_cleanup": 0},
+        {"retention": "expire_after_30_days"},
+        {"observed_at": "2026-02-30T15:00:00Z"},
+        {"private_root": "private installation location"},
+    ],
+)
+def test_status_rejects_misleading_or_unbounded_runtime_accounting(override):
+    raw = public_examples()["matlab_status"]
+    raw["runtime"] = {**runtime_snapshot(), **override}
+    with pytest.raises(ValidationError):
+        tool_output_model("matlab_status").model_validate(raw)
 
 
 @pytest.fixture

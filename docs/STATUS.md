@@ -1,8 +1,19 @@
 # Implementation status
 
-Updated: 2026-09-15. Version: 0.1.0a2 (R1 early preview).
+Updated: 2026-09-16. Version: 0.1.0a3 candidate (R2 early preview).
 
-## Current R1 acceptance
+## Current R2 candidate
+
+The owner approved R2 on 2026-09-16. The candidate adds a per-root local job
+coordinator, private JSON IPC, thin stdio frontends, factual job phases and event
+sequences, bounded waiting, passive storage accounting and held-handle native
+exit observation. R3 has not started. Native execution remains Windows-only;
+unsupported native observation is rejected before a scientific job is admitted.
+See [R2 durable jobs](R2_DURABLE_JOBS.md) for the current evidence ledger.
+The published and installed alpha.2 below remains the rollback baseline until
+the exact R2 package passes its own release and upgrade checks.
+
+## Historical R1 acceptance
 
 The owner approved R1. Passive diagnostics, selected-root propagation, durable
 execution isolation/process identity and over-limit local-delivery routing are
@@ -62,7 +73,7 @@ user/device, upgrades and other-host acceptance remain separate gates.
 | Figure visual checks | READY for selected exports | Assistant visual inspection of the TSV calibration and light-style kinetics exports completed; this is not a visible MATLAB editing or complete figure-quality acceptance |
 | Stable release acceptance | PARTIAL | Alpha preview only; clean-device, upgrade, owner review and broader host gates open |
 
-The architecture document is an approved design record, not a list of shipped features. Warm sessions, shared IPC, remote authentication/service and host attachment adapters are not implemented.
+The architecture document is an approved design record, not a list of shipped features. R2 adds private local IPC. Warm sessions, remote authentication/service and host attachment adapters are not implemented.
 
 The alpha.1 source review identified two P1 reliability concerns: CLI diagnostics
 can resume an orphaned queue during core construction, and failure quarantine

@@ -1,6 +1,16 @@
 # Compatibility and acceptance
 
-Updated: 2026-09-15. Current version: **0.1.0a2, R1 development preview**.
+Updated: 2026-09-16. Current candidate: **0.1.0a3, R2 development preview**.
+
+R2 adds private local IPC and native exit observation. Windows native execution
+requires an independently started coordinator and a verified owned MATLAB process
+handle. Linux/macOS native execution is explicitly unsupported in this candidate
+because its exit observer is not implemented there; portable Linux CI is a
+separate gate. Individual frontend disconnect and complete host termination have
+different scopes. See the [R2 ledger](R2_DURABLE_JOBS.md) for current evidence.
+The matrix below retains historical alpha.1 results; it is not R2 acceptance.
+
+## Historical alpha.2 evidence
 
 R1 runtime `41f9cf7` passed current Windows/Ubuntu CI, the bounded native
 interruption/sentinel case and six final-package native cases across all five
