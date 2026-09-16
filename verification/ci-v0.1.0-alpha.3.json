@@ -1,0 +1,10 @@
+{
+  "source_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+  "run_url": "https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35083094659",
+  "outcome": "passed",
+  "windows": {"passed": 364, "skipped": 6, "seconds": 37.03},
+  "ubuntu": {"passed": 363, "skipped": 7, "seconds": 23.19},
+  "checks": ["pytest", "ruff", "22 schema registry checks", "real stdio MCP", "89-file public source audit"],
+  "windows_runner_capability": "The two-client positive startup test skips only when both Windows clients prove one breakaway launch was denied, no process identity was created, and no fallback or scientific state appeared. Other startup errors and timeouts fail. The positive case and strict-Job rejection case passed on the development machine.",
+  "scope": "Exact runtime-source portable CI. Native execution, installed model, package, current-device upgrade and saved cloud-container acceptance are separate."
+}

@@ -1,0 +1,174 @@
+{
+  "source_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+  "source_dirty": false,
+  "package_version": "0.1.0a3",
+  "archive_sha256": "d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa",
+  "backend_version": "0.13.0",
+  "backend_sha256": "4e065398cf86e9d1d4d3e30cec7faf6f16491ab08128da9a8336369166ad9917",
+  "host": "Codex CLI ephemeral",
+  "native_platform": "Windows local licensed MATLAB",
+  "matlab_release": "2026a",
+  "matlab_version": "26.1.0.3346908 (R2026a) Update 5",
+  "model_requested": "gpt-5.6-terra",
+  "reasoning_requested": "max",
+  "resolved_model_identity_confirmed": false,
+  "actual_reasoning_effort_confirmed": false,
+  "resolved_model_identity": null,
+  "resolved_reasoning_effort": null,
+  "first_attempt_success": false,
+  "observed_at": "2026-09-16T10:29:26.366911+00:00",
+  "outcome": "partial",
+  "model_turn": 2,
+  "scientific_outcome": "completed",
+  "delivery_outcome": "rejected_before_copy",
+  "missing_argument": "job_id",
+  "tool_error": "INPUT_INVALID",
+  "scientific_jobs": 1,
+  "dispatches": 1,
+  "verified_deliveries_in_this_turn": 0,
+  "wait_observations": [
+    {
+      "requested_after_event_seq": 1,
+      "timeout_seconds": 10,
+      "returned_event_seq": 2,
+      "returned_state": "running"
+    },
+    {
+      "requested_after_event_seq": 2,
+      "timeout_seconds": 10,
+      "returned_event_seq": 2,
+      "returned_state": "running"
+    },
+    {
+      "requested_after_event_seq": 2,
+      "timeout_seconds": 10,
+      "returned_event_seq": 4,
+      "returned_state": "completed"
+    }
+  ],
+  "corrected_event_audit": {
+    "checks": {
+      "one_run_started_and_completed": true,
+      "companion_tools_only": true,
+      "no_other_tool_items": true,
+      "all_started_calls_completed": true,
+      "correct_run": true,
+      "wait_sequence_valid": true,
+      "sequence_nondecreasing": true,
+      "seven_verified_delivery_calls": false,
+      "no_cancel_or_reconcile": true,
+      "no_tool_errors": false,
+      "one_completed_turn": true,
+      "no_event_errors": true
+    },
+    "evidence": {
+      "tool_calls": {
+        "matlab_run": 1,
+        "matlab_job": 3,
+        "matlab_artifacts": 2
+      },
+      "wait_calls": 3,
+      "event_sequences": [
+        1,
+        2,
+        2,
+        4
+      ],
+      "tool_error_codes": {
+        "INPUT_INVALID": 1
+      },
+      "event_errors": 0,
+      "known_nonfatal_feature_warnings": 1,
+      "fatal_item_errors": 0,
+      "malformed_event_lines": 0,
+      "usage_events": [
+        {
+          "input_tokens": 113214,
+          "cached_input_tokens": 82176,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3548,
+          "reasoning_output_tokens": 2297
+        }
+      ],
+      "explicit_event_models": null,
+      "explicit_event_reasoning_efforts": null
+    }
+  },
+  "raw_operator_receipt_sha256": "353896000b3f196c673df178e0457a70fec11de40608c545f317c12269d6114a",
+  "raw_operator_audit_preserved_for_history": {
+    "checks": {
+      "complete_job_evidence_readable": false,
+      "one_run_started_and_completed": true,
+      "companion_tools_only": true,
+      "no_other_tool_items": false,
+      "all_started_calls_completed": true,
+      "correct_run": true,
+      "wait_sequence_valid": true,
+      "sequence_nondecreasing": true,
+      "seven_verified_delivery_calls": false,
+      "no_cancel_or_reconcile": true,
+      "no_tool_errors": false,
+      "one_completed_turn": true,
+      "no_event_errors": true,
+      "cli_completed": true
+    },
+    "execution": {
+      "exit_code": 0,
+      "timed_out": false,
+      "failure_stage": null,
+      "seconds": 92.953,
+      "coordinator_running_after_cli": true
+    },
+    "event_evidence": {
+      "tool_calls": {
+        "matlab_run": 1,
+        "matlab_job": 3,
+        "matlab_artifacts": 2
+      },
+      "wait_calls": 3,
+      "event_sequences": [
+        1,
+        2,
+        2,
+        4
+      ],
+      "tool_error_codes": {
+        "INPUT_INVALID": 1
+      },
+      "event_errors": 0,
+      "malformed_event_lines": 0,
+      "usage_events": [
+        {
+          "input_tokens": 113214,
+          "cached_input_tokens": 82176,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3548,
+          "reasoning_output_tokens": 2297
+        }
+      ],
+      "explicit_event_models": null,
+      "explicit_event_reasoning_efforts": null
+    },
+    "job_evidence": {
+      "read_error_type": "FileNotFoundError",
+      "retained_state_records": 1,
+      "dispatch_records": 1
+    }
+  },
+  "audit_interpretation": [
+    "The raw no_other_tool_items failure was the exact known nonfatal feature warning; the corrected audit classifies it separately.",
+    "The raw FileNotFoundError was caused by missing delivery receipts after the rejected call; it was not a native scientific execution failure.",
+    "The continuation preflight required an empty delivered folder before writing its protected-record snapshot.",
+    "No successful delivery from a later model turn is attributed to this first scientific turn."
+  ],
+  "native_verification": {
+    "native_reopen": true,
+    "numerical": true,
+    "script_rerun": true
+  },
+  "native_lifecycle": {
+    "rpc_response_observed": true,
+    "backend_returned": true,
+    "native_exited": true
+  }
+}

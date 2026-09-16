@@ -1,0 +1,84 @@
+{
+  "observed_at": "2026-09-16T10:19:29.438496+00:00",
+  "outcome": "partial",
+  "source_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+  "source_dirty": false,
+  "package_version": "0.1.0a3",
+  "archive_sha256": "d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa",
+  "archive_hash_recomputed": true,
+  "archive_hash_without_archive": "operator supplied from separate package audit",
+  "backend_version": "0.13.0",
+  "backend_sha256": "4e065398cf86e9d1d4d3e30cec7faf6f16491ab08128da9a8336369166ad9917",
+  "model_requested": "gpt-5.6-terra",
+  "reasoning_requested": "max",
+  "availability_observed": "completed_turn_under_requested_configuration",
+  "resolved_model_identity_confirmed": false,
+  "actual_reasoning_effort_confirmed": false,
+  "coordinator_prestarted": true,
+  "coordinator_idle_seconds": 300,
+  "checks": {
+    "complete_job_evidence_readable": false,
+    "one_run_started_and_completed": false,
+    "companion_tools_only": true,
+    "no_other_tool_items": false,
+    "all_started_calls_completed": true,
+    "correct_run": true,
+    "wait_sequence_valid": false,
+    "sequence_nondecreasing": true,
+    "seven_verified_delivery_calls": false,
+    "no_cancel_or_reconcile": true,
+    "no_tool_errors": true,
+    "one_completed_turn": true,
+    "no_event_errors": true,
+    "cli_completed": true
+  },
+  "execution": {
+    "exit_code": 0,
+    "timed_out": false,
+    "failure_stage": null,
+    "seconds": 32.188,
+    "coordinator_running_after_cli": true
+  },
+  "event_evidence": {
+    "tool_calls": {},
+    "wait_calls": 0,
+    "event_sequences": [],
+    "tool_error_codes": {},
+    "event_errors": 0,
+    "malformed_event_lines": 0,
+    "usage_events": [
+      {
+        "input_tokens": 18005,
+        "cached_input_tokens": 7936,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1302,
+        "reasoning_output_tokens": 1113
+      }
+    ],
+    "explicit_event_models": null,
+    "explicit_event_reasoning_efforts": null
+  },
+  "job_evidence": {
+    "read_error_type": "ValueError",
+    "retained_state_records": 0,
+    "dispatch_records": 0
+  },
+  "scope": [
+    "One synthetic kinetics job via Codex CLI; seven approved local original-file deliveries",
+    "Coordinator explicitly prestarted with packaged Python and mandatory BREAKAWAY|NO_WINDOW",
+    "Not coordinator auto-start, GUI/owner visual review, host attachment, new-device or all-host acceptance",
+    "Not outer host/OS shutdown survival; raw process/session identities and logs remain private",
+    "One dispatch record and one observed model run call; native entry count was not instrumented",
+    "No cost inference, automatic replay, native termination, host configuration edit, or cleanup"
+  ],
+  "operator_review": {
+    "reason": "Benchmark configuration incorrectly disabled the code-mode host required by the current Codex tool router. Model stopped before submitting any job. Removed only this disabled feature override for the next attempt.",
+    "model_attempt": 1,
+    "scientific_jobs": 0,
+    "dispatches": 0,
+    "scientific_replay": false,
+    "host_item_error_observed": "code-mode host is disabled",
+    "first_attempt_success": false,
+    "no_event_errors_scope": "The raw false-negative reflects top-level event checking only; item-level host errors are independently recorded here."
+  }
+}

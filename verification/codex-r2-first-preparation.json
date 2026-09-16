@@ -1,0 +1,72 @@
+{
+  "observed_at": "2026-09-16T10:17:53.388155+00:00",
+  "outcome": "partial",
+  "source_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+  "source_dirty": false,
+  "package_version": "0.1.0a3",
+  "archive_sha256": "d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa",
+  "archive_hash_recomputed": true,
+  "archive_hash_without_archive": "operator supplied from separate package audit",
+  "backend_version": "0.13.0",
+  "backend_sha256": "4e065398cf86e9d1d4d3e30cec7faf6f16491ab08128da9a8336369166ad9917",
+  "model_requested": "gpt-5.6-terra",
+  "reasoning_requested": "max",
+  "availability_observed": "no_completed_turn",
+  "resolved_model_identity_confirmed": false,
+  "actual_reasoning_effort_confirmed": false,
+  "coordinator_prestarted": false,
+  "coordinator_idle_seconds": 300,
+  "checks": {
+    "complete_job_evidence_readable": false,
+    "one_run_started_and_completed": false,
+    "companion_tools_only": true,
+    "no_other_tool_items": true,
+    "all_started_calls_completed": true,
+    "correct_run": true,
+    "wait_sequence_valid": false,
+    "sequence_nondecreasing": true,
+    "seven_verified_delivery_calls": false,
+    "no_cancel_or_reconcile": true,
+    "no_tool_errors": true,
+    "one_completed_turn": false,
+    "no_event_errors": true,
+    "cli_completed": false
+  },
+  "execution": {
+    "exit_code": null,
+    "timed_out": false,
+    "failure_stage": "coordinator_start",
+    "seconds": 1.781,
+    "coordinator_running_after_cli": false
+  },
+  "event_evidence": {
+    "tool_calls": {},
+    "wait_calls": 0,
+    "event_sequences": [],
+    "tool_error_codes": {},
+    "event_errors": 0,
+    "malformed_event_lines": 0,
+    "usage_events": null,
+    "explicit_event_models": null,
+    "explicit_event_reasoning_efforts": null
+  },
+  "job_evidence": {
+    "read_error_type": "ValueError",
+    "retained_state_records": 0,
+    "dispatch_records": 0
+  },
+  "scope": [
+    "First model preparation attempt stopped before invoking Codex or submitting scientific work.",
+    "Raw record retained; no scientific replay, model retry or runtime code change.",
+    "Prepared empty coordinator remains for natural idle exit."
+  ],
+  "preparation_audit": {
+    "reason": "Operator compared a resolved coordinator root with an unresolved Windows application-virtualized path. Corrected only the ignored acceptance operator to resolve its new private root.",
+    "model_invoked": false,
+    "scientific_jobs": 0,
+    "dispatches": 0,
+    "coordinator_started_and_independently_observed": true,
+    "automatic_idle_exit": "pending; no termination requested",
+    "raw_operator_field_limit": "coordinator_prestarted and coordinator_running_after_cli were false because the start helper raised before returning its handle; independent observation confirms a ready empty coordinator."
+  }
+}

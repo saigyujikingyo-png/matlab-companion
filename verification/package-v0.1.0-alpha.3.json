@@ -1,0 +1,100 @@
+{
+  "observed_at": "2026-09-16T10:09:41.058338+00:00",
+  "status": "pass",
+  "archive_name": "MATLAB-Companion-0.1.0a3-windows-x64.zip",
+  "archive_size_bytes": 33104323,
+  "archive_sha256": "d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa",
+  "relocated_path_contains_spaces_and_chinese": true,
+  "boundaries": {
+    "visible_gui_opened": false,
+    "host_configuration_changed": false,
+    "matlab_launched": false,
+    "vendor_downloaded": false,
+    "fresh_device_acceptance": false,
+    "host_model_acceptance": false,
+    "native_artifact_delivery_acceptance": false,
+    "note": "Package bytes/runtime/protocol/hidden-window audit only."
+  },
+  "self_test": {
+    "returncode": 0,
+    "elapsed_seconds": 2.234,
+    "portable_pass_text_present": true,
+    "root_created": false
+  },
+  "protocol_and_hidden_tk": {
+    "returncode": 0,
+    "elapsed_seconds": 4.437,
+    "result": {
+      "resource_count": 10,
+      "resources_read": 10,
+      "wait_advertised": true,
+      "native_dispatch_files": 0,
+      "registered_jobs": 0,
+      "tk": {
+        "state_during_update": "withdrawn",
+        "version": "8.6.12",
+        "setup_constructed": true,
+        "updated": true,
+        "destroyed": true
+      },
+      "python_relative": "runtime/python.exe",
+      "module_relative": "runtime/Lib/site-packages/matlab_companion/__init__.py",
+      "runtime_version": "0.1.0a3",
+      "tool_calls": [
+        {
+          "tool": "matlab_status",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_help",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_inspect",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_artifacts",
+          "is_error": false
+        },
+        {
+          "tool": "matlab_run",
+          "is_error": true
+        },
+        {
+          "tool": "matlab_job",
+          "is_error": true
+        }
+      ],
+      "validated_output_schemas": 6
+    }
+  },
+  "coordinator": {
+    "prestarted": true,
+    "launch_flags": [
+      "BREAKAWAY_FROM_JOB",
+      "CREATE_NO_WINDOW"
+    ],
+    "isolated_root": true,
+    "idle_exit": true,
+    "backend_present": false,
+    "native_process_exit_claim": false
+  },
+  "manifest": {
+    "entries": 3991,
+    "mismatches": 0,
+    "unlisted_file_count": 0,
+    "pre_and_post_runtime_readback": true,
+    "source_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+    "source_dirty": false,
+    "python": "3.12.14"
+  },
+  "privacy_scan": {
+    "source_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+    "archive_sha256": "d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa",
+    "scope": "Exact builder username and checkout bytes in UTF-8/UTF-16; not a comprehensive secret audit",
+    "matches": 0,
+    "embedded_builder_metadata": 0,
+    "passed": true
+  }
+}

@@ -1,6 +1,6 @@
 # Next technical route
 
-Updated: 2026-09-16. **R1 has recorded acceptance. R2 is approved and in progress as the alpha.3 candidate; R3 has not started.**
+Updated: 2026-09-16. **R1 has recorded acceptance. R2 is implemented and released as alpha.3 with scoped acceptance. R3 has not started.**
 Recorded R1 evidence is in [R1 reliability](R1_RELIABILITY.md); the current
 implementation and acceptance ledger is [R2 durable jobs](R2_DURABLE_JOBS.md).
 
@@ -45,7 +45,7 @@ flowchart LR
     A --> J[Durable job commands and artifact service]
     C --> D
     C --> J
-    J --> S[Per-user and root coordinator: R2 candidate]
+    J --> S[Per-user and root coordinator: R2 released]
     S --> W[Owned worker: fresh MATLAB session]
     W --> B[Official MathWorks MCP backend]
     B --> M[Licensed local MATLAB]
@@ -54,9 +54,9 @@ flowchart LR
     J --> L[Approved local delivery and readback]
 ```
 
-R1 established the recorded execution and diagnostic boundary. The R2 candidate
-now implements this local coordinator topology; independent acceptance is still
-in progress. It separates job ownership from an individual MCP client, without
+R1 established the recorded execution and diagnostic boundary. The R2 release
+implements this local coordinator topology with the recorded portable and
+native acceptance below. It separates job ownership from an individual MCP client, without
 a public network listener or database. Outer-host or operating-system termination
 remains outside the client-disconnect guarantee.
 
@@ -96,11 +96,31 @@ cannot close this native gate.
 
 ## R2 — Make installed jobs survive ordinary client behavior
 
-**Approved on 2026-09-16; implementation and acceptance in progress.** Candidate
-version: `0.1.0a3` / `0.1.0-alpha.3`. Publication and exact-package native,
-installed-host, model and cloud results remain separate pending gates.
+**Approved and released on 2026-09-16, with scoped acceptance.**
+Release version: `0.1.0a3` / `0.1.0-alpha.3`, runtime
+`1b2eb73bcd674056cf756260ee5359c083c24afe`.
+[Windows/Ubuntu CI](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35083094659)
+and the [relocated package-runtime audit](../verification/package-v0.1.0-alpha.3.json) passed.
+The [current ledger](STATUS.md#current-r2-candidate) identifies the exact archive;
+its [three lifecycle cases](../verification/native-r2-v0.1.0-alpha.3.json) and
+[six scientific cases with 43 local-file readbacks](../verification/native-v0.1.0-alpha.3.json)
+passed from the manifest-bound packaged runtime. The
+[current-device upgrade and registered read-only probe](../verification/local-upgrade-v0.1.0-alpha.3.json)
+also passed, preserving settings, jobs, other connections and alpha.2 files.
+The [model workflow passed after correction](../verification/codex-r2-v0.1.0-alpha.3.json):
+three actual model turns, one scientific job, three valid waits and seven
+original-file deliveries. First-attempt success is false; the missing-`job_id`
+delivery and operator configuration error remain counted. A delivery-only
+continuation reused the completed job without replay. Requested Terra max does
+not confirm resolved model/effort metadata, which the CLI did not expose.
+[Publication and fresh-download readback](../verification/release-v0.1.0-alpha.3.json)
+passed. Saved cloud-container, visible setup, new-device and other-host
+acceptance remain unverified preview limits. The
+earlier `de1cf61` source-native checkpoint is preserved under its own identity.
+Crash-case independent process-exit evidence does not replace the interrupted
+production observer or clear the preserved unknown job/quarantine.
 
-The candidate uses one on-demand coordinator per user and resolved installation
+The release uses one on-demand coordinator per user and resolved installation
 root, with thin stdio front ends and the existing file-based store. Windows uses
 a current-user named-pipe ACL with remote clients rejected; Linux uses a private
 Unix socket. Private bounded JSON RPC carries approved commands. A lifetime lock,
@@ -234,6 +254,7 @@ that passed; do not turn a repaired diagnostic or schema check into a stable
 release claim. Retain the current package as the explicit rollback artifact.
 
 **Current boundary:** the owner authorized R2 implementation and verification on
-2026-09-16. Complete and report its exact candidate gates without inheriting
-alpha.2 native, package, model or host results. R3 and later options remain
-proposals and have not started.
+2026-09-16. R2 is released with separately recorded package, native,
+model-after-correction, current-device upgrade and publication evidence.
+Unverified scopes do not inherit alpha.2 acceptance. R3 and later options
+remain proposals and have not started.

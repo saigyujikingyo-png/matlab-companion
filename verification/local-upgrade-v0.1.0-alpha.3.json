@@ -1,0 +1,77 @@
+{
+  "observed_at": "2026-09-16T10:28:31.649990+00:00",
+  "outcome": "passed",
+  "scope": "Current-device alpha.2 to alpha.3 upgrade and exact registered read-only MCP probe; no native or model execution, visible wizard, new device or rollback exercise.",
+  "source_runtime_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+  "package_sha256": "d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa",
+  "runtime_version": "0.1.0a3",
+  "verified_manifest_files": 3991,
+  "matching_successful_runtime_journals": 1,
+  "matching_successful_plugin_journals": 1,
+  "official_cli_owned_connection_readback": true,
+  "runtime_own_module": true,
+  "settings_and_existing_jobs_preserved": true,
+  "retained_alpha2_files_unchanged": true,
+  "previous_connection_receipt_backed_up": true,
+  "preexisting_other_mcp_preserved": true,
+  "upgrade_baseline_other_hashes_compared": true,
+  "preexisting_other_mcp_count_at_upgrade": 7,
+  "passive_self_test": "passed",
+  "mcp_read_only_probe": {
+    "tool_count": 6,
+    "validated_output_schemas": 6,
+    "resource_count": 10,
+    "resources_read": 10,
+    "calls": [
+      {
+        "tool": "matlab_status",
+        "is_error": false
+      },
+      {
+        "tool": "matlab_help",
+        "is_error": false
+      },
+      {
+        "tool": "matlab_inspect",
+        "is_error": true
+      },
+      {
+        "tool": "matlab_artifacts",
+        "is_error": false
+      },
+      {
+        "tool": "matlab_run",
+        "is_error": true
+      },
+      {
+        "tool": "matlab_job",
+        "is_error": true
+      }
+    ],
+    "structured_results_valid": true,
+    "json_fallback_matches": true,
+    "registered_command_used": true,
+    "coordinator_started": false,
+    "native_dispatch_requested": false
+  },
+  "plugin": {
+    "version": "0.1.0-alpha.3+codex.20260916102812",
+    "installed": true,
+    "enabled": true,
+    "cached_skill_matches_source": true,
+    "cached_manifest_matches_source": true,
+    "icon_sha256": {
+      "icon.png": "518d940313d055d9cbc579c72d847857ed43e1dc12f011f8f63dca2364af756e",
+      "icon.ico": "80b94c3ffc9f7e14f238b17cad0eb24dae5a457e7cb609c3da6f23ba32e34f76"
+    }
+  },
+  "start_menu_shortcut": {
+    "actual_target_verified": true,
+    "target_version": "0.1.0a3",
+    "selected_root_explicit": true,
+    "old_shortcut_backed_up": true,
+    "icon_preserved": true,
+    "visible_launch": "not_run"
+  },
+  "privacy": "Paths, private job identifiers/content, account data and unrelated MCP names omitted."
+}

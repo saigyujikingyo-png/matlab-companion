@@ -1,0 +1,273 @@
+{
+  "source_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+  "source_dirty": false,
+  "package_version": "0.1.0a3",
+  "archive_sha256": "d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa",
+  "backend_version": "0.13.0",
+  "backend_sha256": "4e065398cf86e9d1d4d3e30cec7faf6f16491ab08128da9a8336369166ad9917",
+  "host": "Codex CLI ephemeral",
+  "native_platform": "Windows local licensed MATLAB",
+  "matlab_release": "2026a",
+  "matlab_version": "26.1.0.3346908 (R2026a) Update 5",
+  "model_requested": "gpt-5.6-terra",
+  "reasoning_requested": "max",
+  "resolved_model_identity_confirmed": false,
+  "actual_reasoning_effort_confirmed": false,
+  "resolved_model_identity": null,
+  "resolved_reasoning_effort": null,
+  "first_attempt_success": false,
+  "observed_at": "2026-09-16T10:29:26.366911+00:00",
+  "outcome": "passed_after_correction",
+  "preparation_failure": {
+    "model_invoked": false,
+    "scientific_jobs": 0,
+    "dispatches": 0,
+    "reason": "Resolved versus unresolved Windows root alias comparison in the private operator",
+    "seconds": 1.781,
+    "preserved_receipt": "codex-r2-first-preparation.json",
+    "preserved_receipt_sha256": "2c8ca4dcb118d9b1759c1c5502dd52d7c3e9c6ebe33dd1eaf8cd447562df6540"
+  },
+  "model_turns": [
+    {
+      "model_turn": 1,
+      "phase": "operator_code_host_disabled_no_scientific_work",
+      "seconds": 32.188,
+      "cli_exit_code": 0,
+      "mcp_calls": 0,
+      "by_tool": {},
+      "known_nonfatal_feature_warnings": 1,
+      "fatal_item_errors": 1,
+      "tool_error_codes": {},
+      "usage_events": [
+        {
+          "input_tokens": 18005,
+          "cached_input_tokens": 7936,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1302,
+          "reasoning_output_tokens": 1113
+        }
+      ],
+      "resolved_model_metadata": null,
+      "resolved_reasoning_metadata": null
+    },
+    {
+      "model_turn": 2,
+      "phase": "science_completed_delivery_rejected_missing_job_id",
+      "seconds": 92.953,
+      "cli_exit_code": 0,
+      "mcp_calls": 6,
+      "by_tool": {
+        "matlab_run": 1,
+        "matlab_job": 3,
+        "matlab_artifacts": 2
+      },
+      "known_nonfatal_feature_warnings": 1,
+      "fatal_item_errors": 0,
+      "tool_error_codes": {
+        "INPUT_INVALID": 1
+      },
+      "usage_events": [
+        {
+          "input_tokens": 113214,
+          "cached_input_tokens": 82176,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3548,
+          "reasoning_output_tokens": 2297
+        }
+      ],
+      "resolved_model_metadata": null,
+      "resolved_reasoning_metadata": null
+    },
+    {
+      "model_turn": 3,
+      "phase": "corrected_delivery_only_same_completed_job",
+      "seconds": 66.547,
+      "cli_exit_code": 0,
+      "mcp_calls": 8,
+      "by_tool": {
+        "matlab_artifacts": 8
+      },
+      "known_nonfatal_feature_warnings": 1,
+      "fatal_item_errors": 0,
+      "tool_error_codes": {},
+      "usage_events": [
+        {
+          "input_tokens": 146503,
+          "cached_input_tokens": 123392,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2386,
+          "reasoning_output_tokens": 891
+        }
+      ],
+      "resolved_model_metadata": null,
+      "resolved_reasoning_metadata": null
+    }
+  ],
+  "totals": {
+    "model_turns": 3,
+    "model_elapsed_seconds": 191.688,
+    "elapsed_including_failed_preparation_seconds": 193.469,
+    "mcp_calls": 14,
+    "by_tool": {
+      "matlab_run": 1,
+      "matlab_job": 3,
+      "matlab_artifacts": 10
+    },
+    "scientific_submissions": 1,
+    "retained_scientific_jobs": 1,
+    "dispatch_records": 1,
+    "valid_wait_calls": 3,
+    "artifact_list_calls": 2,
+    "delivery_attempts": 8,
+    "rejected_delivery_calls": 1,
+    "verified_deliveries": 7,
+    "fatal_operator_item_errors": 1,
+    "known_nonfatal_feature_warnings": 3,
+    "usage_fields_summed_independently": {
+      "input_tokens": 277722,
+      "cached_input_tokens": 213504,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 7236,
+      "reasoning_output_tokens": 4301
+    },
+    "usage_note": "Cached-input and reasoning fields may be subsets of other reported fields; they are not added across categories. No monetary cost or quota-efficiency claim is made."
+  },
+  "wait_observations": [
+    {
+      "requested_after_event_seq": 1,
+      "timeout_seconds": 10,
+      "returned_event_seq": 2,
+      "returned_state": "running"
+    },
+    {
+      "requested_after_event_seq": 2,
+      "timeout_seconds": 10,
+      "returned_event_seq": 2,
+      "returned_state": "running"
+    },
+    {
+      "requested_after_event_seq": 2,
+      "timeout_seconds": 10,
+      "returned_event_seq": 4,
+      "returned_state": "completed"
+    }
+  ],
+  "job_checks": {
+    "exactly_one_job_and_dispatch": true,
+    "no_quarantine_or_active_barrier": true,
+    "completed": true,
+    "job_binding": true,
+    "session_binding": true,
+    "owner_binding": true,
+    "operation_and_parameters": true,
+    "details_equal_receipt": true,
+    "native_verification": true,
+    "native_exit_observed": true,
+    "seven_manifests_and_deliveries": true,
+    "all_41_csv_points_analytic": true,
+    "final_concentration_analytic": true,
+    "seven_original_hashes_and_delivery_receipts": true
+  },
+  "correction_checks": {
+    "same_completed_job": true,
+    "delivery_only_tools": true,
+    "every_continuation_call_has_explicit_job_id": true,
+    "all_call_ids_pair_once": true,
+    "protected_records_unchanged": {
+      "request.json": true,
+      "dispatch.json": true,
+      "receipt.json": true,
+      "native-session.json": true,
+      "native-lifecycle.json": true,
+      "result.json": true,
+      "state.json": true,
+      "artifacts.json": true
+    },
+    "original_artifact_bytes_unchanged": true,
+    "no_additional_job_or_dispatch": true,
+    "artifact_roles_match_observed_native_contract": true,
+    "seven_unique_verified_deliveries": true,
+    "no_continuation_tool_or_item_errors": true
+  },
+  "job_evidence": {
+    "native_verification": {
+      "native_reopen": true,
+      "numerical": true,
+      "script_rerun": true
+    },
+    "native_lifecycle": {
+      "rpc_response_observed": true,
+      "backend_returned": true,
+      "native_exited": true
+    },
+    "delivery_readback": [
+      {
+        "name": "analysis.mat",
+        "size_bytes": 3392,
+        "sha256": "3335e8eefe6f424fd22c20e0fc59020406551c06f10662c7efe247ae2cd63df8",
+        "verified": true
+      },
+      {
+        "name": "results.csv",
+        "size_bytes": 2480,
+        "sha256": "c3f26c4636b47a9c46e91b3bbbb7dd9309e25838ac1cd9cc4c2fd38deab98ef5",
+        "verified": true
+      },
+      {
+        "name": "figure.fig",
+        "size_bytes": 11588,
+        "sha256": "161d1d37ca62035b05ba9124aa4b4c8aa76e2b1e92370e853df60bc42610c265",
+        "verified": true
+      },
+      {
+        "name": "figure.png",
+        "size_bytes": 42226,
+        "sha256": "b199714ea52342a3a7c5fcccf1a496d13081ef1a78eab32ddb2b1f3db4f3b99f",
+        "verified": true
+      },
+      {
+        "name": "figure.pdf",
+        "size_bytes": 13570,
+        "sha256": "17ef716869fa998695d564fc87136ecfdb3b5d61b4bca63e87a9ab64f05beb56",
+        "verified": true
+      },
+      {
+        "name": "reproduce.m",
+        "size_bytes": 21790,
+        "sha256": "5401aaf4acc8a58d1a5483584117eb9c0f478c875cf655bd60075d38cf7c5f5c",
+        "verified": true
+      },
+      {
+        "name": "method.json",
+        "size_bytes": 1468,
+        "sha256": "71d67473555d77b6705a83a99105f62297251c03c9b1c90875635be81df5d105",
+        "verified": true
+      }
+    ],
+    "analytic_final": 0.2706705664732254,
+    "actual_final": 0.2706705665373914,
+    "analytic_absolute_tolerance": 1.0010000000000002e-07
+  },
+  "runtime_binding": {
+    "prestarted_owner_uses_audited_packaged_python": true,
+    "package_manifest_sha256": "f3c3ebd2c1321cbe6122b3965d5f159a8a5f13568d0de8bd450879fcf01396f1",
+    "native_package_receipt": "native-v0.1.0-alpha.3.json",
+    "native_package_receipt_sha256": "9b6cdf59b4e4fa2c7721e7fbd918c84efb67c40fd25e8af3a8ce8bd115309c62"
+  },
+  "scope": [
+    "One representative kinetics workflow and seven verified original local-file deliveries after an explicit correction.",
+    "The code-host operator failure and the model's missing job_id error remain counted; first-attempt success is false.",
+    "The third model turn only delivered existing verified bytes; science and native sessions were not replayed.",
+    "Requested Terra max; actual resolved model and effort were not present in CLI metadata and remain unknown.",
+    "No role, visual-review, host-attachment, new-device, coordinator-auto-start, outer-host-survival, or cost claim beyond recorded checks.",
+    "Native dispatch evidence is one observed model run and one preserved dispatch record; function-entry count was not instrumented."
+  ],
+  "evidence_hashes": {
+    "operator_audit": "f7edf0b343fdd5c4b56d8f911f844616ddbe68152bcf15675c3adbfdf1bf2ca1",
+    "delivery_continuation_operator": "e8f0d630e8606a957c29682f3e920be09d5c2f1f455471f09ee3b5338da65c15",
+    "model_turn_1_events": "c0f95647c3f88adcbf07b7545ac849486199e05b27c5cb9d31d73a7cc8d64161",
+    "model_turn_2_events": "5d6bcc722a04d13eb1e43ccb716e8405c01f02574066ea1c974b2ef77c8c7e22",
+    "model_turn_3_events": "e1b8735c885e7cf536ac976e22aec172ae04641242d9c5973caf4299a57cdfb8",
+    "protected_before": "94a729a3bea7e171dac2912442be16cea46fb11fed9827b062a41ab0d59a21d8"
+  }
+}

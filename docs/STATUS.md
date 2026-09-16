@@ -1,17 +1,76 @@
 # Implementation status
 
-Updated: 2026-09-16. Version: 0.1.0a3 candidate (R2 early preview).
+Updated: 2026-09-16. Version: 0.1.0a3 released (R2 Windows early preview).
 
-## Current R2 candidate
+<a id="current-r2-candidate"></a>
 
-The owner approved R2 on 2026-09-16. The candidate adds a per-root local job
+## Current R2 release
+
+The owner approved R2 on 2026-09-16. The release adds a per-root local job
 coordinator, private JSON IPC, thin stdio frontends, factual job phases and event
 sequences, bounded waiting, passive storage accounting and held-handle native
 exit observation. R3 has not started. Native execution remains Windows-only;
 unsupported native observation is rejected before a scientific job is admitted.
 See [R2 durable jobs](R2_DURABLE_JOBS.md) for the current evidence ledger.
-The published and installed alpha.2 below remains the rollback baseline until
-the exact R2 package passes its own release and upgrade checks.
+Alpha.3 is published and installed on the recorded current device. Alpha.2
+remains the retained rollback baseline. Broader usability, host and saved-cloud
+combinations remain explicit unverified limits of this preview.
+
+### Immutable release identity
+
+- Runtime/source: `1b2eb73bcd674056cf756260ee5359c083c24afe`.
+- Windows archive: `MATLAB-Companion-0.1.0a3-windows-x64.zip`, 33,104,323 bytes.
+- Archive SHA-256: `d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa`.
+- Build identity is not package-runtime, native, model or publication acceptance.
+  Later documentation and receipt commits do not change these archive bytes.
+
+| Gate | State | Evidence / remaining work |
+| --- | --- | --- |
+| R2 implementation | IMPLEMENTED at the frozen runtime | Per-root coordinator, bounded private IPC, durable phase/sequence/wait, queue/storage observations and separate native-exit observation; six tools and five operations retained |
+| Exact-source portable CI | PASSED for recorded scope | [CI 35083094659](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35083094659), [receipt](../verification/ci-v0.1.0-alpha.3.json): Windows 364 passed, 6 skipped in 37.03 s; Ubuntu 363 passed, 7 skipped in 23.19 s. Both passed Ruff, 22 schemas, actual stdio and the 89-file public audit. Platform/host-restriction skips remain separate from positive process-lifetime evidence |
+| Earlier source-native lifecycle checkpoint | HISTORICAL PASS at `de1cf61` | [Three-case receipt](../verification/native-r2-source-checkpoint.json): client disconnect, explicit cancellation, and coordinator crash/quarantine with sentinel preservation. This does not accept the final `1b2eb73` archive |
+| Relocated final-package integrity and runtime | PASSED for recorded scope | [Package receipt](../verification/package-v0.1.0-alpha.3.json): 3,991 manifest entries, zero mismatches/unlisted files, pre/post-runtime hash readback, Python 3.12.14. Self-test 2.234 s; actual stdio and withdrawn Tk 4.437 s. Isolated prestarted coordinator exited idle; zero jobs/dispatches. Focused builder-path scan found zero matches; not a comprehensive secret audit |
+| Exact-package native lifecycle | PASSED for three recorded cases | [R2 receipt](../verification/native-r2-v0.1.0-alpha.3.json): prestarted-coordinator client disconnect, explicit cancellation and crash/quarantine, with one native entry per case and preserved synthetic sentinel. Crash exit was independently observed through a held handle; the interrupted production observer remained unconfirmed and unknown/quarantine stayed intact |
+| Exact-package native science and local delivery | PASSED for six recorded cases | [Scientific receipt](../verification/native-v0.1.0-alpha.3.json): all five operations on MATLAB R2026a Update 5, 43 original-file readbacks, applicable native reopen/numerical/script checks, and six held-handle-confirmed native exits. Imported runtime hashes match the clean immutable package manifest |
+| Representative Codex model and original delivery | PASSED AFTER CORRECTION; first attempt failed | [Combined receipt](../verification/codex-r2-v0.1.0-alpha.3.json): three actual turns, 14 MCP calls, one scientific job/dispatch, three valid waits and seven verified original local files. One delivery omitted `job_id` and was rejected; a delivery-only turn reused the completed job. Requested Terra max; resolved model/effort metadata is unavailable |
+| Current-device upgrade and registered host | PASSED for recorded scope | [Upgrade receipt](../verification/local-upgrade-v0.1.0-alpha.3.json): 3,991 manifest files, official Codex connection, enabled plugin cache, selected-root Start-menu target and backups verified. Settings/jobs, retained alpha.2 files and seven other MCP connections preserved. Registered read-only probe validated six schemas/calls and ten resources; no coordinator or native dispatch started |
+| Saved cloud development container | UNVERIFIED for alpha.3 | Successful Ubuntu CI is separate from a saved-container check and remote MATLAB execution; this broader combination is outside the accepted preview scope |
+| GitHub publication and fresh-download integrity | PASSED | [Alpha.3 release](https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.3), [publication receipt](../verification/release-v0.1.0-alpha.3.json): tag resolves to `1b2eb73`; published asset digest, fresh 33,104,323-byte ZIP and downloaded checksum match the accepted SHA-256 |
+| Visible wizard, fresh device and other hosts | UNVERIFIED | No result above establishes these broader end-user gates |
+
+The source-native checkpoint, package checks, installed command and model route
+keep separate identities and scopes. An explicitly prestarted coordinator does
+not establish automatic startup under a host that refuses process breakaway.
+R3 delivery changes and later roadmap items remain unstarted proposals.
+
+The [first model preparation attempt](../verification/codex-r2-first-preparation.json)
+failed an operator-side canonical-path comparison before invoking Codex: zero
+scientific jobs and dispatches. Independent observation confirmed an empty ready
+coordinator; the failed helper had not returned its handle. Only the ignored
+operator's private-root normalization changed. This preparation failure was not
+a model retry or replay of a scientific write.
+
+The [first actual model turn](../verification/codex-r2-first-model-attempt.json)
+then stopped safely because the operator had disabled the code-mode host needed
+by Codex's tool router. It made no Companion calls, jobs or dispatches. Its
+32.188-second turn consumed 18,005 input tokens (7,936 cached), 1,302 output
+tokens (1,113 reasoning); these are reported counters, not a cost estimate.
+Only that operator override was removed for the second actual turn. That turn
+completed one 41-point kinetics job and three valid sequence-aware waits, then
+omitted `job_id` from its first delivery request (`INPUT_INVALID`, no bytes
+copied). The third turn explicitly delivered the seven originals from the same
+completed job. Protected job records and original bytes remained unchanged.
+The [combined receipt](../verification/codex-r2-v0.1.0-alpha.3.json) records
+`passed_after_correction`, with first-attempt success false.
+
+All three actual model turns total 191.688 seconds and 14 MCP calls: one run,
+three waits and ten artifact calls, including the rejected delivery. Actual
+counters total 277,722 input (213,504 cached), 7,236 output (4,301 reasoning)
+tokens; overlapping categories are not added together. The zero-model
+preparation adds 1.781 seconds separately. CLI configuration requested
+`gpt-5.6-terra` / `max`; resolved model/effort metadata was absent and remains
+unconfirmed. No cost or efficiency saving is inferred. The argument error
+remains a model-usability gap; R3 is still an unstarted proposal.
 
 ## Historical R1 acceptance
 
@@ -23,8 +82,9 @@ the bounded native interruption/sentinel case, and final-package six-case native
 acceptance covering all five operations with 43 original-file readbacks.
 The clean 33,054,016-byte package has 3,976 verified manifest entries.
 See [R1 reliability](R1_RELIABILITY.md) for receipts and the retained first-probe
-failure. R2/R3 are not implemented; new model, visible setup, new-device and
-saved cloud-container acceptance remain separate.
+failure. At that alpha.2 checkpoint R2/R3 had not started; R2 is now implemented
+in the separately identified release above. New model, visible setup,
+new-device and saved cloud-container acceptance remain separate.
 
 [Alpha.2 is published](https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.2);
 its GitHub asset digest, fresh ZIP download and checksum match the accepted
@@ -116,9 +176,9 @@ Jobs, input snapshots, native logs and results stay in local application data. T
 
 Queued writes are idempotent. A coordinator disappearing after dispatch marks the outcome unknown and quarantines the executor. Reconcile the existing job before any retry. Cancellation is a request, not proof of exit. Setup recovery requires owner confirmation that the plugin-owned session stopped; it never kills unrelated MATLAB. Jobs and delivered files are retained for explicit review/removal; automatic pruning is not implemented.
 
-## Measurements and limits
+## Historical alpha.1 measurements and current limits
 
-The recorded final-archive synthetic jobs took about 11–23 seconds each including fresh MATLAB startup and verification on this machine. The final relocated bundle's portable self-test took 1.907 seconds and protocol/hidden-Tk checks took 3.938 seconds. Default output schemas are roughly 2.4–4.3 KB each. These observations do not establish general performance or token savings.
+The recorded alpha.1 final-archive synthetic jobs took about 11–23 seconds each including fresh MATLAB startup and verification on this machine. That relocated bundle's portable self-test took 1.907 seconds and protocol/hidden-Tk checks took 3.938 seconds. Its default output schemas were roughly 2.4–4.3 KB each. These historical observations do not measure alpha.3 performance or establish general token savings.
 
 Both model records requested `gpt-5.6-terra` with `max` reasoning through an
 ephemeral Codex CLI session. The complete run used the existing signed-in

@@ -1,0 +1,16 @@
+{
+  "observed_at": "2026-09-16T10:32:08.367330+00:00",
+  "release_url": "https://github.com/saigyujikingyo-png/matlab-companion/releases/tag/v0.1.0-alpha.3",
+  "tag": "v0.1.0-alpha.3",
+  "prerelease": true,
+  "source_commit": "1b2eb73bcd674056cf756260ee5359c083c24afe",
+  "archive_name": "MATLAB-Companion-0.1.0a3-windows-x64.zip",
+  "archive_size_bytes": 33104323,
+  "archive_sha256": "d6a839606570d94a83407b7d1276bd2068c72c260d03cda210f33c7841b30aaa",
+  "tag_commit_verified": true,
+  "github_asset_digest_matches": true,
+  "downloaded_release_bytes_match": true,
+  "downloaded_checksum_matches": true,
+  "outcome": "passed",
+  "scope": "GitHub prerelease, exact runtime tag and fresh ZIP/checksum readback. Current-device installation, native execution, model workflow and host attachments are separate evidence."
+}
