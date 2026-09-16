@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import errno
 import hashlib
 import json
 import os
@@ -33,9 +34,14 @@ def _sharing_retry(action):
         try:
             return action()
         except OSError as error:
+            windows_sharing = getattr(error, "winerror", None) in {5, 32, 33}
+            crt_access = getattr(error, "winerror", None) is None and error.errno in {
+                errno.EACCES,
+                errno.EPERM,
+            }
             if (
                 os.name != "nt"
-                or getattr(error, "winerror", None) not in {5, 32, 33}
+                or not (windows_sharing or crt_access)
                 or time.monotonic() >= deadline
             ):
                 raise

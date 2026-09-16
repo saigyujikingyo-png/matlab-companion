@@ -9,6 +9,28 @@ import pytest
 from matlab_companion import storage
 
 
+@pytest.mark.skipif(storage.os.name != "nt", reason="Windows CRT read sharing errors")
+def test_crt_read_denial_without_winerror_is_retried_for_a_short_race(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    target = tmp_path / "state.json"
+    storage.atomic_json(target, {"state": "running"})
+    original_open = Path.open
+    denied_reads = []
+
+    def temporarily_denied(path, *args, **kwargs):
+        if path == target and len(denied_reads) < 2:
+            denied_reads.append(path)
+            # Python's CRT-backed file open can report errno only, unlike
+            # os.replace's WinError. Both occur during Windows replace races.
+            raise PermissionError(13, "Permission denied", str(path))
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", temporarily_denied)
+    assert storage.read_json(target) == {"state": "running"}
+    assert len(denied_reads) == 2
+
+
 @pytest.mark.skipif(storage.os.name != "nt", reason="Windows bounded sharing retries")
 def test_persistent_access_denial_preserves_original_and_ends_retry(tmp_path, monkeypatch):
     target = tmp_path / "state.json"

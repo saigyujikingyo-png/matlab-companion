@@ -77,6 +77,21 @@ harness propagates the original runtime/dependency binding and checks two real
 Python child generations without MATLAB. This failed probe is not native R2
 acceptance and no unknown scientific write was replayed.
 
+At `de1cf61`, the [corrected source-native checkpoint](../verification/native-r2-source-checkpoint.json)
+passed all three lifecycle cases. Disconnect and cancellation each completed with
+one native entry and separately verified exit. Crash recovery retained unknown
+state and quarantine, refused new dispatch and exited idle-degraded; no late
+receipt arrived. An independent held handle observed that crash-case native exit,
+while the interrupted production observer correctly retained an unconfirmed exit.
+The synthetic sentinel preserved its state and cooperatively exited.
+
+Subsequent integrated testing exposed a Windows CRT file-open race reported as
+`errno=13` without `winerror`. The existing bounded 250 ms file-sharing retry now
+also handles this Windows-only form. Its regression failed before the fix and
+passed afterward; permanent access denial still ends within the same bound.
+Only file I/O is retried, never native execution. This source checkpoint and its
+package audit remain separate from the final rebuilt archive's acceptance.
+
 The default idle window is 30 seconds; an explicit Setup **Start job service**
 uses 300 seconds to allow the user to return to their host. Individual client
 disconnect never cancels accepted work. Closing the entire host or outer Windows

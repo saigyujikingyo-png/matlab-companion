@@ -234,16 +234,28 @@ def test_windows_pipe_explicit_acl_and_creation_flags(tmp_path, monkeypatch):
         security.ConvertSecurityDescriptorToStringSecurityDescriptorW.argtypes = [
             w.LPVOID, w.DWORD, w.DWORD, pointer(w.LPWSTR), pointer(w.DWORD)]
         security.ConvertSecurityDescriptorToStringSecurityDescriptorW.restype = w.BOOL
-        descriptor, text = w.LPVOID(), w.LPWSTR()
+        descriptor, expected_descriptor = w.LPVOID(), w.LPVOID()
+        text, expected_text = w.LPWSTR(), w.LPWSTR()
         assert security.GetSecurityInfo(server._pending.handle, 6, 4, None, None, None, None,
                                         ctypes.byref(descriptor)) == 0
         try:
             assert security.ConvertSecurityDescriptorToStringSecurityDescriptorW(
                 descriptor, 1, 4, ctypes.byref(text), None)
-            assert text.value == f"D:P(A;;FA;;;{api.sid})"
+            # Windows may render the current local administrator SID as LA.
+            # Canonicalize the exact current SID, never accept an arbitrary alias:
+            # protected DACL, exactly one allow ACE, full file access, current user.
+            assert api.advapi.ConvertStringSecurityDescriptorToSecurityDescriptorW(
+                f"D:P(A;;FA;;;{api.sid})", 1, ctypes.byref(expected_descriptor), None)
+            assert security.ConvertSecurityDescriptorToStringSecurityDescriptorW(
+                expected_descriptor, 1, 4, ctypes.byref(expected_text), None)
+            assert text.value == expected_text.value
         finally:
             if text:
                 api.kernel.LocalFree(text)
+            if expected_text:
+                api.kernel.LocalFree(expected_text)
+            if expected_descriptor:
+                api.kernel.LocalFree(expected_descriptor)
             api.kernel.LocalFree(descriptor)
         with pytest.raises(OSError):
             LocalListener(tmp_path, identity)

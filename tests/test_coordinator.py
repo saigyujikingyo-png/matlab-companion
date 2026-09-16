@@ -341,6 +341,7 @@ def test_two_initial_client_processes_share_a_single_automatically_started_owner
     root, release = tmp_path / "shared store", tmp_path / "connect now"
     code = "from test_coordinator import _initial_client; _initial_client(*sys.argv[1:])"
     children = []
+    child_outputs = []
     try:
         for index in range(2):
             children.append(
@@ -368,9 +369,13 @@ def test_two_initial_client_processes_share_a_single_automatically_started_owner
         results = []
         for index, child in enumerate(children):
             out, error = child.communicate(timeout=20)
-            assert child.returncode == 0, (out, error)
+            child_outputs.append(
+                {"client": index, "returncode": child.returncode, "stdout": out, "stderr": error}
+            )
+            assert child.returncode == 0
             results.append(read_json(tmp_path / f"client-{index}.json"))
-        assert all(item["response"]["ok"] for item in results), results
+        if not all(item["response"]["ok"] for item in results):
+            pytest.fail("Initial clients did not both connect; full diagnostics follow", pytrace=False)
         assert results[0]["owner"]["instance_id"] == results[1]["owner"]["instance_id"]
         assert results[0]["owner"]["pid"] == results[1]["owner"]["pid"]
         assert (
@@ -379,6 +384,27 @@ def test_two_initial_client_processes_share_a_single_automatically_started_owner
         owner_pid = results[0]["owner"]["pid"]
         eventually(lambda: not process_alive(owner_pid), description="shared owner idle exit")
         assert not (root / "coordinator.json").exists()
+    except BaseException:
+        # Captured stdout is shown in full on failure; assertion repr truncates
+        # the response error codes that distinguish blocked/failed/unready owners.
+        diagnostics = {"clients": child_outputs, "records": {}, "owner_logs": {}}
+        for index in range(2):
+            record = tmp_path / f"client-{index}.json"
+            if record.is_file():
+                try:
+                    diagnostics["records"][str(index)] = json.loads(
+                        record.read_text(encoding="utf-8")
+                    )
+                except (OSError, ValueError) as error:
+                    diagnostics["records"][str(index)] = {"read_error": repr(error)}
+            for suffix in ("owner.stdout", "owner.stderr"):
+                log = record.with_suffix("." + suffix)
+                if log.is_file():
+                    diagnostics["owner_logs"][f"{index}.{suffix}"] = log.read_text(
+                        encoding="utf-8", errors="replace"
+                    )
+        print("Initial-client startup diagnostics:\n" + json.dumps(diagnostics, indent=2))
+        raise
     finally:
         release.touch()
         for child in children:
@@ -388,18 +414,58 @@ def test_two_initial_client_processes_share_a_single_automatically_started_owner
 
 
 def _initial_client(root, source, release, result, runtime):
+    from matlab_companion import coordinator
+
     # Start each real client through the base interpreter, but let production
     # auto-start use the installed/venv runtime it would normally receive.
     sys.executable = runtime
     result = Path(result)
     result.with_suffix(result.suffix + ".ready").touch()
     eventually(lambda: Path(release).exists(), description="simultaneous client release")
-    response = CoordinatorClient(
-        root, [Path(source).parent], idle_seconds=PRESTART_IDLE_SECONDS
-    ).call("matlab_inspect", {"path": source})
+    original_popen = coordinator.subprocess.Popen
+    launches = []
+    owners = []
+
+    def observed_popen(*args, **kwargs):
+        # Observe the real production startup, changing only its discarded log
+        # destinations. Keep command, environment, flags and lifetimes unchanged.
+        launch = {"command": args[0], "creationflags": kwargs.get("creationflags", 0)}
+        launches.append(launch)
+        try:
+            with (
+                result.with_suffix(".owner.stdout").open("ab") as stdout,
+                result.with_suffix(".owner.stderr").open("ab") as stderr,
+            ):
+                child = original_popen(*args, **(kwargs | {"stdout": stdout, "stderr": stderr}))
+            owners.append(child)
+            launch["launcher_pid"] = child.pid
+            return child
+        except OSError as error:
+            launch["error"] = {
+                "type": type(error).__name__,
+                "errno": error.errno,
+                "winerror": getattr(error, "winerror", None),
+                "message": str(error),
+            }
+            raise
+
+    coordinator.subprocess.Popen = observed_popen
+    try:
+        response = CoordinatorClient(
+            root, [Path(source).parent], idle_seconds=PRESTART_IDLE_SECONDS
+        ).call("matlab_inspect", {"path": source})
+    finally:
+        coordinator.subprocess.Popen = original_popen
+    for launch, owner in zip(launches, owners, strict=False):
+        launch["launcher_returncode_at_response"] = owner.poll()
     metadata = Path(root) / "coordinator.json"
     atomic_json(
-        result, {"response": response, "owner": read_json(metadata) if metadata.exists() else None}
+        result,
+        {
+            "response": response,
+            "owner": read_json(metadata) if metadata.exists() else None,
+            "launches": launches,
+        },
     )
 
 
