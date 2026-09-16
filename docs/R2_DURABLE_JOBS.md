@@ -92,6 +92,15 @@ passed afterward; permanent access denial still ends within the same bound.
 Only file I/O is retried, never native execution. This source checkpoint and its
 package audit remain separate from the final rebuilt archive's acceptance.
 
+The Windows GitHub runner rejected both nested clients' independent-process
+creation with WinError 5 in [CI 35082324331](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35082324331).
+Both returned `COORDINATOR_START_BLOCKED`, made exactly one launch attempt and
+created no service or job store. The positive two-client automatic-start check
+is skipped only for that fully observed restriction; other startup errors still
+fail. Local Windows and Ubuntu positive evidence and the explicit restrictive
+Windows Job refusal test remain separate. No ordinary-child fallback or host
+restriction workaround is introduced.
+
 The default idle window is 30 seconds; an explicit Setup **Start job service**
 uses 300 seconds to allow the user to return to their host. Individual client
 disconnect never cancels accepted work. Closing the entire host or outer Windows
