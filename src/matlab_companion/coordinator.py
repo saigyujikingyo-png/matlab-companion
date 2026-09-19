@@ -19,11 +19,15 @@ from pydantic import ValidationError
 from . import __version__
 from .core import Core, WorkflowError
 from .ipc import LocalListener
-from .storage import atomic_json, file_lock, process_start_identity, read_json, utc_now
+from .startup import Startup, StartupError
+from .storage import atomic_json, file_lock, utc_now
 
 PROTOCOL_VERSION = 1
 IDLE_SECONDS = 30.0
 MAX_CLIENTS = 8
+# Exact returned children are retained even if ownership publication or the
+# daemon waiter fails. No process in this registry is signalled.
+_launches: dict[str, subprocess.Popen] = {}
 
 
 def resolved_configuration(root, allowed_roots=(), output_roots=()):
@@ -114,69 +118,138 @@ def in_windows_job():
     return windows_job_observation()["member"]
 
 
-def spawn_coordinator(root, allowed_roots=(), output_roots=(), *, idle_seconds=IDLE_SECONDS):
-    command = [
-        sys.executable,
-        "-I",
-        "-B",
-        "-m",
-        "matlab_companion",
-        "coordinator",
-        "--root",
-        str(Path(root).resolve()),
-        "--idle-seconds",
-        str(idle_seconds),
-    ]
-    for flag, values in (("--allow-root", allowed_roots), ("--output-root", output_roots)):
-        for value in values:
-            command.extend([flag, str(Path(value).resolve())])
-    environment = {
-        key: value
-        for key, value in os.environ.items()
-        if key.upper()
-        in {
-            "PATH",
-            "WINDIR",
-            "SYSTEMROOT",
-            "SYSTEMDRIVE",
-            "COMSPEC",
-            "PATHEXT",
-            "TEMP",
-            "TMP",
-            "USERPROFILE",
-            "LOCALAPPDATA",
-            "APPDATA",
-            "HOME",
-            "DISPLAY",
-            "LANG",
-            "LD_LIBRARY_PATH",
-            "MLM_LICENSE_FILE",
-            "LM_LICENSE_FILE",
-            "MATLAB_COMPANION_MATLAB_ROOT",
+def spawn_coordinator(
+    root,
+    allowed_roots=(),
+    output_roots=(),
+    *,
+    idle_seconds=IDLE_SECONDS,
+    startup,
+    attempt,
+):
+    if startup.read() != attempt or attempt.phase != "spawn_requested":
+        raise startup.error(
+            "COORDINATOR_START_RECORD_INVALID",
+            "A matching durable launch intent is required.",
+            attempt,
+        )
+    startup.check_scope(attempt)
+    try:
+        config, fingerprint = resolved_configuration(root, allowed_roots, output_roots)
+        startup.scope(config["root"], fingerprint, __version__, PROTOCOL_VERSION, attempt)
+        if (
+            not 0.1 <= idle_seconds <= 300
+            or str(Path(sys.executable).resolve()) != attempt.launch_executable
+        ):
+            raise ValueError("Launch parameters changed before invocation")
+        command = [
+            sys.executable,
+            "-I",
+            "-B",
+            "-m",
+            "matlab_companion",
+            "coordinator",
+            "--root",
+            str(Path(root).resolve()),
+            "--idle-seconds",
+            str(idle_seconds),
+            "--startup-attempt-id",
+            attempt.attempt_id,
+        ]
+        for flag, values in (("--allow-root", allowed_roots), ("--output-root", output_roots)):
+            for value in values:
+                command.extend([flag, str(Path(value).resolve())])
+        environment = {
+            key: value
+            for key, value in os.environ.items()
+            if key.upper()
+            in {
+                "PATH",
+                "WINDIR",
+                "SYSTEMROOT",
+                "SYSTEMDRIVE",
+                "COMSPEC",
+                "PATHEXT",
+                "TEMP",
+                "TMP",
+                "USERPROFILE",
+                "LOCALAPPDATA",
+                "APPDATA",
+                "HOME",
+                "DISPLAY",
+                "LANG",
+                "LD_LIBRARY_PATH",
+                "MLM_LICENSE_FILE",
+                "LM_LICENSE_FILE",
+                "MATLAB_COMPANION_MATLAB_ROOT",
+            }
         }
-    }
-    kwargs = (
-        {"start_new_session": True}
-        if os.name != "nt"
-        else {
-            "creationflags": subprocess.CREATE_BREAKAWAY_FROM_JOB | subprocess.CREATE_NO_WINDOW,
-        }
-    )
+        kwargs = (
+            {"start_new_session": True}
+            if os.name != "nt"
+            else {
+                "creationflags": subprocess.CREATE_BREAKAWAY_FROM_JOB | subprocess.CREATE_NO_WINDOW,
+            }
+        )
+    except (OSError, ValueError, TypeError, StartupError) as error:
+        # This catch ends before Popen: noncreation is a known local fact.
+        startup.update(
+            attempt,
+            phase="failed_before_spawn",
+            terminal_evidence="popen_not_invoked",
+            last_observation="preflight_failed_before_popen",
+        )
+        raise startup.error(
+            "COORDINATOR_START_BLOCKED",
+            "Launch preparation failed before process creation; the noncreation record was preserved.",
+            attempt,
+        ) from error
     # Failure to break away is deliberately not retried as an ordinary child.
-    process = subprocess.Popen(
-        command,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        close_fds=True,
-        env=environment,
-        **kwargs,
-    )
-    # The frontend may stay alive after the service's idle exit. Reap that
-    # exact child without owning its lifetime; a daemon waiter neither signals
-    # the service nor keeps a disconnecting frontend alive. This also avoids a
-    # Linux zombie being mistaken for a live coordinator by process probes.
-    threading.Thread(target=process.wait, name="companion-owner-reaper", daemon=True).start()
+    try:
+        process = subprocess.Popen(
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            close_fds=True,
+            env=environment,
+            **kwargs,
+        )
+    except OSError as error:
+        with contextlib.suppress(OSError, ValueError, StartupError):
+            startup.note(attempt, "spawn_exception")
+        raise startup.error(
+            "COORDINATOR_START_BLOCKED",
+            "Independent process creation was not confirmed. No ordinary child fallback was attempted; the startup attempt was preserved.",
+            attempt,
+        ) from error
+    _launches[attempt.attempt_id] = process
+    # Capture the returned launcher before creating a thread. A Windows venv
+    # launcher may be a redirector; the actual owner must claim itself separately.
+    publication_error = None
+    try:
+        startup.launcher(attempt, process)
+    except (OSError, ValueError, StartupError) as error:
+        publication_error = error
+
+    def reap():
+        process.wait()
+        _launches.pop(attempt.attempt_id, None)
+
+    try:
+        threading.Thread(target=reap, name="companion-owner-reaper", daemon=True).start()
+    except RuntimeError as error:
+        raise startup.error(
+            "COORDINATOR_START_UNCONFIRMED",
+            "The returned child is retained but its waiter could not start; ownership was preserved.",
+            attempt,
+        ) from error
+    if publication_error is not None:
+        raise startup.error(
+            "COORDINATOR_START_UNCONFIRMED",
+            "Launcher publication was not confirmed; the returned child and startup attempt were preserved.",
+            attempt,
+        ) from publication_error
     return process
 
 
@@ -189,6 +262,7 @@ class Coordinator:
         *,
         idle_seconds=IDLE_SECONDS,
         backend=None,
+        startup_attempt_id=None,
     ):
         self.root = Path(root).resolve()
         self.configuration, self.fingerprint = resolved_configuration(
@@ -197,6 +271,8 @@ class Coordinator:
         self.idle_seconds = idle_seconds
         self.backend = backend
         self.instance_id = str(uuid.uuid4())
+        self.startup_attempt_id = startup_attempt_id
+        self.startup = Startup(self.root, self.fingerprint, __version__, PROTOCOL_VERSION)
         self.guard = threading.Lock()
         self.inflight = 0
         self.last_request = time.monotonic()
@@ -303,12 +379,11 @@ class Coordinator:
         windows_job = windows_job_observation()
         self.root.mkdir(parents=True, exist_ok=True)
         with file_lock(self.root / ".coordinator.lock"):
-            identity = process_start_identity(os.getpid())
-            if not identity:
-                raise RuntimeError("Coordinator process creation identity is unavailable")
-            listener = LocalListener(self.root, self.instance_id, max_clients=MAX_CLIENTS)
-            core = None
+            admitted = self.startup.admit(self.startup_attempt_id, self.instance_id)
+            self.startup_attempt_id = admitted.attempt_id
+            listener = core = None
             try:
+                listener = LocalListener(self.root, self.instance_id, max_clients=MAX_CLIENTS)
                 core = Core(
                     self.root,
                     self.configuration["allowed_roots"],
@@ -319,9 +394,10 @@ class Coordinator:
                     "protocol": PROTOCOL_VERSION,
                     "instance_id": self.instance_id,
                     "pid": os.getpid(),
-                    "process_start": identity,
+                    "process_start": admitted.owner.process_start,
                     "version": __version__,
-                    "executable": str(Path(sys.executable).resolve()),
+                    "executable": admitted.owner.executable,
+                    "startup_attempt_id": admitted.attempt_id,
                     "root": str(self.root),
                     "configuration_sha256": self.fingerprint,
                     "state": "ready",
@@ -334,7 +410,20 @@ class Coordinator:
                     "windows_job": windows_job,
                     "lifetime_scope": "individual_frontend_disconnect; outer host or OS termination is not covered",
                 }
-                atomic_json(self.root / "coordinator.json", record)
+                with self.startup.locked():
+                    current = self.startup.read()
+                    if (
+                        current is None
+                        or current.attempt_id != admitted.attempt_id
+                        or current.owner != admitted.owner
+                        or current.phase != "core_admitted"
+                    ):
+                        raise self.startup.error(
+                            "COORDINATOR_START_RECORD_INVALID",
+                            "Core ownership changed before readiness; the existing Core will settle.",
+                            admitted,
+                        )
+                    atomic_json(self.root / "coordinator.json", record)
                 with ThreadPoolExecutor(
                     max_workers=MAX_CLIENTS, thread_name_prefix="companion-ipc"
                 ) as handlers:
@@ -372,9 +461,28 @@ class Coordinator:
                     },
                 )
             finally:
-                listener.close()
-                if core is not None:
-                    core.close()
-                path = self.root / "coordinator.json"
-                if path.exists() and read_json(path).get("instance_id") == self.instance_id:
-                    path.unlink()
+                # Diagnostic writes and listener failures must not skip Core.close.
+                # The surrounding lifetime lock stays held through all settlement.
+                try:
+                    with contextlib.suppress(OSError, ValueError, StartupError):
+                        self.startup.stopping(admitted)
+                finally:
+                    try:
+                        if listener is not None:
+                            listener.close()
+                    finally:
+                        if core is not None:
+                            core.close()
+                with contextlib.suppress(OSError, ValueError, StartupError), self.startup.locked():
+                    current = self.startup.read()
+                    ready = self.startup.read_ready()
+                    if (
+                        current
+                        and current.attempt_id == admitted.attempt_id
+                        and current.owner == admitted.owner
+                        and ready
+                        and ready.get("startup_attempt_id") == admitted.attempt_id
+                        and ready.get("instance_id") == self.instance_id
+                    ):
+                        self.startup.bind_ready(current, ready)
+                        self.startup.ready_path.unlink()

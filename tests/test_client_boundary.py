@@ -132,3 +132,39 @@ def test_explicit_relative_roots_resolve_but_saved_empty_list_stays_unprivileged
     explicit, _ = resolved_configuration(root, ["relative-inputs"], ["relative-outputs"])
     assert explicit["allowed_roots"] == [str(Path("relative-inputs").resolve())]
     assert explicit["output_roots"] == [str(Path("relative-outputs").resolve())]
+
+
+@pytest.mark.parametrize("command", ["serve", "status", "setup", "self-test"])
+def test_private_startup_token_cannot_be_used_by_other_entrypoints(tmp_path, monkeypatch, command):
+    import sys
+
+    from matlab_companion.__main__ import main
+
+    root = tmp_path / "absent-cli-root"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["companion", command, "--root", str(root), "--startup-attempt-id", str(uuid.uuid4())],
+    )
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 2
+    assert not root.exists()
+
+
+@pytest.mark.parametrize("token", ["not-a-uuid", "{00000000-0000-0000-0000-000000000000}"])
+def test_malformed_startup_token_is_rejected_before_coordinator_root(tmp_path, monkeypatch, token):
+    import sys
+
+    from matlab_companion.__main__ import main
+
+    root = tmp_path / "absent-cli-root"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["companion", "coordinator", "--root", str(root), "--startup-attempt-id", token],
+    )
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 2
+    assert not root.exists()

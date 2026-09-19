@@ -7,6 +7,8 @@ import threading
 import uuid
 from contextlib import contextmanager
 
+import pytest
+
 import matlab_companion.core as core_module
 from matlab_companion.contracts import JobSummary
 from matlab_companion.core import Core
@@ -106,6 +108,9 @@ def test_malformed_native_receipt_also_blocks_the_next_dispatch(tmp_path):
     try:
         job_id = submit(core, "malformed")
         assert core.wait(job_id, timeout=5)["state"] == "unknown"
+        # A terminal state is visible before the worker finishes publishing its
+        # quarantine under the still-held execution lock. Join that same worker.
+        core.futures[job_id].result(timeout=5)
         assert (tmp_path / "executor-quarantine.json").is_file()
         rejected = core.call(
             "matlab_run",
@@ -119,6 +124,71 @@ def test_malformed_native_receipt_also_blocks_the_next_dispatch(tmp_path):
         assert backend.calls == [job_id]
     finally:
         core.close()
+
+
+def test_malformed_receipt_keeps_execution_owned_until_quarantine(tmp_path, monkeypatch):
+    publishing, release, second_waiting = (threading.Event() for _ in range(3))
+
+    class MalformedBackend(LostResponseBackend):
+        async def execute(self, job):
+            self.thread_id = threading.get_ident()
+            self.calls.append(job.name)
+            atomic_json(job / "receipt.json", {"job_id": job.name})
+
+    first_backend, second_backend = MalformedBackend(), LostResponseBackend()
+    first = Core(tmp_path, backend=first_backend)
+    second = Core(tmp_path, backend=second_backend)
+    original_publish = first._publish_quarantine
+    original_lock = core_module.file_lock
+
+    def hold_publication(job_id, reason):
+        publishing.set()
+        assert release.wait(5), "The test must release its own quarantine publication gate"
+        return original_publish(job_id, reason)
+
+    @contextmanager
+    def observe_execution_attempt(path, timeout=0):
+        if (
+            path.name == ".execution.lock"
+            and publishing.is_set()
+            and threading.get_ident() != first_backend.thread_id
+        ):
+            second_waiting.set()
+        with original_lock(path, timeout=timeout):
+            yield
+
+    monkeypatch.setattr(first, "_publish_quarantine", hold_publication)
+    monkeypatch.setattr(core_module, "file_lock", observe_execution_attempt)
+    try:
+        first_id = submit(first, "malformed-window-first")
+        assert publishing.wait(5)
+        assert first.wait(first_id, timeout=5)["state"] == "unknown"
+        state_bytes = (first._job_path(first_id) / "state.json").read_bytes()
+        assert not (tmp_path / "executor-quarantine.json").exists()
+        assert read_json(tmp_path / "executor-active.json")["job_id"] == first_id
+        with pytest.raises(TimeoutError), original_lock(tmp_path / ".execution.lock", timeout=0):
+            pytest.fail("Unknown state must not release execution before quarantine publication")
+
+        # Admission may queue another job during this window. Its worker must
+        # still acquire execution ownership before it can reach the backend.
+        second_id = submit(second, "malformed-window-second")
+        assert second_waiting.wait(5)
+        assert not second.futures[second_id].done()
+        assert second_backend.calls == []
+
+        release.set()
+        first.futures[first_id].result(timeout=5)
+        second.futures[second_id].result(timeout=5)
+        assert read_json(tmp_path / "executor-quarantine.json")["job_id"] == first_id
+        assert not (tmp_path / "executor-active.json").exists()
+        assert (first._job_path(first_id) / "state.json").read_bytes() == state_bytes
+        assert second.wait(second_id, timeout=5)["state"] == "failed"
+        assert first_backend.calls == [first_id]
+        assert second_backend.calls == [], "No second backend dispatch may pass the held barrier"
+    finally:
+        release.set()
+        first.close()
+        second.close()
 
 
 def test_reused_pid_does_not_hide_an_orphaned_dispatch(tmp_path):

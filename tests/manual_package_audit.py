@@ -1,18 +1,17 @@
-"""Independent Windows package audit; no live host changes or MATLAB launch.
+"""Independent passive Windows package audit; no Core, host mutation or MATLAB.
 
-Run with the developer environment for jsonschema validation. Every tested
-product command and MCP server uses the newly extracted package interpreter.
+Use the developer environment for JSON Schema checking. Every tested product
+entrypoint imports from the newly extracted package, guarded before Core/service
+construction. Integrity checks must pass before a package executable is run.
 """
 
 from __future__ import annotations
 
 import argparse
-import getpass
-import hashlib
 import json
 import os
-import stat
 import subprocess
+import sys
 import time
 import uuid
 import zipfile
@@ -21,44 +20,25 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-
-def sha256(path: Path) -> str:
-    with path.open("rb") as stream:
-        return hashlib.file_digest(stream, "sha256").hexdigest()
-
-
-def privacy_findings(archived_files: dict[str, Path], repo: Path) -> list[dict]:
-    fingerprints = {
-        "builder_username": getpass.getuser(),
-        "builder_checkout_backslash": str(repo),
-        "builder_checkout_forward_slash": repo.as_posix(),
-    }
-    findings = []
-    for relative, item in archived_files.items():
-        data = item.read_bytes().lower()
-        categories = []
-        for category, value in fingerprints.items():
-            for pattern in {value, value.replace("\\", "\\\\")}:
-                if (
-                    pattern.encode("utf-8").lower() in data
-                    or pattern.encode("utf-16-le").lower() in data
-                ):
-                    categories.append(category)
-                    break
-        if categories:
-            documented_example = (
-                relative == "docs/ARCHITECTURE.md" and "builder_username" not in categories
-            )
-            findings.append(
-                {
-                    "path": relative,
-                    "categories": categories,
-                    "classification": "documented_checkout_example"
-                    if documented_example
-                    else "embedded_builder_metadata",
-                }
-            )
-    return sorted(findings, key=lambda item: (item["path"].endswith(".pyc"), item["path"]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from bundle_support import (
+    NORMATIVE_FILES,
+    PASSIVE_BOOTSTRAP,
+    capture_source,
+    check_versions,
+    document_paths,
+    privacy_findings,
+    safe_file,
+    sha256,
+    tree_manifest,
+    validate_archive_members,
+    validate_document_links,
+    validate_public_bytes,
+    vendor_documents,
+    verify_manifest,
+    verify_product_wheel,
+    verify_source,
+)
 
 
 def run_python(python: Path, args: list[str], cwd: Path, state_root: Path) -> dict:
@@ -90,43 +70,40 @@ def run_python(python: Path, args: list[str], cwd: Path, state_root: Path) -> di
 
 PROBE = r"""
 import asyncio
+import importlib.metadata
 import json
 import sys
+import tkinter
 from pathlib import Path
-
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 import matlab_companion
-from matlab_companion.setup_ui import SetupWindow
+import matlab_companion.setup_ui
 
 async def main():
     root = Path(sys.argv[1])
-    # Passive self-test no longer creates the acceptance parent directory.
-    root.mkdir(parents=True)
-    input_folder = root / "inputs"
-    input_folder.mkdir()
-    fixture = input_folder / "synthetic.csv"
-    fixture.write_text("x,y\n0,1\n1,3\n2,5\n", encoding="utf-8")
+    root.mkdir(parents=True, exist_ok=False)
+    guards = root / "protocol-guards.json"
     parameters = StdioServerParameters(command=sys.executable,
-        args=["-I", "-B", "-m", "matlab_companion", "serve", "--root", str(root / "server"),
-              "--allow-root", str(input_folder)])
+        args=["-I", "-B", sys.argv[2], str(guards), "serve", "--root", str(root / "server")])
     calls = []
     async with stdio_client(parameters) as (read, write), ClientSession(read, write) as session:
         await session.initialize()
         listing = await session.list_tools()
         schemas = {tool.name: tool.output_schema for tool in listing.tools}
         assert len(schemas) == 6
+        # Invalid inspect/job requests never enter their stateful code paths.
         for name, arguments in [
             ("matlab_status", {}),
             ("matlab_help", {}),
-            ("matlab_inspect", {"path": str(fixture)}),
+            ("matlab_inspect", {"path": ""}),
             ("matlab_artifacts", {"action": "read_schema", "operation": "linear_calibration"}),
             ("matlab_run", {"operation": "linear_calibration", "parameters": {}, "idempotency_key": "package-invalid-request"}),
-            ("matlab_job", {"job_id": "00000000-0000-4000-8000-000000000000", "action": "status"}),
+            ("matlab_job", {"action": "status"}),
         ]:
             result = await session.call_tool(name, arguments)
             assert json.loads(result.content[0].text) == result.structured_content
-            expected_error = name in ("matlab_run", "matlab_job")
+            expected_error = name in ("matlab_inspect", "matlab_run", "matlab_job")
             assert bool(result.is_error) == expected_error, (name, result)
             assert result.structured_content["ok"] is not expected_error
             calls.append({"tool": name, "is_error": bool(result.is_error),
@@ -134,85 +111,137 @@ async def main():
         resources = await session.list_resources()
         assert len(resources.resources) == 10
         await session.read_resource("matlab-companion://schemas/linear_calibration/result")
-    window = SetupWindow(root / "gui-state")
-    window.window.withdraw()
-    window.window.update()
-    hidden_state = window.window.state()
-    tk_version = window.window.tk.call("info", "patchlevel")
-    assert hidden_state == "withdrawn"
-    window.window.destroy()
-    assert not list(root.rglob("dispatch.json"))
-    assert not list(root.rglob("backend-result.json"))
+    guard = json.loads(guards.read_text(encoding="utf-8"))
+    assert guard["installed"] and not any(guard["attempts"].values()), guard
+    assert not (root / "server").exists()
+    # Import Setup and construct Tcl without constructing a visible/native UI.
+    interpreter = tkinter.Tcl()
     return {"python": sys.executable, "module_path": matlab_companion.__file__,
+            "module_version": matlab_companion.__version__,
+            "metadata_version": importlib.metadata.version("matlab-companion"),
             "calls": calls, "resource_count": len(resources.resources),
-            "tk": {"state_during_update": hidden_state, "version": tk_version,
-                   "constructed": True, "updated": True, "destroyed": True},
-            "native_dispatch_files": 0}
+            "tk": {"tcl_version": interpreter.call("info", "patchlevel"),
+                   "setup_imported": True, "window_constructed": False},
+            "guards": guard, "product_root_created": False}
 
 print(json.dumps(asyncio.run(main()), ensure_ascii=True))
 """
 
 
-def audit(archive: Path, repo: Path) -> dict:
+def audit(archive: Path, repo: Path, expected_source: str) -> dict:
+    source = capture_source(repo)
+    if source["source_commit"] != expected_source:
+        raise ValueError("Audit requires the exact committed source used for this package")
+    version = check_versions(repo)
     archive = archive.resolve(strict=True)
     dist = (repo / "dist").resolve(strict=True)
     extraction = dist / f"package audit 中文-{uuid.uuid4().hex[:12]}"
     extraction.mkdir(exist_ok=False)
     with zipfile.ZipFile(archive) as bundle_zip:
-        names = bundle_zip.namelist()
-        folded = [os.path.normcase(name) for name in names]
-        if len(folded) != len(set(folded)):
-            raise ValueError("Archive has duplicate or case-colliding paths")
-        for info in bundle_zip.infolist():
-            target = (extraction / info.filename).resolve()
-            if not target.is_relative_to(extraction) or stat.S_ISLNK(info.external_attr >> 16):
-                raise ValueError("Archive contains an escaping path or symbolic link")
+        package_name = validate_archive_members(bundle_zip.infolist())
+        if package_name != f"MATLAB-Companion-{version}-windows-x64":
+            raise ValueError("Archive root does not identify the expected package version")
         bundle_zip.extractall(extraction)
-    manifests = list(extraction.glob("*/bundle-manifest.json"))
-    if len(manifests) != 1:
-        raise ValueError("Expected exactly one package manifest")
-    bundle = manifests[0].parent
-    manifest = json.loads(manifests[0].read_text(encoding="utf-8"))
-    manifest_paths = set()
-    mismatches = []
-    for record in manifest["files"]:
-        relative = record["path"]
-        item = (bundle / relative).resolve()
-        if not item.is_relative_to(bundle) or relative in manifest_paths:
-            raise ValueError("Manifest contains an escaping or duplicate path")
-        manifest_paths.add(relative)
-        if not item.is_file():
-            mismatches.append({"path": relative, "problem": "missing"})
-        elif item.stat().st_size != record["size_bytes"] or sha256(item) != record["sha256"]:
-            mismatches.append({"path": relative, "problem": "size_or_hash_mismatch"})
-    archived_files = {
-        item.relative_to(bundle).as_posix(): item for item in bundle.rglob("*") if item.is_file()
-    }
-    unlisted = sorted(set(archived_files) - manifest_paths - {"bundle-manifest.json"})
-    # Scan only exact builder identity/path fingerprints, not generic variable names.
-    findings = privacy_findings(archived_files, repo)
-    embedded = [item for item in findings if item["classification"] == "embedded_builder_metadata"]
-    python = bundle / "runtime" / "python.exe"
+    bundle = extraction / package_name
+    manifest_path = safe_file(bundle, "bundle-manifest.json")
+    manifest_hash = sha256(manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    integrity_before = verify_manifest(bundle, manifest)
+    if (
+        manifest.get("source_commit") != expected_source
+        or manifest.get("source_dirty") is not False
+        or manifest.get("source_tree") != source["source_tree"]
+        or manifest.get("version") != version
+    ):
+        raise ValueError("Manifest source/version identity mismatch")
+    provenance_path = safe_file(bundle, "build-provenance.json")
+    if sha256(provenance_path) != manifest.get("provenance_sha256"):
+        raise ValueError("Build provenance digest mismatch")
+    provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    if (
+        provenance.get("source_commit") != expected_source
+        or provenance.get("source_tree") != source["source_tree"]
+        or provenance.get("version") != version
+    ):
+        raise ValueError("Build provenance source/version identity mismatch")
+    references = document_paths(source)
+    expected_references = {name: source["source_files_sha256"][name] for name in references}
+    if provenance.get("reference_files_sha256") != expected_references:
+        raise ValueError("Package reference allowlist/source identity mismatch")
+    if provenance.get("normative_files_sha256") != {
+        name: expected_references[name] for name in NORMATIVE_FILES
+    }:
+        raise ValueError("Normative copy identity mismatch")
+    for name, expected in expected_references.items():
+        path = safe_file(bundle, name)
+        if sha256(path) != expected:
+            raise ValueError("Packaged reference is not byte-identical to its source")
+        validate_public_bytes(path)
+    if provenance.get("lock_sha256") != source["source_files_sha256"]["uv.lock"]:
+        raise ValueError("Lock identity mismatch")
+    if provenance.get("requirements_sha256") != sha256(safe_file(bundle, "requirements.txt")):
+        raise ValueError("Exported requirements identity mismatch")
+    # The engineering build retains its wheel and dependency downloads beside
+    # the ZIP. Their hashes bind the archive receipt to actual selected inputs.
+    product = provenance["product_wheel"]
+    retained_wheel = safe_file(archive.parent, product["name"])
+    if (
+        sha256(retained_wheel) != product["sha256"]
+        or retained_wheel.stat().st_size != product["size_bytes"]
+    ):
+        raise ValueError("Retained product wheel identity mismatch")
+    if tree_manifest(archive.parent / "dependency-wheels") != provenance["dependency_wheels"]:
+        raise ValueError("Retained dependency wheel inventory mismatch")
+    vendor_copies = vendor_documents(bundle)
+    if provenance.get("vendor_document_copies") != vendor_copies:
+        raise ValueError("Vendor document provenance mismatch")
+    wheel_identity = verify_product_wheel(
+        retained_wheel, source, bundle / "runtime/Lib/site-packages"
+    )
+    files = {row["path"]: bundle / row["path"] for row in manifest["files"]}
+    files["bundle-manifest.json"] = manifest_path
+    links = validate_document_links(
+        bundle, [name for name in files if name != "bundle-manifest.json"]
+    )
+    findings = privacy_findings(files, repo)
+    if any(row["classification"] == "embedded_builder_metadata" for row in findings):
+        raise ValueError("Package contains embedded builder identity or checkout path")
+    for name, path in files.items():
+        if name.startswith("runtime/Lib/site-packages/matlab_companion/"):
+            validate_public_bytes(path)
+
+    # All static admission checks above must pass before executing the package.
+    python = safe_file(bundle, "runtime/python.exe")
     state = extraction / "isolated acceptance state"
+    state.mkdir()
+    bootstrap = extraction / "guarded_entrypoint.py"
+    bootstrap.write_text(PASSIVE_BOOTSTRAP, encoding="utf-8")
+    self_guards = state / "self-test-guards.json"
     self_test = run_python(
         python,
-        ["-m", "matlab_companion", "self-test", "--root", str(state / "self-test")],
+        [str(bootstrap), str(self_guards), "self-test", "--root", str(state / "self-test")],
         extraction,
         state,
     )
     probe_script = extraction / "package_probe.py"
     probe_script.write_text(PROBE, encoding="utf-8")
     probe_run = run_python(
-        python, [str(probe_script), str(state / "protocol-and-tk")], extraction, state
+        python,
+        [str(probe_script), str(state / "protocol-and-tk"), str(bootstrap)],
+        extraction,
+        state,
     )
     probe_summary = None
     schema_count = 0
     if probe_run["returncode"] == 0:
         result = json.loads(probe_run["stdout"])
-        if not Path(result["python"]).is_relative_to(bundle) or not Path(
-            result["module_path"]
-        ).is_relative_to(bundle):
-            raise ValueError("Probe imported outside the relocated package")
+        if (
+            not Path(result["python"]).is_relative_to(bundle)
+            or not Path(result["module_path"]).is_relative_to(bundle)
+            or result["module_version"] != version
+            or result["metadata_version"] != version
+        ):
+            raise ValueError("Probe did not use the exact relocated package and version")
         for call in result["calls"]:
             Draft202012Validator.check_schema(call["schema"])
             Draft202012Validator(call["schema"]).validate(call["structured"])
@@ -224,63 +253,80 @@ def audit(archive: Path, repo: Path) -> dict:
             "validated_output_schemas": schema_count,
             "resource_count": result["resource_count"],
             "tk": result["tk"],
-            "native_dispatch_files": result["native_dispatch_files"],
+            "guards": result["guards"],
+            "product_root_created": result["product_root_created"],
             "python_relative": Path(result["python"]).relative_to(bundle).as_posix(),
             "module_relative": Path(result["module_path"]).relative_to(bundle).as_posix(),
+            "module_version": result["module_version"],
+            "metadata_version": result["metadata_version"],
         }
+    guards = json.loads(self_guards.read_text(encoding="utf-8")) if self_guards.exists() else None
+    guards_pass = guards and guards["installed"] and not any(guards["attempts"].values())
+    integrity_after = verify_manifest(bundle, manifest)
+    if sha256(manifest_path) != manifest_hash:
+        raise ValueError("Manifest changed during passive execution")
+    verify_source(repo, source)
     runtime_pass = (
-        self_test["returncode"] == 0 and probe_run["returncode"] == 0 and schema_count == 6
+        self_test["returncode"] == 0
+        and "PASS: portable" in self_test["stdout"]
+        and guards_pass
+        and not (state / "self-test").exists()
+        and probe_run["returncode"] == 0
+        and schema_count == 6
     )
     return {
         "observed_at": datetime.now(UTC).isoformat(),
-        "status": "pass"
-        if runtime_pass and not mismatches and not unlisted and not embedded
-        else "partial",
+        "status": "pass" if runtime_pass else "fail",
         "archive": archive.relative_to(repo).as_posix(),
         "archive_size_bytes": archive.stat().st_size,
         "archive_sha256": sha256(archive),
+        "manifest_sha256": manifest_hash,
+        "product_wheel_sha256": product["sha256"],
         "extraction_relative": extraction.relative_to(repo).as_posix(),
         "relocated_path_contains_spaces_and_chinese": True,
         "manifest": {
-            "entries": len(manifest_paths),
-            "mismatches": mismatches,
-            "unlisted_file_count": len(unlisted),
-            "unlisted_examples": unlisted[:20],
-            "source_commit": manifest.get("source_commit"),
-            "source_dirty": manifest.get("source_dirty"),
-            "python": manifest.get("python"),
+            "before": integrity_before,
+            "after": integrity_after,
+            "source_commit": expected_source,
+            "source_tree": source["source_tree"],
+            "source_dirty": False,
+            "version": version,
+            "python": manifest["python"],
         },
+        "document_links": links,
+        "product_identity": wheel_identity,
+        "vendor_document_copies": vendor_copies,
+        "normative_copies_verified": len(NORMATIVE_FILES),
         "privacy_scan": {
-            "scope": "Exact local builder username and checkout path bytes, UTF-8/UTF-16; not a comprehensive secret audit.",
-            "matched_file_count": len(findings),
-            "embedded_builder_metadata_files": len(embedded),
-            "non_bytecode_findings": [
-                item for item in findings if not item["path"].endswith(".pyc")
-            ],
-            "findings": findings[:100],
-            "truncated": len(findings) > 100,
+            "scope": "Exact builder username/checkout bytes and bounded credential patterns in authored references/product files; not a comprehensive secret audit.",
+            "embedded_builder_metadata_files": 0,
+            "findings": findings,
         },
         "self_test": {
             "returncode": self_test["returncode"],
             "elapsed_seconds": self_test["elapsed_seconds"],
             "portable_pass_text_present": "PASS: portable" in self_test["stdout"],
+            "guards": guards,
+            "product_root_created": (state / "self-test").exists(),
             "stderr": self_test["stderr"][:5000],
         },
-        "protocol_and_hidden_tk": {
+        "passive_protocol": {
             "returncode": probe_run["returncode"],
             "elapsed_seconds": probe_run["elapsed_seconds"],
             "result": probe_summary,
             "stderr": probe_run["stderr"][:5000],
         },
         "boundaries": {
+            "scope": "Unpublished P1 package admission only",
+            "guarded_passive_checks": True,
+            "core_started": False,
             "visible_gui_opened": False,
             "host_configuration_changed": False,
             "matlab_launched": False,
-            "vendor_downloaded": False,
             "fresh_device_acceptance": False,
             "host_model_acceptance": False,
+            "installed_activation": False,
             "native_artifact_delivery_acceptance": False,
-            "note": "Package runtime/protocol/hidden-window checks only; valid only for the recorded archive SHA-256.",
         },
     }
 
@@ -288,29 +334,26 @@ def audit(archive: Path, repo: Path) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--archive", type=Path, required=True)
-    parser.add_argument("--report", type=Path, default=Path("verification/package-check.json"))
+    parser.add_argument("--expected-source", required=True)
+    parser.add_argument("--report", type=Path, required=True)
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[1]
-    report = audit(args.archive, repo)
+    try:
+        report = audit(args.archive, repo, args.expected_source)
+    except (
+        ValueError,
+        OSError,
+        KeyError,
+        TypeError,
+        subprocess.SubprocessError,
+        zipfile.BadZipFile,
+    ) as error:
+        report = {"status": "fail", "error_type": type(error).__name__, "error": str(error)}
     target = args.report if args.report.is_absolute() else repo / args.report
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(
-        json.dumps(
-            {
-                key: report[key]
-                for key in (
-                    "status",
-                    "archive_sha256",
-                    "manifest",
-                    "self_test",
-                    "protocol_and_hidden_tk",
-                )
-            },
-            ensure_ascii=True,
-        )
-    )
-    print(f"privacy_matched_files={report['privacy_scan']['matched_file_count']}")
+    print(json.dumps(report, ensure_ascii=True))
+    raise SystemExit(0 if report["status"] == "pass" else 1)
 
 
 if __name__ == "__main__":

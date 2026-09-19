@@ -12,7 +12,8 @@ from .coordinator import IDLE_SECONDS, PROTOCOL_VERSION, resolved_configuration,
 from .core import Core, WorkflowError
 from .diagnostics import passive_status
 from .ipc import Endpoint, connect
-from .storage import file_lock, process_alive, process_start_identity, read_json
+from .startup import TERMINAL, Startup, StartupError
+from .storage import process_start_identity, read_json
 
 
 class CoordinatorClient:
@@ -29,73 +30,97 @@ class CoordinatorClient:
     def close(self):
         """Closing a frontend does not cancel accepted work or signal its owner."""
 
-    def _record(self):
-        path = self.root / "coordinator.json"
-        if not path.exists():
-            return None
-        record = read_json(path)
-        if not process_alive(record["pid"]):
-            return None
-        identity = process_start_identity(record["pid"])
-        if identity is not None and identity != record["process_start"]:
-            return None
-        if identity is None:
-            raise WorkflowError(
-                "COORDINATOR_IDENTITY_UNAVAILABLE",
-                "Existing coordinator identity cannot be checked; it was preserved.",
-            )
-        if record["version"] != __version__ or record["protocol"] != PROTOCOL_VERSION:
-            raise WorkflowError(
-                "COORDINATOR_VERSION_CONFLICT",
-                "An earlier runtime still owns this root. Let its jobs finish and its idle service exit before reconnecting.",
-            )
-        _, fingerprint = resolved_configuration(self.root, self.allowed_roots, self.output_roots)
-        if record["root"] != str(self.root) or record["configuration_sha256"] != fingerprint:
-            raise WorkflowError(
-                "COORDINATOR_CONFIGURATION_CHANGED",
-                "The live service uses different setup settings. Let accepted work finish and the service exit after its idle interval before reconnecting.",
-            )
-        return record
-
-    def _ensure(self):
+    def _startup(self):
         try:
-            resolved_configuration(self.root, self.allowed_roots, self.output_roots)
+            _, fingerprint = resolved_configuration(
+                self.root, self.allowed_roots, self.output_roots
+            )
+            if not 0.1 <= self.idle_seconds <= 300:
+                raise ValueError("Invalid idle lifetime")
         except (ValueError, TypeError, OSError):
             raise WorkflowError(
                 "SETUP_INVALID",
                 "Saved folder permissions or settings are invalid. Review setup; existing values were preserved.",
             ) from None
-        record = self._record()
-        if record:
-            return record
-        with file_lock(self.root / ".coordinator-start.lock", timeout=10):
-            record = self._record()
-            if record:
-                return record
-            try:
-                process = spawn_coordinator(
-                    self.root, self.allowed_roots, self.output_roots, idle_seconds=self.idle_seconds
-                )
-            except OSError as error:
-                raise WorkflowError(
-                    "COORDINATOR_START_BLOCKED",
-                    "This host did not permit an independent local process. Start Companion's job service from its setup window, then retry with the same idempotency key. No ordinary child fallback was attempted.",
-                ) from error
+        return Startup(self.root, fingerprint, __version__, PROTOCOL_VERSION)
+
+    def _record(self):
+        startup = self._startup()
+        try:
+            with startup.locked():
+                return startup.reconciled()[1]
+        except StartupError as error:
+            raise WorkflowError(error.code, error.message) from error
+
+    def _ensure(self):
+        startup = self._startup()
+        attempt = None
+        try:
+            with startup.locked():
+                attempt, ready = startup.reconciled()
+                if ready:
+                    return ready
+                if attempt is None or attempt.phase in TERMINAL:
+                    startup.free_lifetime()
+                    startup.archive(attempt)
+                    attempt = startup.intent()
+                    # This is the last durable boundary before anything can spawn.
+                    attempt = startup.update(
+                        attempt, phase="spawn_requested", last_observation="spawn_requested"
+                    )
+                    spawn_coordinator(
+                        self.root,
+                        self.allowed_roots,
+                        self.output_roots,
+                        idle_seconds=self.idle_seconds,
+                        startup=startup,
+                        attempt=attempt,
+                    )
+            # A child needs the startup lock to claim ownership before Core.
+            # Never wait for it while holding that lock, or launch from this loop.
             deadline = time.monotonic() + 15
             while time.monotonic() < deadline:
-                record = self._record()
-                if record:
-                    return record
-                if process.poll() is not None:
-                    raise WorkflowError(
-                        "COORDINATOR_START_FAILED",
-                        "The independent service could not start. Existing jobs were preserved; inspect setup before retrying.",
-                    )
+                with startup.locked(timeout=min(10, max(0, deadline - time.monotonic()))):
+                    current, ready = startup.reconciled()
+                    if current is None or current.attempt_id != attempt.attempt_id:
+                        raise startup.error(
+                            "COORDINATOR_START_UNCONFIRMED",
+                            "Startup ownership changed while waiting; no further process was launched.",
+                            attempt,
+                        )
+                    if ready:
+                        return ready
+                    attempt = current
+                    if attempt.phase in TERMINAL:
+                        raise startup.error(
+                            "COORDINATOR_START_FAILED",
+                            "The identified service retired before readiness; its metadata and jobs were preserved.",
+                            attempt,
+                        )
                 time.sleep(0.05)
-            raise WorkflowError(
+            with startup.locked():
+                startup.note(attempt, "ready_timeout")
+            raise startup.error(
                 "COORDINATOR_START_UNCONFIRMED",
-                "The service did not become ready in time. Its outcome is unconfirmed; no second process was started.",
+                "The service has not confirmed readiness. This attempt remains owned; no further process was launched.",
+                attempt,
             )
+        except StartupError as error:
+            raise WorkflowError(error.code, error.message) from error
+        except (OSError, ValueError, RuntimeError) as error:
+            # A storage/launch failure can occur after publication or creation.
+            # Its exception type never authorizes replacement of the attempt.
+            if attempt is None:
+                try:
+                    attempt = startup.read()
+                except StartupError:
+                    pass
+            failure = startup.error(
+                "COORDINATOR_START_UNCONFIRMED",
+                "Startup persistence or creation was not confirmed; existing ownership was preserved.",
+                attempt,
+            )
+            raise WorkflowError(failure.code, failure.message) from error
 
     def _rpc(self, method, params):
         connection = None

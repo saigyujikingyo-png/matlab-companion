@@ -144,11 +144,11 @@ passed afterward; permanent access denial still ends within the same bound.
 Only file I/O is retried, never native execution. This source checkpoint and its
 package audit remain separate from the final rebuilt archive's acceptance.
 
-The Windows GitHub runner rejected both nested clients' independent-process
+In the historical Alpha.3 run, the Windows GitHub runner rejected both nested clients' independent-process
 creation with WinError 5 in [CI 35082324331](https://github.com/saigyujikingyo-png/matlab-companion/actions/runs/35082324331).
 Both returned `COORDINATOR_START_BLOCKED`, made exactly one launch attempt and
-created no service or job store. The positive two-client automatic-start check
-is skipped only for that fully observed restriction; other startup errors still
+created no service or job store. At that release, the positive two-client automatic-start check
+was skipped only for that fully observed restriction; other startup errors still
 fail. Local Windows and Ubuntu positive evidence and the explicit restrictive
 Windows Job refusal test remain separate. No ordinary-child fallback or host
 restriction workaround is introduced.
@@ -165,3 +165,38 @@ and [Job objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job
 on 2026-09-16. A remaining outer Job membership is not proof of membership in an
 individual frontend's Job. The coordinator records the observable Job limits;
 actual disconnect acceptance supplies the bounded lifetime evidence.
+
+
+## Unreleased startup-attempt ownership follow-up
+
+The source candidate following documentation baseline 34e2cf17 fixes the
+cross-call creation gap identified by the 2026-09-19 lifecycle review. A harmless
+regression first failed on the baseline with two launch requests after two
+unconfirmed calls; the candidate preserves one attempt across later callers.
+This is not evidence of duplicate scientific execution in the released package.
+
+Private journal intent precedes Popen; exact self-claim and durable admission
+precede Core. Ready matching binds the attempt, actual owner, instance and scope.
+Legacy reuse requires no journal. An owner cannot be rebound to the same UUID,
+and an old observer cannot overwrite newer ownership. Every pending phase stays
+owned until positively reconciled; no timeout, reset or deletion advice creates
+a successor. A complete retired chain is archived and read back first.
+
+Source regression uses separate Popen, Core-construction and fake-dispatch counts.
+It covers publication before/after replacement, readback failure, reaper creation,
+actual harmless parent loss, late readiness, rejected identities, lock ordering,
+archive failure and actual queued Core recovery with a fake backend. A readiness
+failure during recovery cannot release lifetime ownership before Core.close.
+The existing scientific Core and native observer source files are unchanged.
+
+The Windows capability skip now requires exactly one denied breakaway invocation,
+no returned launcher/owner and the other frontend reporting the same preserved
+unconfirmed attempt. It does not turn a creation exception into noncreation proof.
+Controlled parent-loss helpers exercise private admission using ordinary test
+Python children; they do not assert production breakaway, native or OS-event acceptance.
+
+These changes are a bounded source candidate for governance review. Alpha.3's
+archive, installed files and historical R2 evidence remain unchanged. Publication,
+a distinct-version package, quiescent activation, native tests, model/host delivery
+and real OS-event checks remain separate gates. R3 has not started. The
+[lifecycle record](LIFECYCLE.md) describes remaining conservative startup limits.

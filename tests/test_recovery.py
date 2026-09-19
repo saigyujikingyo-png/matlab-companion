@@ -610,3 +610,140 @@ def test_execution_lock_failure_keeps_an_existing_dispatch_unknown(core_factory,
     core._execute(job_id)
     assert core._state(job_id)["state"] == "unknown"
     assert backend.calls == []
+
+
+@pytest.mark.parametrize("after_ready_replace", [False, True])
+def test_startup_ready_failure_cannot_release_recovering_core_or_replay_job(
+    core_factory, monkeypatch, after_ready_replace
+):
+    """Real Core recovers one queued job; only its backend artifacts are fake."""
+    import asyncio
+    from types import SimpleNamespace
+
+    from matlab_companion import coordinator as coordinator_module
+    from matlab_companion.client import CoordinatorClient
+    from matlab_companion.core import WorkflowError
+    from matlab_companion.storage import file_lock
+
+    original, input_id = core_factory()
+    real_atomic = core_module.atomic_json
+
+    def stop_before_index(path, value):
+        if path == original.root / "idempotency.json":
+            raise OSError("Injected interruption before queue index commit")
+        real_atomic(path, value)
+
+    arguments = {
+        "operation": "data_profile",
+        "parameters": {},
+        "input_id": input_id,
+        "idempotency_key": "startup-recovery-once",
+    }
+    monkeypatch.setattr(core_module, "atomic_json", stop_before_index)
+    assert not original.call("matlab_run", arguments)["ok"]
+    original.close()
+    job = next((original.root / "jobs").iterdir())
+    atomic_json(
+        job / "scheduler.json", read_json(job / "scheduler.json") | {"coordinator_pid": 999_999}
+    )
+    monkeypatch.setattr(core_module, "atomic_json", real_atomic)
+    old_alive = core_module.process_alive
+    monkeypatch.setattr(
+        core_module, "process_alive", lambda pid: False if pid == 999_999 else old_alive(pid)
+    )
+    entered, release, closing = threading.Event(), threading.Event(), threading.Event()
+    counts = {"popen": 0, "core": 0, "fake_dispatch": 0}
+    failures = []
+    order = []
+
+    class BlockedReceipt(ReceiptBackend):
+        async def execute(self, job):
+            counts["fake_dispatch"] += 1
+            entered.set()
+            for _ in range(1200):
+                if release.is_set():
+                    break
+                await asyncio.sleep(0.025)
+            else:
+                raise TimeoutError("The harmless backend release was not observed")
+            await super().execute(job)
+
+    class ObservedCore(Core):
+        def __init__(self, *args, **kwargs):
+            counts["core"] += 1
+            super().__init__(*args, **kwargs)
+
+        def close(self):
+            order.append("close_entered")
+            closing.set()
+            with file_lock(original.root / ".coordinator-start.lock", timeout=0):
+                pass
+            with (
+                pytest.raises(TimeoutError),
+                file_lock(original.root / ".coordinator.lock", timeout=0),
+            ):
+                pytest.fail("Lifetime lock released before real Core settlement")
+            super().close()
+            order.append("close_finished")
+
+    def forbid_spawn(*args, **kwargs):
+        counts["popen"] += 1
+        raise AssertionError("An unready recovery owner must not be replaced")
+
+    def fail_ready(path, value):
+        if path.name == "coordinator.json":
+            assert entered.wait(5), "The real recovery worker never entered the fake backend"
+            if after_ready_replace:
+                real_atomic(path, value)
+            raise OSError("Injected readiness publication failure after recovery dispatch")
+        real_atomic(path, value)
+
+    monkeypatch.setattr(coordinator_module, "Core", ObservedCore)
+    monkeypatch.setattr(coordinator_module, "atomic_json", fail_ready)
+    monkeypatch.setattr("matlab_companion.client.spawn_coordinator", forbid_spawn)
+    clock = [0.0]
+    monkeypatch.setattr(
+        "matlab_companion.client.time",
+        SimpleNamespace(
+            monotonic=lambda: clock[0],
+            sleep=lambda seconds: clock.__setitem__(0, clock[0] + seconds),
+        ),
+    )
+    backend = BlockedReceipt()
+    owner = coordinator_module.Coordinator(
+        original.root, original.allowed_roots, original.output_roots, backend=backend
+    )
+
+    def run():
+        try:
+            owner.run()
+        except OSError as error:
+            failures.append(error)
+        finally:
+            order.append("lifetime_released")
+
+    worker = threading.Thread(target=run)
+    worker.start()
+    try:
+        assert entered.wait(5)
+        assert closing.wait(5)
+        with pytest.raises(WorkflowError) as error:
+            CoordinatorClient(
+                original.root, original.allowed_roots, original.output_roots
+            )._ensure()
+        assert error.value.code == "COORDINATOR_START_UNCONFIRMED"
+        assert counts == {"popen": 0, "core": 1, "fake_dispatch": 1}
+        assert worker.is_alive()
+        assert not (job / "cancel.flag").exists()
+        assert read_json(original.root / "coordinator-start.json")["phase"] == "stopping"
+    finally:
+        release.set()
+        worker.join(10)
+    assert not worker.is_alive()
+    assert len(failures) == 1 and "readiness publication" in str(failures[0])
+    assert order == ["close_entered", "close_finished", "lifetime_released"]
+    assert read_json(job / "state.json")["state"] == "completed"
+    assert backend.calls == [job.name]
+    assert counts == {"popen": 0, "core": 1, "fake_dispatch": 1}
+    with file_lock(original.root / ".coordinator.lock", timeout=0):
+        pass
