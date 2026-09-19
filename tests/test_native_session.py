@@ -123,6 +123,9 @@ def test_wrong_launcher_identity_never_authorizes_process_observation(owned, fie
         watcher.begin()
         watcher.start(installation)
         atomic_json(job / "native-session.json", marker)
+        # This case asserts identity rejection, not a 100 ms scheduling budget.
+        # Wait for the same fake observer; dedicated timeout cases remain separate.
+        await asyncio.wait_for(asyncio.shield(watcher.task), timeout=5)
         result = await watcher.finish(backend_returned=True, timeout=0.1)
         assert result["native_exited"] is None
         assert result["native_identity"] is None
@@ -147,6 +150,9 @@ def test_existing_or_reused_process_cannot_inherit_ownership(owned, mismatch):
         else:
             process.identity["executable"] = str(installation / "another.exe")
         process.has_exited = True
+        # This case asserts identity rejection, not a 100 ms scheduling budget.
+        # Wait for the same fake observer; dedicated timeout cases remain separate.
+        await asyncio.wait_for(asyncio.shield(watcher.task), timeout=5)
         result = await watcher.finish(backend_returned=True, timeout=0.1)
         assert result["native_exited"] is None
         assert result["reason_code"] == "NATIVE_IDENTITY_REJECTED"
