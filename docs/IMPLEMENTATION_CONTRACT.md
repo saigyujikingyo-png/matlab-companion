@@ -29,4 +29,14 @@ Native code returns MAT, FIG, standalone M, CSV, PNG, PDF where applicable, and 
 
 ## Ownership
 
-Root owns core, native backend Python integration, server, CLI, scripts, packaging, README and releases. The native contributor owns `matlab/` and its own `tests/test_native_source.py` only; do not launch MATLAB concurrently with root. The contracts contributor owns `src/matlab_companion/contracts.py`, `tests/test_contracts.py`, and `docs/CONTRACTS.md` only. The cloud contributor owns browser environment work and `verification/cloud-environment.md` only. Coordinate changes to this seam before implementation.
+One MATLAB Product Max is accountable for core, native integration, contracts,
+server, CLI, packaging, documentation and releases. Contributors receive bounded,
+disjoint scopes from that owner; the earlier native/contracts/cloud work split
+is not continuing parallel product ownership. Native work in matlab/ and
+tests/test_native_source.py, contract work in src/matlab_companion/contracts.py,
+tests/test_contracts.py and docs/CONTRACTS.md, and cloud evidence in
+verification/cloud-environment.md require explicit coordination at this seam.
+Do not launch MATLAB concurrently with the owner. Follow
+[shared ownership](../governance/OWNERSHIP.md) and the
+[product lifecycle record](LIFECYCLE.md); shared-rule adoption is separate from
+native or host acceptance.

@@ -1,6 +1,6 @@
 # MATLAB Companion contributor entrypoint
 
-Read DEVELOPMENT_PRINCIPLES.md (shared version 2026-09-14.1), README.md and docs/IMPLEMENTATION_CONTRACT.md before work. docs/ARCHITECTURE.md contains the approved design and historical planning evidence.
+Read [DEVELOPMENT_PRINCIPLES.md](DEVELOPMENT_PRINCIPLES.md) (shared version 2026-09-19.1), [README.md](README.md) and [docs/IMPLEMENTATION_CONTRACT.md](docs/IMPLEMENTATION_CONTRACT.md) before work. For lifecycle or ownership changes also read [RUNTIME_LIFECYCLE.md](RUNTIME_LIFECYCLE.md), [governance/OWNERSHIP.md](governance/OWNERSHIP.md) and the product [lifecycle record](docs/LIFECYCLE.md). Shared copies are pinned to Chembridge commit 922d95041b3b857f6ba11fbfb2817b18712ef605. docs/ARCHITECTURE.md contains the approved design and historical planning evidence.
 
 Implement one host-neutral core with thin adapters. Use the official MathWorks MATLAB MCP Server as a private backend first. Scientific computation and editable files come from licensed MATLAB; portable tests do not prove native execution or host delivery. Never attach to or terminate an unrelated MATLAB session. Keep jobs, credentials, vendor binaries and runtime environments outside public source and cloud sync.
 
@@ -8,4 +8,4 @@ Use Python 3.12 and locked dependencies. Setup: `uv sync --locked --extra dev`. 
 
 All public tools require meaningful outputSchema and server-validated structuredContent; all dispatched operations require their own validated result contract. Preserve original artifacts, hashes, native reopen and separate delivery evidence. Public content is English. Ordinary users must not need a coding project or development terminal. Read the shared principles for cross-task standing authorisation and Terra max acceptance requirements.
 
-Preserve unrelated changes. Agents own disjoint files; the root integrates and verifies the combined state. No source publication includes private inputs, licence files, tokens or installed vendor runtimes.
+One Product Max owns long-term product development and integrates any explicitly scoped contributors; Governance High reviews shared contracts and incidents. Preserve unrelated changes and disjoint file ownership. Rule adoption does not accept runtime conformance. The next startup-attempt change requires a concrete design/diff plan before implementation; R3, native/OS acceptance and package deployment remain separate gated work. No source publication includes private inputs, licence files, tokens or installed vendor runtimes.

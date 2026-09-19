@@ -1,6 +1,13 @@
 # Implementation status
 
-Updated: 2026-09-16. Version: 0.1.0a3 released (R2 Windows early preview).
+Updated: 2026-09-19 (documentation adoption only). Version: 0.1.0a3 released (R2 Windows early preview).
+
+Shared baseline 2026-09-19.1 and lifecycle contract 1.0 are adopted in the
+[lifecycle record](LIFECYCLE.md). Governance verified the single Product Max
+handoff. Runtime conformance remains partial: persistent startup-attempt ownership
+is a source-confirmed, not fault-reproduced gap. Its design/diff plan is the next
+gate; no startup fix, R3 work, native/OS acceptance or deployment occurred in this
+adoption. Existing release receipts below retain their original dates and scope.
 
 <a id="current-r2-candidate"></a>
 

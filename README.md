@@ -13,7 +13,7 @@ The [alpha review](docs/ALPHA_REVIEW_2026-09-15.md) records the original finding
 [R2 durable jobs](docs/R2_DURABLE_JOBS.md) tracks the current increment; the
 [technical route](docs/NEXT_TECHNICAL_ROUTE.md) keeps R3 and later proposals separate.
 
-Read [development principles](DEVELOPMENT_PRINCIPLES.md), [architecture](docs/ARCHITECTURE.md) and [implementation contract](docs/IMPLEMENTATION_CONTRACT.md). Native execution, portable checks, installation, model calls and host file delivery have separate evidence.
+Read [development principles](DEVELOPMENT_PRINCIPLES.md), [architecture](docs/ARCHITECTURE.md) and [implementation contract](docs/IMPLEMENTATION_CONTRACT.md). The [runtime lifecycle record](docs/LIFECYCLE.md) adopts shared baseline 2026-09-19.1 and records the open startup-attempt reconciliation gap. This documentation adoption does not change or newly certify the Alpha.3 runtime. Native execution, portable checks, installation, model calls and host file delivery have separate evidence.
 
 ## Install and use
 
