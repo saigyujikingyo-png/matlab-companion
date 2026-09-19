@@ -7,7 +7,7 @@ description: Use MATLAB Companion for bounded CSV or TSV analysis, editable MATL
 
 Use the `matlab-companion` MCP connection created by the setup wizard. This skill adds guidance; it does not install MATLAB or establish host acceptance.
 
-This guidance targets the `0.1.0a3` / `0.1.0-alpha.3` R2 candidate. R2 implementation and acceptance are in progress; R3 has not started. Discover the connected runtime's tools before using candidate features with an older installation. Do not imply this candidate is released or inherit earlier acceptance results.
+This guidance targets the `0.1.0a4` / `0.1.0-alpha.4` unpublished packaging candidate. Startup source acceptance and package verification are separate; installed activation is not approved; R3 has not started. Discover the connected runtime's tools before using candidate features with an older installation. Do not imply this candidate is released or inherit earlier acceptance results.
 
 1. Call `matlab_status`. This is passive and does not start the job service. Distinguish installed/unverified from actual native verification. If installation or folder permission is missing, direct the user to Start Setup.
 2. Discover relevant parameters with `matlab_help`. Preserve input and explicit units. Clarify relative weights versus known standard deviations, and free versus zero intercept, when material and unspecified.
@@ -21,7 +21,7 @@ This guidance targets the `0.1.0a3` / `0.1.0-alpha.3` R2 candidate. R2 implement
 
 Accepted work belongs to an on-demand coordinator for the user and resolved installation root. A client disconnect abandons its response/wait and does not cancel the scientific job. Reconnect to that root with the existing job ID or original idempotency key. Lost responses never authorize an automatic write retry. Cancellation requires an explicit `matlab_job` action; `cancel_requested` is intent, not proof of a stopped MATLAB process. Coordinator loss retains unknown/quarantine recovery without replaying a dispatched operation.
 
-If a Windows host rejects independent startup, guide the user to open **Start Setup.vbs** normally and explicitly choose **Start job service**, then return to the agent. The launcher fails without falling back to a client-owned process. Service startup can resume accepted, undispatched work, so it is a distinct action from passive setup checks. No survival guarantee covers closure of the outer host, its Windows Job Object or the operating system. Never stop an unrelated MATLAB session or clear quarantine without the documented stopped-session confirmation.
+If startup is unconfirmed, retain its startup attempt identifier and existing ownership records. Later calls and Setup's Start job service observe the same pending attempt; they are not a reset or bypass. Do not delete a marker, start an older runtime, or resubmit scientific work to repair startup. Installed activation and native acceptance require separate evidence.
 
 `job.phase` is factual: `executing` includes session startup, and `validating` means receipt/artifact checking. Neither reports a percentage. `job.event_seq` changes only when the persisted summary changes. Legacy jobs may return null phase and sequence zero; do not rewrite them to normalize a response.
 
