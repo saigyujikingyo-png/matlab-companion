@@ -1,7 +1,7 @@
 # MATLAB Companion runtime lifecycle
 
 Observed: 2026-09-19. Shared baseline: **2026-09-19.1**; lifecycle contract: **1.0**.
-Status: **documentation adopted; runtime conformance remains partial**.
+Status: **documentation adopted; bounded startup source candidate; runtime conformance remains partial**.
 
 Accountable owner: one MATLAB Companion Product Max, with Governance High reviewing
 shared contracts and incidents. Ownership transfer was verified on 2026-09-19;
@@ -11,12 +11,17 @@ a separate acceptance policy.
 
 ## Scope and immutable identities
 
-Product: [matlab-companion](https://github.com/saigyujikingyo-png/matlab-companion),
-branch codex/initial-preview. This review inspected source HEAD
-f071db33bcfeb92fe4ae41d1445f7f88ee1f7c4e. Its changes after runtime commit
-1b2eb73bcd674056cf756260ee5359c083c24afe are documentation and receipts only.
-This adoption changes documentation, not the six-tool interface, scientific
-operations, installed runtime, package version or original acceptance records.
+Product: [matlab-companion](https://github.com/saigyujikingyo-png/matlab-companion).
+The shared-document adoption is commit
+34e2cf17c2709247d039171692d8ce4718c2aa0a on codex/initial-preview. The bounded
+startup candidate follows that baseline on codex/startup-attempt-ownership.
+It changes private startup admission and related tests/documentation. The six
+public tools, scientific recovery, native observer, package version and original
+release acceptance records retain their existing contracts.
+
+The original documentation review inspected f071db33bcfeb92fe4ae41d1445f7f88ee1f7c4e;
+changes from runtime 1b2eb73bcd674056cf756260ee5359c083c24afe through that adoption
+were documentation and receipts only. The source candidate is a subsequent change.
 
 The published Windows preview is 0.1.0a3 / v0.1.0-alpha.3. Its ZIP is
 33,104,323 bytes, SHA-256
@@ -73,19 +78,51 @@ accepted work. Reading a job through such a path is not guaranteed to be passive
   Idle exit requires no active work or request handlers. An idle_degraded receipt
   retains active/quarantine evidence and makes no native-exit claim.
 
-### Open startup-attempt gap
+### Bounded startup-attempt source candidate
 
-Current [client startup](../src/matlab_companion/client.py), lines 68–98,
-holds a spawned process only in a local variable. If readiness is unconfirmed
-before coordinator.json exists, that invocation does not spawn again, but a
-later invocation may make another launch attempt. Persistent spawning/failed/
-unconfirmed attempt ownership is missing. This is a source-confirmed gap;
-delayed-ready failure injection has not yet reproduced it.
+The original cross-call gap was reproduced against source baseline 34e2cf17:
+two successive unconfirmed calls requested two launches in a harmless fixture.
+The [regression](../tests/test_startup.py) now requires one request across both
+calls. This proves a startup retry defect, not duplicate scientific execution.
 
-The coordinator lifetime lock precedes Core construction and prevents a second
-simultaneous Core. This finding does not establish duplicate scientific execution.
-Core construction can recover accepted queued work before ready is published.
-An unready process therefore must not be blindly terminated.
+The candidate uses [private startup admission](../src/matlab_companion/startup.py):
+
+- Persist and read back coordinator-start.json before Popen. A managed launch
+  advances intent to spawn_requested before its single creation request.
+- The child claims its exact attempt, actual PID/birth/image and instance UUID
+  under lifetime ownership, then persists core_admitted before constructing Core.
+  An exact repeated self-claim is idempotent; another instance cannot bind that
+  UUID, and Core admission cannot be reused.
+- Release the startup lock before Core construction or the bounded ready wait.
+  Startup-lock acquisition is at most 10 seconds; a launcher probes the lifetime
+  lock with timeout zero. Ready polling is 15 seconds. Synchronous OS creation
+  and filesystem operations are not given an invented hard deadline.
+- Readiness requires matching attempt, owner, instance, root, configuration,
+  runtime/protocol and current process identity. The legacy-ready branch is
+  available only with no journal; a malformed or conflicting journal never
+  falls back to legacy reuse.
+- A returned launcher is recorded before reaper creation and differs from the
+  actual owner when Python uses a redirector. Creation, publication or waiter
+  failure preserves the same attempt. Timeout is an observation, never expiry.
+- A positively retired complete owner/launcher chain, or proven pre-invocation
+  noncreation, can be archived before a successor intent. Archive/readback
+  failure blocks replacement. Records and archives are bounded to 64 KiB;
+  uncertain records are not removed, rotated or reset.
+- Readiness or stopping-record failure after Core admission still closes Core
+  under the lifetime lock. Eligible queued recovery keeps its existing behavior;
+  native uncertainty, quarantine and scientific replay rules are unchanged.
+
+A parent can disappear before recording its returned child. The original child
+may still self-claim and become ready. If the launch chain cannot be established,
+the attempt remains blocked with its diagnostic UUID, including after a wrapper
+exits. There is no age-based expiry or marker-deletion recovery instruction.
+Retired metadata has explicit-removal retention; no history-pruning feature is added.
+
+This is source-level behavior. Installed Alpha.3 ignores the new journal and is
+untouched. Source and emulated legacy tests cannot establish a global one-spawn
+guarantee with that binary. A distinct-version package and verified quiescent
+activation remain required before deployment; package, native, host/model and
+real OS-event acceptance are separate gates.
 
 ### Uncertain effects and native identity
 
@@ -112,7 +149,7 @@ locks; it preserves a receipt and does not terminate MATLAB. See
 | Event | Implemented behavior / recovery | Evidence or gap |
 | --- | --- | --- |
 | Host launch / individual frontend EOF or disconnect | A valid request may start the independent owner; frontend close does not cancel accepted work | Historical native disconnect case passed with a prestarted coordinator; whole-host/outer-Job termination is not covered |
-| Concurrent frontends / delayed ready / retry | Startup and lifetime locks plus identity checks constrain ownership | Portable concurrency evidence exists; the cross-call startup-attempt gap above remains open |
+| Concurrent frontends / delayed ready / retry | Startup and lifetime locks plus identity checks constrain ownership | Candidate source regressions cover one managed launch, delayed ready, parent loss and publication faults; installed Alpha.3 retains the historical gap |
 | Coordinator crash / next explicit start | Reconcile retained intent; eligible undispatched queue can resume; uncertain dispatched work is not replayed | Historical crash case retained unknown/quarantine; observer uncertainty remained even when an external held handle later proved exit |
 | Boot / logon / reboot | No autostart; next explicit host/Setup start performs ordinary reconciliation | No continuous execution promise through reboot; actual reboot recovery unverified |
 | Sleep / resume / logoff / shutdown | No dedicated OS-event hooks or guaranteed job survival; reconnect to the same root and reconcile | Actual event acceptance unverified; do not reboot or log off an active workstation as an incidental check |
@@ -150,18 +187,23 @@ at this documentation stage. Runtime conformance and
 Governance owns the shared incident and migration ledger; this repository owns
 its implementation and evidence.
 
-The next engineering deliverable is a concrete startup-attempt design and diff
-plan for governance review, not implementation in this documentation change.
-The proposed seam is client.py / coordinator.py with bounded storage helpers and
-coordinator/recovery tests. Required invariant: persist attempt intent before
-anything can spawn, reconcile that same canonical owner before a new launch,
-and preserve ambiguous/pre-ready ownership without cancellation or science replay.
+Governance accepted the concrete startup design and authorized only its bounded
+source implementation and non-native regression. The candidate adds startup.py
+and changes client.py, coordinator.py and __main__.py; related tests and this
+lifecycle/installation/R2 documentation record the result.
 
-The first non-native gate must cover delayed ready plus a second caller (one
-spawn), late readiness bound to the original identity, pre/post-spawn failures,
-client loss during pre-ready recovery, concurrent roots and stale/PID-reused
-identities. Exact-package, installed-current-device, native and OS-event gates
-are separate and remain gated. R3 original-file delivery work remains deferred.
+The evidence matrix is intentionally split:
+
+| Candidate requirement | Regression evidence | Boundary |
+| --- | --- | --- |
+| Cross-call ownership, strict records, stale observers, reapers and publication faults | [Startup fault matrix](../tests/test_startup.py) | Temporary roots and explicitly counted Popen/Core/backend fixtures |
+| Concurrent managed creation, parent loss and late child self-claim | [Coordinator processes](../tests/test_coordinator.py) | Harmless Python processes; parent-loss helpers use controlled test launch parameters, separate from production breakaway capability |
+| Ready-write failure during accepted queue recovery | [Recovery tests](../tests/test_recovery.py) | Actual Core and one queued job with a fake receipt backend; lifetime release follows Core settlement |
+| Rejected inputs and private CLI token | [Client boundary](../tests/test_client_boundary.py) | No Core or launch for invalid input; no new public tool or schema |
+
+The source candidate is returned for governance review with its exact diff and
+fresh check results. Exact-package, installed-current-device, native and OS-event
+gates remain open. R3 original-file delivery work remains deferred.
 
 Distribution gap: the existing bundle builder copies docs and selected root
 files, but does not yet include all newly adopted root/governance/template
@@ -169,9 +211,9 @@ dependencies. This repository-only migration neither rebuilds nor deploys the
 Alpha.3 package. A future packaging change must include the required documents
 or reviewed versioned references and validate packaged links before release.
 
-Rollback of this adoption is a documentation revert only; it does not touch
+Rollback of the earlier shared-document adoption is a documentation revert only; it does not touch
 settings, accepted work, native sessions or installed Alpha.3/Alpha.2 runtimes.
-No runtime/schema/data migration is introduced.
+The startup candidate adds private state; it is not an in-place installed runtime migration.
 
 ## Shared provenance
 

@@ -32,7 +32,17 @@ def main():
     parser.add_argument("--allow-root", action="append", default=[])
     parser.add_argument("--output-root", action="append", default=[])
     parser.add_argument("--idle-seconds", type=float, default=30, help=argparse.SUPPRESS)
+    parser.add_argument("--startup-attempt-id", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.startup_attempt_id is not None:
+        from .startup import canonical_uuid
+
+        try:
+            canonical_uuid(args.startup_attempt_id)
+        except ValueError:
+            parser.error("Invalid startup attempt identifier")
+        if args.command != "coordinator":
+            parser.error("Startup attempt identifiers are private to the coordinator")
     root = resolve_root(args.root)
     if args.command == "setup":
         from .setup_ui import main as setup_main
@@ -50,7 +60,13 @@ def main():
     elif args.command == "coordinator":
         from .coordinator import Coordinator
 
-        Coordinator(root, args.allow_root, args.output_root, idle_seconds=args.idle_seconds).run()
+        Coordinator(
+            root,
+            args.allow_root,
+            args.output_root,
+            idle_seconds=args.idle_seconds,
+            startup_attempt_id=args.startup_attempt_id,
+        ).run()
     else:
         print(json.dumps(passive_status(root), indent=2))
         if args.command == "self-test":

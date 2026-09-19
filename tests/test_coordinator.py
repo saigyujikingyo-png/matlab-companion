@@ -300,6 +300,8 @@ def test_lost_rpc_response_is_not_automatically_retransmitted(tmp_path):
                 "pid": os.getpid(),
                 "process_start": process_start_identity(os.getpid()),
                 "version": __version__,
+                "executable": str(Path(sys.executable).resolve()),
+                "state": "ready",
                 "root": str(root.resolve()),
                 "configuration_sha256": fingerprint,
                 "endpoint": {"kind": listener.endpoint.kind, "address": listener.endpoint.address},
@@ -374,37 +376,54 @@ def test_two_initial_client_processes_share_a_single_automatically_started_owner
             )
             assert child.returncode == 0
             results.append(read_json(tmp_path / f"client-{index}.json"))
+        journal_path = root / "coordinator-start.json"
+        journal = read_json(journal_path) if journal_path.exists() else None
+        launches = [launch for item in results for launch in item.get("launches", [])]
+        # A nested Windows Job can deny the single breakaway request. The other
+        # caller must preserve that same unknown attempt, not make a second one.
         if (
             os.name == "nt"
-            and len(results) == 2
+            and journal
+            and journal["phase"] == "spawn_requested"
+            and journal["owner"] is None
+            and journal["launcher"] is None
+            and sorted((item["response"].get("error") or {}).get("code", "") for item in results)
+            == ["COORDINATOR_START_BLOCKED", "COORDINATOR_START_UNCONFIRMED"]
             and all(
-                item["response"].get("ok") is False
-                and (item["response"].get("error") or {}).get("code")
-                == "COORDINATOR_START_BLOCKED"
-                and item["owner"] is None
-                and len(item.get("launches", [])) == 1
-                and item["launches"][0].get("creationflags") == 150994944
-                and item["launches"][0].get("error", {}).get("winerror") == 5
-                and item["launches"][0].get("error", {}).get("errno") == 13
-                and "launcher_pid" not in item["launches"][0]
+                item["owner"] is None
+                and journal["attempt_id"] in item["response"]["error"]["message"]
                 for item in results
             )
-            and (
-                not root.exists()
-                or all(
-                    path.name == ".coordinator-start.lock" and path.is_file()
-                    for path in root.iterdir()
-                )
+            and len(launches) == 1
+            and launches[0].get("creationflags") == 150994944
+            and launches[0].get("error", {}).get("winerror") == 5
+            and launches[0].get("error", {}).get("errno") == 13
+            and "launcher_pid" not in launches[0]
+            and all(
+                path.is_file()
+                and path.name
+                in {".coordinator-start.lock", ".coordinator.lock", "coordinator-start.json"}
+                for path in root.iterdir()
             )
         ):
             pytest.skip(
-                "Windows runner rejected both nested CREATE_BREAKAWAY_FROM_JOB | "
-                "CREATE_NO_WINDOW launches with WinError 5 (errno 13); no process, "
-                "owner, job store or native marker was created. Positive auto-start "
-                "is unsupported here; the separate strict-Job refusal test still applies."
+                "Windows runner denied the single nested breakaway launch with WinError 5; "
+                "the second client preserved the same unconfirmed attempt. No owner/job "
+                "record was observed. This is not positive auto-start or noncreation proof; "
+                "the separate strict-Job refusal test still applies."
             )
         if not all(item["response"]["ok"] for item in results):
-            pytest.fail("Initial clients did not both connect; full diagnostics follow", pytrace=False)
+            pytest.fail(
+                "Initial clients did not both connect; full diagnostics follow", pytrace=False
+            )
+        assert len(launches) == 1
+        assert (
+            journal["attempt_id"]
+            == results[0]["owner"]["startup_attempt_id"]
+            == results[1]["owner"]["startup_attempt_id"]
+        )
+        assert journal["owner"]["pid"] == results[0]["owner"]["pid"]
+        assert journal["launcher"]["pid"] == launches[0]["launcher_pid"]
         assert results[0]["owner"]["instance_id"] == results[1]["owner"]["instance_id"]
         assert results[0]["owner"]["pid"] == results[1]["owner"]["pid"]
         assert (
@@ -546,3 +565,169 @@ def test_restrictive_windows_job_refuses_background_start_without_child_fallback
             child.terminate()
             child.communicate(timeout=5)
         kernel.CloseHandle(job)
+
+
+def _startup_parent_fault(root, control, window):
+    """Abrupt exit of an owned Python fixture, never an installed frontend."""
+    from matlab_companion import coordinator as module
+    from matlab_companion.startup import Startup
+
+    root, control = Path(root), Path(control)
+    _, fingerprint = resolved_configuration(root)
+    startup = Startup(root, fingerprint, __version__, PROTOCOL_VERSION)
+    atomic_json(control / "counts.json", {"popen": 0, "core": 0, "fake_dispatch": 0})
+    with startup.locked():
+        attempt = startup.intent()
+        if window == "intent":
+            os._exit(0)
+        attempt = startup.update(
+            attempt, phase="spawn_requested", last_observation="spawn_requested"
+        )
+        if window == "spawn_requested":
+            os._exit(0)
+        original_popen = module.subprocess.Popen
+
+        def harmless_child(command, **kwargs):
+            atomic_json(control / "counts.json", {"popen": 1, "core": 0, "fake_dispatch": 0})
+            code = "from test_coordinator import _startup_blocked_ready_child; _startup_blocked_ready_child(*sys.argv[1:])"
+            with (control / "child.log").open("w", encoding="utf-8") as log:
+                # Deliberately use an ordinary, explicitly controlled test child.
+                # This tests journal recovery, not production breakaway or mixed
+                # runtime capability (covered/gated separately).
+                inherited_code = "import sys; sys.path[:] = " + repr(sys.path) + "; " + code
+                return original_popen(
+                    python_command(inherited_code, root, control, attempt.attempt_id),
+                    stdin=subprocess.DEVNULL,
+                    stdout=log,
+                    stderr=log,
+                    **process_options(),
+                )
+
+        module.subprocess.Popen = harmless_child
+        startup.launcher = lambda *args: os._exit(0)
+        module.spawn_coordinator(root, startup=startup, attempt=attempt)
+        raise AssertionError("The returned-Popen fault was not reached")
+
+
+def _startup_blocked_ready_child(root, control, attempt_id):
+    from test_recovery import ReceiptBackend
+
+    from matlab_companion import coordinator as module
+
+    root, control = Path(root), Path(control)
+    real_atomic, real_core = module.atomic_json, module.Core
+
+    def counted_core(*args, **kwargs):
+        counts = read_json(control / "counts.json")
+        atomic_json(control / "counts.json", counts | {"core": counts["core"] + 1})
+        core = real_core(*args, **kwargs)
+        try:
+            atomic_json(control / "core-entered.json", {"pid": os.getpid()})
+            # Pause after actual Core construction, outside the startup lock.
+            eventually(
+                lambda: (control / "release").exists(),
+                timeout=20,
+                description="harmless delayed Core return",
+            )
+            return core
+        except BaseException:
+            core.close()
+            raise
+
+    def blocked_ready(path, value):
+        if path.name == "coordinator.json":
+            owner.last_request = time.monotonic()
+        real_atomic(path, value)
+
+    module.Core, module.atomic_json = counted_core, blocked_ready
+    owner = module.Coordinator(
+        root, startup_attempt_id=attempt_id, idle_seconds=2, backend=ReceiptBackend()
+    )
+    try:
+        owner.run()
+    finally:
+        atomic_json(control / "finished.json", {"pid": os.getpid()})
+
+
+@pytest.mark.parametrize("window", ["intent", "spawn_requested", "returned_popen"])
+def test_parent_loss_before_identity_publication_preserves_attempt_and_late_self_claim(
+    tmp_path, monkeypatch, window
+):
+    from types import SimpleNamespace
+
+    from matlab_companion.core import WorkflowError
+
+    root, control = tmp_path / "store", tmp_path / "control"
+    control.mkdir()
+    code = (
+        "from test_coordinator import _startup_parent_fault; _startup_parent_fault(*sys.argv[1:])"
+    )
+    child_started = False
+    clock = [0.0]
+    launches = []
+    monkeypatch.setattr(
+        "matlab_companion.client.time",
+        SimpleNamespace(
+            monotonic=lambda: clock[0],
+            sleep=lambda seconds: clock.__setitem__(0, clock[0] + seconds),
+        ),
+    )
+
+    def forbidden_spawn(*args, **kwargs):
+        launches.append(True)
+        raise AssertionError("A lost parent is not permission to replace its startup attempt")
+
+    monkeypatch.setattr("matlab_companion.client.spawn_coordinator", forbidden_spawn)
+    try:
+        parent = subprocess.Popen(
+            python_command(code, root, control, window),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            **process_options(),
+        )
+        out, error = parent.communicate(timeout=10)
+        assert parent.returncode == 0, (out, error)
+        attempt = read_json(root / "coordinator-start.json")
+        assert attempt["launcher"] is None
+        if window == "returned_popen":
+            child_started = True
+            eventually(
+                lambda: (control / "core-entered.json").exists(),
+                description="late child self-claim and real Core",
+            )
+        for _ in range(2):
+            with pytest.raises(WorkflowError) as outcome:
+                CoordinatorClient(root)._ensure()
+            assert outcome.value.code == "COORDINATOR_START_UNCONFIRMED"
+            assert attempt["attempt_id"] in outcome.value.message
+        assert launches == []
+        counts = read_json(control / "counts.json")
+        assert counts == {
+            "popen": int(child_started),
+            "core": int(child_started),
+            "fake_dispatch": 0,
+        }
+        if child_started:
+            control.joinpath("release").touch()
+            eventually(
+                lambda: (root / "coordinator.json").exists(),
+                description="late readiness of original attempt",
+            )
+            ready = CoordinatorClient(root)._ensure()
+            journal = read_json(root / "coordinator-start.json")
+            assert ready["startup_attempt_id"] == journal["attempt_id"] == attempt["attempt_id"]
+            assert ready["pid"] == journal["owner"]["pid"] != parent.pid
+            assert journal["launcher"] is None
+            assert journal["phase"] == "core_admitted"
+        else:
+            assert not (root / "jobs").exists()
+    finally:
+        control.joinpath("release").touch()
+        if child_started and (control / "core-entered.json").exists():
+            eventually(
+                lambda: (control / "finished.json").exists(),
+                timeout=10,
+                description="owned harmless child settlement",
+            )

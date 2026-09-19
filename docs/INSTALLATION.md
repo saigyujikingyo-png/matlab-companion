@@ -46,7 +46,7 @@ installation root. The usual idle lifetime is 30 seconds. Disconnecting an agent
 does not request cancellation. Reconnect with the same job ID and idempotency
 key; explicitly request cancellation only when intended.
 
-If a Windows host blocks independent process startup, open setup and select
+For the published Alpha.3 package, if a Windows host blocks independent process startup, open setup and select
 **Start job service**, then return to the agent within five minutes. This explicit
 action can resume accepted, undispatched work. A setup status check remains
 passive. The launcher never substitutes a client-owned child after a rejected
@@ -97,6 +97,22 @@ setup and every execution/configuration component. Only ordinary service startup
 can recover a previously accepted, undispatched queue under the existing
 idempotency policy. The older `0.1.0a1` diagnostic side effect remains documented
 in the [historical alpha review](ALPHA_REVIEW_2026-09-15.md).
+
+### Unreleased startup ownership candidate
+
+The source candidate following 34e2cf17 adds durable startup ownership. An error
+that includes a **startup attempt** identifier preserves that same attempt across
+later calls, including **Start job service**. Setup is not a bypass for unresolved
+startup ownership. Retain the identifier and existing records for diagnosis;
+there is no startup reset, expiry or instruction to delete a marker. A late
+coordinator can still claim its original attempt and become ready.
+
+This change has not been installed or packaged as an upgrade to Alpha.3. The
+source version remains 0.1.0a3 for review only; do not replace that installed
+version's files in place. A distinct-version candidate and verified quiescent
+activation are required before deployment. Old installed frontends do not
+participate in the new journal, so source tests cannot prove mixed-version
+one-spawn behavior. See the [lifecycle record](LIFECYCLE.md) for the separate gates.
 
 ## Verification status
 
