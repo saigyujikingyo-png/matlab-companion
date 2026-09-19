@@ -14,6 +14,8 @@ The build records the managed CPython version and a digest of the copied clean r
 
 The package keeps its root documentation, tracked public docs/verification files and an explicit allowlist of 22 additional public references. Unapproved new dependencies fail the check. Ignored files, private evidence, Git state and development environments are excluded. Normative copies remain byte-identical to the frozen source. The validator checks packaged Markdown targets and local anchors, path containment and case consistency before freezing the manifest and after extraction.
 
+The locked pywin32 wheel's MAPI notice links to a license path missing from that wheel layout. One explicit vendor-document mapping copies its already included COM license verbatim to that relative destination. It does not rewrite the notice or license, and refuses to overwrite an existing destination. This additional vendor license copy is recorded separately from the 22 product reference files.
+
 Every distributed file has a relative path, size and SHA-256 entry. The manifest binds the source and build-provenance digest. The completed ZIP receives its own checksum and a private build receipt. A package audit checks malformed archives, duplicate or unlisted files, hashes, version labels, source/reference identity and bounded privacy fingerprints before executing any package command.
 
 ## Passive package verification

@@ -27,6 +27,7 @@ from bundle_support import (
     tree_manifest,
     validate_document_links,
     validate_public_bytes,
+    vendor_documents,
     verify_manifest,
     verify_product_wheel,
     verify_snapshot_bytes,
@@ -256,6 +257,7 @@ def main():
     if (staging / "isolated-self-test").exists():
         raise ValueError("Passive self-test unexpectedly created product state")
 
+    vendor_copies = vendor_documents(bundle, copy=True)
     wheel_identity = verify_product_wheel(wheel, snapshot, target)
     links = validate_document_links(bundle, [row["path"] for row in tree_manifest(bundle)])
     verify_snapshot_bytes(source, snapshot)
@@ -290,6 +292,7 @@ def main():
         },
         "document_links": links,
         "product_identity": wheel_identity,
+        "vendor_document_copies": vendor_copies,
     }
     write_json(bundle / "build-provenance.json", provenance)
     files = tree_manifest(bundle)

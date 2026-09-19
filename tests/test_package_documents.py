@@ -381,3 +381,20 @@ def test_product_wheel_source_and_installed_bytes_must_agree(tmp_path):
         output.writestr("matlab_companion/__init__.py", "altered")
     with pytest.raises(ValueError, match="wheel bytes"):
         bundle.verify_product_wheel(wheel, source, installed)
+
+
+def test_vendor_license_copy_closes_notice_without_rewriting_vendor_bytes(tmp_path):
+    write(tmp_path, "runtime/Lib/site-packages/win32comext/License.txt", "Vendor COM terms\n")
+    notice = "runtime/Lib/site-packages/win32comext/mapi/NOTICE.md"
+    write(tmp_path, notice, "See [License.txt](../../License.txt).\n")
+    before = (tmp_path / notice).read_bytes()
+    records = bundle.vendor_documents(tmp_path, copy=True)
+    assert bundle.vendor_documents(tmp_path) == records
+    paths = [row["path"] for row in bundle.tree_manifest(tmp_path)]
+    assert bundle.validate_document_links(tmp_path, paths)["local_links"] == 1
+    assert (tmp_path / notice).read_bytes() == before
+    with pytest.raises(FileExistsError):
+        bundle.vendor_documents(tmp_path, copy=True)
+    write(tmp_path, records[0]["path"], "Changed terms")
+    with pytest.raises(ValueError, match="Vendor license copy"):
+        bundle.vendor_documents(tmp_path)

@@ -34,6 +34,7 @@ from bundle_support import (
     validate_archive_members,
     validate_document_links,
     validate_public_bytes,
+    vendor_documents,
     verify_manifest,
     verify_product_wheel,
     verify_source,
@@ -191,6 +192,9 @@ def audit(archive: Path, repo: Path, expected_source: str) -> dict:
         raise ValueError("Retained product wheel identity mismatch")
     if tree_manifest(archive.parent / "dependency-wheels") != provenance["dependency_wheels"]:
         raise ValueError("Retained dependency wheel inventory mismatch")
+    vendor_copies = vendor_documents(bundle)
+    if provenance.get("vendor_document_copies") != vendor_copies:
+        raise ValueError("Vendor document provenance mismatch")
     wheel_identity = verify_product_wheel(
         retained_wheel, source, bundle / "runtime/Lib/site-packages"
     )
@@ -291,6 +295,7 @@ def audit(archive: Path, repo: Path, expected_source: str) -> dict:
         },
         "document_links": links,
         "product_identity": wheel_identity,
+        "vendor_document_copies": vendor_copies,
         "normative_copies_verified": len(NORMATIVE_FILES),
         "privacy_scan": {
             "scope": "Exact builder username/checkout bytes and bounded credential patterns in authored references/product files; not a comprehensive secret audit.",

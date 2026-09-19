@@ -506,3 +506,26 @@ def verify_product_wheel(wheel, source, installed):
     if installed_files != set(expected):
         raise ValueError("Installed product has missing or unexpected source files")
     return {"product_files": len(expected), "source_wheel_installed_match": True}
+
+
+# pywin32's wheel moves COM licensing into win32comext but its MAPI notice
+# still links to ../../License.txt. Preserve that exact existing license text.
+VENDOR_DOCUMENT_COPIES = {
+    "runtime/Lib/site-packages/License.txt": "runtime/Lib/site-packages/win32comext/License.txt",
+}
+
+
+def vendor_documents(bundle, *, copy=False):
+    records = []
+    for destination, origin in VENDOR_DOCUMENT_COPIES.items():
+        source = safe_file(bundle, origin)
+        target = Path(bundle) / destination
+        if copy:
+            # Never replace a third-party file that may have appeared since review.
+            with target.open("xb") as stream:
+                stream.write(source.read_bytes())
+        target = safe_file(bundle, destination)
+        if target.read_bytes() != source.read_bytes():
+            raise ValueError("Vendor license copy does not match its original bytes")
+        records.append({"path": destination, "copied_from": origin, "sha256": sha256(source)})
+    return records
